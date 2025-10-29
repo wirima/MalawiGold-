@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, useContext, useMemo } from 'react';
 import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod } from '../types';
 import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS } from '../data/mockData';
@@ -22,9 +20,9 @@ interface AuthContextType {
     products: Product[];
     addProduct: (productData: Omit<Product, 'id' | 'imageUrl'>, imageDataUrl?: string | null) => void;
     updateProduct: (product: Product) => void;
-    updateMultipleProducts: (updatedProducts: Pick<Product, 'id' | 'price'>[]) => void;
+    updateMultipleProducts: (updatedProducts: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => void;
     brands: Brand[];
-    addBrand: (brandData: Omit<Brand, 'id'>) => void;
+    addBrand: (brandData: Omit<Brand, 'id'>) => Brand;
     updateBrand: (brand: Brand) => void;
     deleteBrand: (brandId: string) => void;
     categories: Category[];
@@ -201,16 +199,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
     };
 
-    const updateMultipleProducts = (updatedProducts: Pick<Product, 'id' | 'price'>[]) => {
-        const updatesMap = new Map(updatedProducts.map(p => [p.id, p.price]));
+    const updateMultipleProducts = (updatedProducts: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => {
+        const updatesMap = new Map(updatedProducts.map(p => [p.id, { price: p.price, costPrice: p.costPrice }]));
         setProducts(prevProducts =>
             prevProducts.map(p =>
-                updatesMap.has(p.id) ? { ...p, price: updatesMap.get(p.id)! } : p
+                updatesMap.has(p.id) ? { ...p, price: updatesMap.get(p.id)!.price, costPrice: updatesMap.get(p.id)!.costPrice } : p
             )
         );
     };
 
-    const addBrand = (brandData: Omit<Brand, 'id'>) => setBrands(prev => [...prev, { id: `b_${Date.now()}`, ...brandData }]);
+    const addBrand = (brandData: Omit<Brand, 'id'>): Brand => {
+        const newBrand = { id: `b_${Date.now()}`, ...brandData };
+        setBrands(prev => [...prev, newBrand]);
+        return newBrand;
+    };
     const updateBrand = (updatedBrand: Brand) => setBrands(prev => prev.map(b => b.id === updatedBrand.id ? updatedBrand : b));
     const deleteBrand = (brandId: string) => {
         if (products.some(p => p.brandId === brandId)) {

@@ -16,7 +16,7 @@ const Step: React.FC<{ number: number; title: string; children: React.ReactNode 
                 {number}
             </span>
             {/* Render line only if it's not the last step */}
-            {number < 5 && <div className="flex-1 w-px bg-slate-300 dark:bg-slate-600 my-2"></div>}
+            {number < 6 && <div className="flex-1 w-px bg-slate-300 dark:bg-slate-600 my-2"></div>}
         </div>
         <div className="flex-1 pb-8">
             <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">{title}</h3>
@@ -52,16 +52,30 @@ const DeploymentPage: React.FC = () => {
             </div>
             <div className="p-6 md:p-8">
                 <div className="max-w-4xl mx-auto">
-                    <Step number={1} title="Prerequisites: The Tools You'll Need">
-                        <p>Before you begin, ensure you have the following installed on your system. Think of these as the basic workshop tools needed to build and run the application.</p>
-                        <ul className="list-disc pl-5">
+                    <Step number={1} title="Prerequisites: Set Up Your Node.js Environment">
+                        <p>This application is built with modern web technologies that require a JavaScript runtime environment called Node.js. It's like the engine that powers the application.</p>
+
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">1a. Download and Install Node.js</h4>
+                        <ul className="list-disc pl-5 space-y-2">
                             <li>
-                                <strong>Node.js:</strong> This is the engine that runs the application's code. Version 18.x or higher is recommended. You can download it from <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">nodejs.org</a>.
+                                Navigate to the official Node.js website: <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">nodejs.org</a>.
                             </li>
                             <li>
-                                <strong>npm (Node Package Manager):</strong> This is a tool that helps manage all the building blocks (or 'packages') the application needs. It's installed automatically when you install Node.js.
+                                Download the installer for the <strong>LTS (Long-Term Support)</strong> version (e.g., v18.x or higher). This version is the most stable and is recommended for most users.
+                            </li>
+                            <li>
+                                Run the installer you just downloaded and follow the on-screen instructions. The default settings are usually sufficient for most setups.
                             </li>
                         </ul>
+                        
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200 mt-4">1b. Verify the Installation</h4>
+                        <p>Once the installation is complete, you can verify that Node.js and its package manager (npm) are correctly installed. Open your terminal or command prompt and run the following commands one by one:</p>
+                        <CodeBlock>{`# Check Node.js version
+node -v
+
+# Check npm version
+npm -v`}</CodeBlock>
+                        <p>If the commands return version numbers (e.g., `v18.18.0`), your environment is ready! <strong>npm</strong> is installed automatically with Node.js. If you get an error, please try restarting your terminal or your computer, or reinstalling Node.js.</p>
                     </Step>
                     
                     <Step number={2} title="Project Setup: Getting the Code">
@@ -75,14 +89,54 @@ cd gemini-pos-system`}</CodeBlock>
                         <p>Once you are inside the project folder, run this command. It reads a list of all the tools the app needs (like React for the user interface) and downloads them. This might take a minute or two.</p>
                         <CodeBlock>{`npm install`}</CodeBlock>
                     </Step>
+
+                    <Step number={3} title="(Optional) Setting Up a Local Database">
+                        <p>By default, this application runs with mock data for demonstration purposes (you can see it in `src/data/mockData.ts`). For a real-world application, you'll want to connect to a database to persist your data. This guide shows how to set up a simple local <strong>SQLite</strong> database using <strong>Prisma</strong>.</p>
+                        
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3a. Install Prisma CLI</h4>
+                        <p>Prisma is a modern database toolkit. Install its command-line tool as a development dependency:</p>
+                        <CodeBlock>{`npm install prisma --save-dev`}</CodeBlock>
+                        
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3b. Initialize Prisma with SQLite</h4>
+                        <p>This command creates a new `prisma` directory and configures your project for a SQLite database:</p>
+                        <CodeBlock>{`npx prisma init --datasource-provider sqlite`}</CodeBlock>
+                        <p>This will also update your `.env` file with a `DATABASE_URL` pointing to a local database file.</p>
+                        
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3c. Define Your Database Schema</h4>
+                        <p>Open `prisma/schema.prisma` and define your data models. For example, to create a `Product` table, you could add this model:</p>
+                        <CodeBlock>{`model Product {
+  id          String   @id @default(cuid())
+  name        String
+  sku         String   @unique
+  price       Float
+  costPrice   Float
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}`}</CodeBlock>
+                        
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3d. Run the Database Migration</h4>
+                        <p>This command creates your SQLite database file (e.g., `prisma/dev.db`) based on your schema and generates the Prisma Client, a type-safe library for database access.</p>
+                        <CodeBlock>{`npx prisma migrate dev --name init`}</CodeBlock>
+                        
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3e. Connect Your Application</h4>
+                        <p>With the database set up, the final step is to replace the mock data usage in the application. For example, in `src/contexts/AuthContext.tsx`, you would import the Prisma Client and use it to fetch and update data instead of using the mock data arrays. This is a conceptual example of how you would fetch products:</p>
+                        <CodeBlock>{`// In a new backend service file or context:
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
+
+async function getProducts() {
+  return await prisma.product.findMany();
+}`}</CodeBlock>
+                    </Step>
                     
-                    <Step number={3} title="Configuration: Connecting to the AI">
+                    <Step number={4} title="Configuration: Connecting to the AI">
                         <p>This POS system uses Google's powerful Gemini AI for features like "Smart Business Insights" on the dashboard. To use these features, the application needs a special password, called an API Key.</p>
                         
-                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3a. Create a `.env` file</h4>
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">4a. Create a `.env` file</h4>
                         <p>In the project's main folder (where you see files like `index.html`), create a new file and name it exactly <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-sm">.env</code>. The dot at the beginning is important!</p>
                         
-                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">3b. Add Your Gemini API Key</h4>
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">4b. Add Your Gemini API Key</h4>
                         <p>Open the new <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-sm">.env</code> file and add the following line. Replace the placeholder with your actual key from Google AI Studio.</p>
                         <CodeBlock>API_KEY="AIzaSy...your...actual...key...here"</CodeBlock>
                         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 text-yellow-800 dark:text-yellow-300">
@@ -91,7 +145,7 @@ cd gemini-pos-system`}</CodeBlock>
                         </div>
                     </Step>
                     
-                    <Step number={4} title="Run the Application">
+                    <Step number={5} title="Run the Application">
                         <p>Now you're ready to start the app! This command starts a "development server," which is like a mini web server running just on your computer.</p>
                         <p>Run the following command in your terminal:</p>
                         <CodeBlock>{`npm run dev`}</CodeBlock>
@@ -103,7 +157,7 @@ cd gemini-pos-system`}</CodeBlock>
   ➜  press h + enter to show help`}</CodeBlock>
                     </Step>
 
-                    <Step number={5} title="View Your App!">
+                    <Step number={6} title="View Your App!">
                         <p>Open your web browser (like Chrome, Firefox, or Safari) and go to the "Local" address shown in your terminal. It's usually:</p>
                         <p><a href="http://localhost:5173" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">http://localhost:5173</a></p>
                         <p>You should now see the Gemini POS application running in your browser! You can switch between users like 'Alice Admin' or 'Casey Cashier' to explore all the features. Congratulations!</p>

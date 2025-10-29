@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +8,17 @@ import { Product, Brand, Category, Unit, BusinessLocation } from '../types';
 
 const baseInputClasses = "mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500";
 const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-500 focus:ring-red-500";
+
+const Tooltip: React.FC<{ text: string }> = ({ text }) => (
+    <span className="group relative ml-1">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 cursor-help" fill="none" viewBox="0 0 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span className="absolute bottom-full mb-2 w-72 scale-0 rounded bg-slate-800 p-2 text-xs text-white transition-all group-hover:scale-100 left-1/2 -translate-x-1/2 z-10">
+            {text}
+        </span>
+    </span>
+);
 
 const ProductFormModal: React.FC<{
     product: Product | null;
@@ -29,6 +41,8 @@ const ProductFormModal: React.FC<{
         stock: product?.stock || 0,
         reorderPoint: product?.reorderPoint || 0,
         isNotForSale: product?.isNotForSale || false,
+        taxAmount: product?.taxAmount || 0,
+        taxType: product?.taxType || 'percentage',
     });
     const [errors, setErrors] = useState({ name: '', sku: '', costPrice: '', price: '' });
 
@@ -46,6 +60,8 @@ const ProductFormModal: React.FC<{
                 stock: product.stock,
                 reorderPoint: product.reorderPoint,
                 isNotForSale: product.isNotForSale,
+                taxAmount: product.taxAmount || 0,
+                taxType: product.taxType || 'percentage',
             });
         }
     }, [product]);
@@ -85,7 +101,7 @@ const ProductFormModal: React.FC<{
         if (type === 'checkbox') {
             setFormData(prev => ({...prev, [name]: (e.target as HTMLInputElement).checked }));
         } else {
-            const numValue = (name === 'price' || name === 'stock' || name === 'reorderPoint' || name === 'costPrice') ? parseFloat(value) : value;
+            const numValue = (name === 'price' || name === 'stock' || name === 'reorderPoint' || name === 'costPrice' || name === 'taxAmount') ? parseFloat(value) : value;
             setFormData(prev => ({ ...prev, [name]: numValue }));
         }
     };
@@ -149,6 +165,16 @@ const ProductFormModal: React.FC<{
                             <select id="businessLocationId" name="businessLocationId" value={formData.businessLocationId} onChange={handleChange} className={baseInputClasses}>
                                 {businessLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                             </select>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label htmlFor="taxAmount" className="block text-sm font-medium">Tax <Tooltip text="Set the tax rate for this product. This can be a percentage or a fixed cash amount." /></label>
+                            <div className="mt-1 flex rounded-md shadow-sm">
+                                <input type="number" name="taxAmount" id="taxAmount" value={formData.taxAmount || ''} onChange={handleChange} step="0.01" min="0" className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00" />
+                                <select name="taxType" value={formData.taxType || 'percentage'} onChange={handleChange} className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="fixed">Fixed Amount</option>
+                                </select>
+                            </div>
                         </div>
                          <div className="md:col-span-2">
                             <div className="flex items-start">

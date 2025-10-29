@@ -1,5 +1,6 @@
 
 
+
 export interface Brand {
   id: string;
   name: string;
@@ -27,6 +28,8 @@ export interface VariationValue {
   name: string;
 }
 
+export type BarcodeType = 'CODE128' | 'CODE39' | 'EAN13' | 'EAN8' | 'UPC' | 'UPCE';
+
 export interface Product {
   id: string;
   name: string;
@@ -41,6 +44,11 @@ export interface Product {
   reorderPoint: number;
   imageUrl: string;
   isNotForSale: boolean;
+  description?: string;
+  productType: 'single' | 'variable' | 'combo';
+  barcodeType: BarcodeType;
+  taxAmount?: number;
+  taxType?: 'percentage' | 'fixed';
 }
 
 export interface Customer {

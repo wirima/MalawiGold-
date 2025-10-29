@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -55,6 +56,7 @@ import PaymentMethodsPage from './pages/PaymentMethodsPage';
 import ImportProductsPage from './pages/ImportProductsPage';
 import ImportOpeningStockPage from './pages/ImportOpeningStockPage';
 import DeploymentPage from './pages/DeploymentPage';
+import PrintLabelsPage from './pages/PrintLabelsPage';
 
 const App: React.FC = () => {
   return (
@@ -70,7 +72,7 @@ const App: React.FC = () => {
             <Route path="/products/:productId" element={<ProductDetailPage />} />
             <Route path="/products/add" element={<AddProductPage />} />
             <Route path="/products/update-price" element={<UpdatePricePage />} />
-            <Route path="/products/print-labels" element={<NotFoundPage />} />
+            <Route path="/products/print-labels" element={<PrintLabelsPage />} />
             <Route path="/products/variations" element={<VariationsPage />} />
             <Route path="/products/import" element={<ImportProductsPage />} />
             <Route path="/products/import-opening-stock" element={<ImportOpeningStockPage />} />

@@ -2,6 +2,8 @@
 
 
 
+
+
 import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
@@ -77,16 +79,16 @@ export const MOCK_VARIATION_VALUES: VariationValue[] = [
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
-  { id: 'PROD001', name: 'Espresso', sku: 'SKU001', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.20, price: 2.50, stock: 115, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/espresso/400', isNotForSale: false },
-  { id: 'PROD002', name: 'Latte', sku: 'SKU002', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.50, price: 3.50, stock: 80, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/latte/400', isNotForSale: false },
-  { id: 'PROD003', name: 'Cappuccino', sku: 'SKU003', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.50, price: 3.50, stock: 75, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/cappuccino/400', isNotForSale: false },
-  { id: 'PROD004', name: 'Croissant', sku: 'SKU004', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.10, price: 2.75, stock: 50, reorderPoint: 15, imageUrl: 'https://picsum.photos/seed/croissant/400', isNotForSale: false },
-  { id: 'PROD005', name: 'Muffin', sku: 'SKU005', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.90, price: 2.25, stock: 28, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/muffin/400', isNotForSale: false },
-  { id: 'PROD006', name: 'Iced Tea', sku: 'SKU006', categoryId: 'C03', brandId: 'B03', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.75, price: 2.00, stock: 90, reorderPoint: 25, imageUrl: 'https://picsum.photos/seed/icedtea/400', isNotForSale: false },
-  { id: 'PROD007', name: 'Mineral Water', sku: 'SKU007', categoryId: 'C03', brandId: 'B03', unitId: 'U01', businessLocationId: 'LOC03', costPrice: 0.50, price: 1.50, stock: 120, reorderPoint: 30, imageUrl: 'https://picsum.photos/seed/water/400', isNotForSale: false },
-  { id: 'PROD008', name: 'Sandwich', sku: 'SKU008', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 2.50, price: 5.50, stock: 30, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/sandwich/400', isNotForSale: false },
-  { id: 'PROD009', name: 'Salad', sku: 'SKU009', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 3.00, price: 6.50, stock: 0, reorderPoint: 5, imageUrl: 'https://picsum.photos/seed/salad/400', isNotForSale: true },
-  { id: 'PROD010', name: 'Americano', sku: 'SKU010', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.30, price: 3.00, stock: 85, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/americano/400', isNotForSale: false },
+  { id: 'PROD001', name: 'Espresso', sku: 'SKU001', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.20, price: 2.50, stock: 115, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/espresso/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'A rich and aromatic shot of pure coffee.', taxAmount: 5, taxType: 'percentage' },
+  { id: 'PROD002', name: 'Latte', sku: 'SKU002', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.50, price: 3.50, stock: 80, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/latte/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Smooth espresso with steamed milk.', taxAmount: 5, taxType: 'percentage' },
+  { id: 'PROD003', name: 'Cappuccino', sku: 'SKU003', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.50, price: 3.50, stock: 75, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/cappuccino/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Espresso, steamed milk, and a deep layer of foam.', taxAmount: 0, taxType: 'percentage' },
+  { id: 'PROD004', name: 'Croissant', sku: 'SKU004', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.10, price: 2.75, stock: 50, reorderPoint: 15, imageUrl: 'https://picsum.photos/seed/croissant/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Buttery, flaky, and delicious.', taxAmount: 0, taxType: 'percentage' },
+  { id: 'PROD005', name: 'Muffin', sku: 'SKU005', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.90, price: 2.25, stock: 28, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/muffin/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'A delightful baked treat.', taxAmount: 0, taxType: 'percentage' },
+  { id: 'PROD006', name: 'Iced Tea', sku: 'SKU006', categoryId: 'C03', brandId: 'B03', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.75, price: 2.00, stock: 90, reorderPoint: 25, imageUrl: 'https://picsum.photos/seed/icedtea/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Refreshing and cool.', taxAmount: 0, taxType: 'percentage' },
+  { id: 'PROD007', name: 'Mineral Water', sku: 'SKU007', categoryId: 'C03', brandId: 'B03', unitId: 'U01', businessLocationId: 'LOC03', costPrice: 0.50, price: 1.50, stock: 120, reorderPoint: 30, imageUrl: 'https://picsum.photos/seed/water/400', isNotForSale: false, productType: 'single', barcodeType: 'EAN13', description: 'Pure and simple hydration.', taxAmount: 0.25, taxType: 'fixed' },
+  { id: 'PROD008', name: 'Sandwich', sku: 'SKU008', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 2.50, price: 5.50, stock: 30, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/sandwich/400', isNotForSale: false, productType: 'single', barcodeType: 'UPC', description: 'Freshly made sandwich.', taxAmount: 0, taxType: 'percentage' },
+  { id: 'PROD009', name: 'Salad', sku: 'SKU009', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 3.00, price: 6.50, stock: 0, reorderPoint: 5, imageUrl: 'https://picsum.photos/seed/salad/400', isNotForSale: true, productType: 'single', barcodeType: 'CODE128', description: 'Healthy and crisp salad.', taxAmount: 0, taxType: 'percentage' },
+  { id: 'PROD010', name: 'Americano', sku: 'SKU010', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.30, price: 3.00, stock: 85, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/americano/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Espresso shots topped with hot water.', taxAmount: 5, taxType: 'percentage' },
 ];
 
 export const MOCK_STOCK_ADJUSTMENTS: StockAdjustment[] = [
