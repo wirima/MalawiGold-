@@ -23,6 +23,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'contacts:view', 'contacts:manage', 'contacts:import',
     'purchases:view', 'purchases:manage',
     'sell:view', 'sell:pos', 'sell:sales', 'sell:manage', 'shipping:view', 'shipping:manage', 'discounts:view',
+    'pos:apply_discount', 'pos:change_price', 'pos:process_return', 'pos:void_sale',
     'stock_transfer:view', 'stock_transfer:manage',
     'stock_adjustment:view', 'stock_adjustment:manage',
     'expense:view', 'expense:manage',
@@ -30,7 +31,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'users:view', 'users:manage',
     'notifications:manage',
     'settings:view',
-    'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations'
+    'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification'
 ];
 
 const NavIcon: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -169,6 +170,7 @@ export const NAV_ITEMS: NavItem[] = [
         { path: '/settings', label: 'General Settings' },
         { path: '/settings/locations', label: 'Business Locations', permission: 'settings:locations' },
         { path: '/settings/payment-methods', label: 'Payment Methods', permission: 'settings:payment' },
+        { path: '/settings/age-verification', label: 'Age Verification', permission: 'settings:age_verification' },
         { path: '/settings/deployment', label: 'Deployment', permission: 'settings:view' }
     ]
   }

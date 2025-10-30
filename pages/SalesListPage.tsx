@@ -1,11 +1,13 @@
 
 
+
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Sale } from '../types';
 import { Link } from 'react-router-dom';
 
-type SortableKeys = 'date' | 'id' | 'customerName' | 'total';
+type SortableKeys = 'date' | 'id' | 'customerName' | 'total' | 'status';
 type SortDirection = 'ascending' | 'descending';
 type SortConfig = {
     key: SortableKeys;
@@ -13,10 +15,11 @@ type SortConfig = {
 } | null;
 
 const SalesListPage: React.FC = () => {
-    const { sales, customers, hasPermission, paymentMethods } = useAuth();
+    const { sales, customers, hasPermission, paymentMethods, voidSale } = useAuth();
     
     const canManageSales = hasPermission('sell:manage');
     const canViewSales = hasPermission('sell:sales');
+    const canVoidSales = hasPermission('pos:void_sale');
 
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'date', direction: 'descending' });
     const [customerFilter, setCustomerFilter] = useState('all');
@@ -63,8 +66,8 @@ const SalesListPage: React.FC = () => {
                         bValue = new Date(b.date).getTime();
                         break;
                     default:
-                        aValue = a[sortConfig.key];
-                        bValue = b[sortConfig.key];
+                        aValue = a[sortConfig.key] || '';
+                        bValue = b[sortConfig.key] || '';
                 }
 
                 if (aValue < bValue) {
@@ -121,6 +124,19 @@ const SalesListPage: React.FC = () => {
             </button>
         </th>
     );
+    
+    const getStatusBadge = (status?: 'completed' | 'voided' | 'return') => {
+        switch (status) {
+            case 'completed':
+                return <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-2 py-0.5 rounded-full text-xs font-medium">Completed</span>;
+            case 'voided':
+                return <span className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-2 py-0.5 rounded-full text-xs font-medium">Voided</span>;
+            case 'return':
+                 return <span className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-2 py-0.5 rounded-full text-xs font-medium">Return</span>;
+            default:
+                return <span className="bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-medium">Unknown</span>;
+        }
+    };
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
@@ -178,6 +194,8 @@ const SalesListPage: React.FC = () => {
                             <SortableHeader sortKey="customerName">Customer</SortableHeader>
                             <SortableHeader sortKey="total" className="text-right">Total Amount</SortableHeader>
                             <th scope="col" className="px-6 py-3">Payment Method</th>
+                            <SortableHeader sortKey="status">Status</SortableHeader>
+                            <th scope="col" className="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -196,11 +214,27 @@ const SalesListPage: React.FC = () => {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right font-semibold">{sale.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
-                                <td className="px-6 py-4">{paymentMethodsMap.get(sale.paymentMethodId) || 'N/A'}</td>
+                                <td className="px-6 py-4">
+                                    {sale.payments.length > 1
+                                        ? 'Split Payment'
+                                        : (paymentMethodsMap.get(sale.payments[0]?.methodId) || 'N/A')
+                                    }
+                                </td>
+                                <td className="px-6 py-4">{getStatusBadge(sale.status)}</td>
+                                <td className="px-6 py-4 space-x-2 whitespace-nowrap">
+                                    <Link to={`/sell/receipt/${sale.id}`} className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline">
+                                        View Receipt
+                                    </Link>
+                                    {canVoidSales && sale.status === 'completed' && (
+                                        <button onClick={() => voidSale(sale.id)} className="font-medium text-red-600 dark:text-red-500 hover:underline">
+                                            Void
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
                         )) : (
                              <tr>
-                                <td colSpan={4} className="text-center py-10 text-slate-500 dark:text-slate-400">
+                                <td colSpan={6} className="text-center py-10 text-slate-500 dark:text-slate-400">
                                     No sales found matching your criteria.
                                 </td>
                             </tr>

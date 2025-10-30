@@ -1,6 +1,5 @@
 
 
-
 export interface Brand {
   id: string;
   name: string;
@@ -49,6 +48,7 @@ export interface Product {
   barcodeType: BarcodeType;
   taxAmount?: number;
   taxType?: 'percentage' | 'fixed';
+  isAgeRestricted?: boolean;
 }
 
 export interface Customer {
@@ -77,6 +77,7 @@ export interface CustomerGroup {
 
 export interface CartItem extends Product {
   quantity: number;
+  originalPrice?: number;
 }
 
 export interface PaymentMethod {
@@ -90,9 +91,15 @@ export interface Sale {
   customer: Pick<Customer, 'id' | 'name'>;
   items: CartItem[];
   total: number;
-  paymentMethodId: string;
+  payments: { methodId: string; amount: number }[];
   passportNumber?: string;
   nationality?: string;
+  status?: 'completed' | 'voided' | 'return';
+  discount?: {
+    type: 'percentage' | 'fixed';
+    value: number;
+  };
+  isQueued?: boolean;
 }
 
 export interface Shipment {
@@ -206,6 +213,11 @@ export type Permission =
   | 'shipping:view'
   | 'shipping:manage'
   | 'discounts:view'
+  // POS Specific
+  | 'pos:apply_discount'
+  | 'pos:change_price'
+  | 'pos:process_return'
+  | 'pos:void_sale'
   // Stock
   | 'stock_transfer:view'
   | 'stock_transfer:manage'
@@ -238,7 +250,8 @@ export type Permission =
   | 'settings:reward_points'
   | 'settings:modules'
   | 'settings:custom_labels'
-  | 'settings:locations';
+  | 'settings:locations'
+  | 'settings:age_verification';
 
 export interface Role {
     id: string;

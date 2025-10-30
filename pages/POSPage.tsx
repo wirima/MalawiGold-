@@ -1,57 +1,66 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Product, CartItem, Customer, PaymentMethod } from '../types';
+import { useOffline } from '../contexts/OfflineContext';
+import { Product, CartItem, Customer, Sale } from '../types';
+import SaleReceipt from '../components/SaleReceipt';
+import SplitPaymentModal from '../components/SplitPaymentModal';
+import TrainingGuide from '../components/TrainingGuide';
+import ResumeOrderModal from '../components/ResumeOrderModal';
+import AgeVerificationModal from '../components/AgeVerificationModal';
 
-const PaymentModal: React.FC<{
-    total: number;
+interface HeldOrder {
+    id: number;
+    cart: CartItem[];
+    customerId: string;
+    customerName: string;
+}
+
+const DiscountModal: React.FC<{
     onClose: () => void;
-    onConfirm: (paymentMethodId: string) => void;
-    paymentMethods: PaymentMethod[];
-}> = ({ total, onClose, onConfirm, paymentMethods }) => {
-    const [selectedMethodId, setSelectedMethodId] = useState<string>(paymentMethods[0]?.id || '');
-    
+    onApply: (type: 'percentage' | 'fixed', value: number) => void;
+}> = ({ onClose, onApply }) => {
+    const [type, setType] = useState<'percentage' | 'fixed'>('percentage');
+    const [value, setValue] = useState('');
+
+    const handleApply = () => {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue) && numValue >= 0) {
+            onApply(type, numValue);
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose} role="dialog" aria-modal="true">
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                <div className="p-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center">Confirm Payment</h3>
-                    <p className="mt-2 text-center text-5xl font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                        {total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                    </p>
-                    <div className="mt-6">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Payment Method</label>
-                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {paymentMethods.map(method => (
-                                <button
-                                    key={method.id}
-                                    onClick={() => setSelectedMethodId(method.id)}
-                                    className={`px-3 py-3 rounded-lg text-sm font-semibold border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-indigo-500 ${
-                                        selectedMethodId === method.id 
-                                        ? 'bg-indigo-600 border-indigo-600 text-white' 
-                                        : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:border-indigo-500'
-                                    }`}
-                                >
-                                    {method.name}
-                                </button>
-                            ))}
-                        </div>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-xs" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b dark:border-slate-700">
+                    <h3 className="text-lg font-bold">Apply Discount</h3>
+                </div>
+                <div className="p-4 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium">Discount Type</label>
+                        <select value={type} onChange={e => setType(e.target.value as any)} className="mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent">
+                            <option value="percentage">Percentage (%)</option>
+                            <option value="fixed">Fixed Amount ($)</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium">Value</label>
+                        <input type="number" value={value} onChange={e => setValue(e.target.value)} className="mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent" />
                     </div>
                 </div>
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg">
-                    <button type="button" onClick={onClose} className="w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600">
-                        Cancel
-                    </button>
-                    <button type="button" onClick={() => onConfirm(selectedMethodId)} disabled={!selectedMethodId} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed">
-                        Confirm Payment
-                    </button>
+                 <div className="p-3 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-2 rounded-b-lg">
+                    <button onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</button>
+                    <button onClick={handleApply} className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Apply</button>
                 </div>
             </div>
         </div>
     );
 };
 
+
 const POSPage: React.FC = () => {
-    const { products, customers, addSale, hasPermission, paymentMethods } = useAuth();
+    const { products, customers, addSale, hasPermission, ageVerificationSettings } = useAuth();
+    const { isOnline, addSaleToQueue } = useOffline();
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -60,6 +69,38 @@ const POSPage: React.FC = () => {
     const [cartErrors, setCartErrors] = useState<Record<string, string>>({});
     const [passportNumber, setPassportNumber] = useState('');
     const [nationality, setNationality] = useState('');
+    const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+    const [isTrainingMode, setIsTrainingMode] = useState(false);
+    
+    // State for role-based features
+    const [isReturnMode, setIsReturnMode] = useState(false);
+    const [discount, setDiscount] = useState<{ type: 'percentage' | 'fixed'; value: number } | null>(null);
+    const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+    const [editingPriceFor, setEditingPriceFor] = useState<string | null>(null);
+
+    // State for shortcuts and new features
+    const [heldOrders, setHeldOrders] = useState<HeldOrder[]>([]);
+    const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+    const [selectedCartItemIndex, setSelectedCartItemIndex] = useState<number>(-1);
+    
+    // State for Age Verification
+    const [isAgeVerificationModalOpen, setIsAgeVerificationModalOpen] = useState(false);
+    const [productForVerification, setProductForVerification] = useState<Product | null>(null);
+
+
+    // Refs for Training Guide & Shortcuts
+    const searchRef = useRef<HTMLInputElement>(null);
+    const customerSelectRef = useRef<HTMLSelectElement>(null);
+    const productGridRef = useRef<HTMLDivElement>(null);
+    const cartRef = useRef<HTMLDivElement>(null);
+    const chargeButtonRef = useRef<HTMLButtonElement>(null);
+    const holdButtonRef = useRef<HTMLButtonElement>(null);
+    const resumeButtonRef = useRef<HTMLButtonElement>(null);
+
+    const canManageUsers = hasPermission('users:manage');
+    const canApplyDiscount = hasPermission('pos:apply_discount');
+    const canChangePrice = hasPermission('pos:change_price');
+    const canProcessReturn = hasPermission('pos:process_return');
 
 
     if (!hasPermission('sell:pos')) {
@@ -74,31 +115,63 @@ const POSPage: React.FC = () => {
     }
 
     const productsMap = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
+    
+    const resetCart = useCallback(() => {
+        setCart([]);
+        setCartErrors({});
+        setPassportNumber('');
+        setNationality('');
+        setSelectedCustomerId(customers.find(c => c.name === 'Walk-in Customer')?.id || customers[0]?.id || '');
+        setSelectedCartItemIndex(-1);
+        setDiscount(null);
+        setIsReturnMode(false);
+    }, [customers]);
 
-    const addToCart = useCallback((product: Product) => {
+    const _addToCartInternal = useCallback((product: Product) => {
         const liveProduct = productsMap.get(product.id);
-        if (!liveProduct || liveProduct.stock <= 0) return;
+        if (!liveProduct || (liveProduct.stock <= 0 && !isReturnMode)) return;
 
         setCart(prevCart => {
-            const existingItem = prevCart.find(item => item.id === product.id);
+            const existingItemIndex = prevCart.findIndex(item => item.id === product.id);
             const newCartErrors = { ...cartErrors };
             delete newCartErrors[product.id];
 
-            if (existingItem) {
-                if (existingItem.quantity >= liveProduct.stock) {
+            if (existingItemIndex > -1) {
+                const existingItem = prevCart[existingItemIndex];
+                if (!isReturnMode && existingItem.quantity >= liveProduct.stock) {
                     newCartErrors[product.id] = `Max: ${liveProduct.stock}`;
                     setCartErrors(newCartErrors);
                     return prevCart;
                 }
                 setCartErrors(newCartErrors);
-                return prevCart.map(item => 
-                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-                );
+                 const newCart = [...prevCart];
+                 newCart[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + 1 };
+                 return newCart;
+            } else {
+                 setCartErrors(newCartErrors);
+                 const newCart = [...prevCart, { ...liveProduct, quantity: 1 }];
+                 setSelectedCartItemIndex(newCart.length - 1);
+                 return newCart;
             }
-            setCartErrors(newCartErrors);
-            return [...prevCart, { ...liveProduct, quantity: 1 }];
         });
-    }, [productsMap, cartErrors]);
+    }, [productsMap, cartErrors, isReturnMode]);
+
+    const addToCart = useCallback((product: Product) => {
+        if (product.isAgeRestricted && !isReturnMode) {
+            setProductForVerification(product);
+            setIsAgeVerificationModalOpen(true);
+        } else {
+            _addToCartInternal(product);
+        }
+    }, [_addToCartInternal, isReturnMode]);
+    
+    const handleVerificationSuccess = () => {
+        if (productForVerification) {
+            _addToCartInternal(productForVerification);
+        }
+        setIsAgeVerificationModalOpen(false);
+        setProductForVerification(null);
+    };
 
     const updateQuantity = useCallback((productId: string, newQuantity: number) => {
         setCart(prevCart => {
@@ -110,10 +183,13 @@ const POSPage: React.FC = () => {
 
             if (isNaN(newQuantity) || newQuantity <= 0) {
                 setCartErrors(newCartErrors);
-                return prevCart.filter(item => item.id !== productId);
+                const newCart = prevCart.filter(item => item.id !== productId);
+                if (newCart.length === 0) setSelectedCartItemIndex(-1);
+                else setSelectedCartItemIndex(prev => Math.min(prev, newCart.length -1));
+                return newCart;
             }
             
-            if (newQuantity > liveProduct.stock) {
+            if (!isReturnMode && newQuantity > liveProduct.stock) {
                 newCartErrors[productId] = `Max: ${liveProduct.stock}`;
                 setCartErrors(newCartErrors);
                 return prevCart.map(item =>
@@ -126,73 +202,265 @@ const POSPage: React.FC = () => {
                 item.id === productId ? { ...item, quantity: newQuantity } : item
             );
         });
-    }, [productsMap, cartErrors]);
+    }, [productsMap, cartErrors, isReturnMode]);
     
     const removeItem = useCallback((productId: string) => {
-        setCart(prev => prev.filter(item => item.id !== productId));
+        setCart(prev => {
+            const newCart = prev.filter(item => item.id !== productId);
+            if (newCart.length === 0) setSelectedCartItemIndex(-1);
+            else setSelectedCartItemIndex(prevIdx => Math.min(prevIdx, newCart.length - 1));
+            return newCart;
+        });
         const newCartErrors = { ...cartErrors };
         delete newCartErrors[productId];
         setCartErrors(newCartErrors);
     }, [cartErrors]);
+    
+     const handleHoldOrder = useCallback(() => {
+        if (cart.length === 0) return;
+        const customer = customers.find(c => c.id === selectedCustomerId);
+        const newHeldOrder: HeldOrder = {
+            id: Date.now(),
+            cart: cart,
+            customerId: selectedCustomerId,
+            customerName: customer?.name || 'Unknown',
+        };
+        setHeldOrders(prev => [...prev, newHeldOrder]);
+        resetCart();
+    }, [cart, selectedCustomerId, customers, resetCart]);
+
+    const handleResumeOrder = (orderId: number) => {
+        const orderToResume = heldOrders.find(o => o.id === orderId);
+        if (orderToResume) {
+            setCart(orderToResume.cart);
+            setSelectedCustomerId(orderToResume.customerId);
+            setHeldOrders(prev => prev.filter(o => o.id !== orderId));
+            setIsResumeModalOpen(false);
+        }
+    };
 
     const filteredProducts = useMemo(() => products.filter(product =>
-        !product.isNotForSale &&
+        (isReturnMode || !product.isNotForSale) &&
         (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-    ), [products, searchTerm]);
+    ), [products, searchTerm, isReturnMode]);
+    
+    const subtotal = useMemo(() => cart.reduce((acc, item) => acc + (item.originalPrice ?? item.price) * item.quantity, 0), [cart]);
 
-    const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const tax = subtotal * 0.08;
-    const total = subtotal + tax;
+    const discountAmount = useMemo(() => {
+        if (!discount) return 0;
+        return discount.type === 'percentage'
+            ? (subtotal * discount.value) / 100
+            : discount.value;
+    }, [subtotal, discount]);
+    
+    const totalAfterDiscount = subtotal - discountAmount;
+    const tax = totalAfterDiscount * 0.08;
+    const total = totalAfterDiscount + tax;
 
-    const handleConfirmPayment = (paymentMethodId: string) => {
+    const handleConfirmPayment = (payments: { methodId: string; amount: number }[]) => {
         const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
         if (!selectedCustomer) {
             alert('Error: Please select a valid customer.');
             return;
         }
 
-        addSale({
+        const saleData = {
             customer: { id: selectedCustomer.id, name: selectedCustomer.name },
             items: cart,
             total,
-            paymentMethodId,
+            payments,
             passportNumber,
-            nationality
-        });
+            nationality,
+            discount,
+            status: isReturnMode ? 'return' : 'completed',
+        };
 
+        const newSale = isOnline ? addSale(saleData) : addSaleToQueue(saleData);
+        
         setIsPaymentModalOpen(false);
-        setCart([]);
-        setCartErrors({});
-        setPassportNumber('');
-        setNationality('');
+        setCompletedSale(newSale);
+    };
+
+    const handleCloseReceipt = () => {
+        setCompletedSale(null);
+        resetCart();
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
     };
+    
+    const resetTrainingState = useCallback(() => {
+        setCart([]);
+        setCartErrors({});
+        setIsPaymentModalOpen(false);
+        setHeldOrders([]);
+        setIsResumeModalOpen(false);
+    }, []);
+
+    const handleStartTraining = () => {
+        resetTrainingState();
+        setIsTrainingMode(true);
+    };
+
+    const handleEndTraining = () => {
+        setIsTrainingMode(false);
+        resetTrainingState();
+    };
+    
+     // Keyboard Shortcuts Handler
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+            if (editingPriceFor) return; // Disable shortcuts while editing price
+
+            // Global shortcuts that should always work
+            if (e.key === 'F1' || ((e.metaKey || e.ctrlKey) && e.key === 's')) {
+                e.preventDefault();
+                searchRef.current?.focus();
+            }
+            if (e.key === 'F2' || ((e.metaKey || e.ctrlKey) && e.key === 'c')) {
+                e.preventDefault();
+                customerSelectRef.current?.focus();
+            }
+             if (e.key === 'F6') {
+                e.preventDefault();
+                if(cart.length > 0) handleHoldOrder();
+            }
+            if (e.key === 'F7') {
+                e.preventDefault();
+                setIsResumeModalOpen(true);
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setSearchTerm('');
+                setSelectedCartItemIndex(-1);
+                searchRef.current?.blur();
+            }
+            
+            // Shortcuts that shouldn't fire when typing in an input
+            if (!isInputFocused) {
+                 if (e.key === 'Enter' && cart.length > 0 && !isPaymentModalOpen && !isResumeModalOpen) {
+                    e.preventDefault();
+                    setIsPaymentModalOpen(true);
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedCartItemIndex(prev => Math.min(prev + 1, cart.length - 1));
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedCartItemIndex(prev => Math.max(prev - 1, 0));
+                }
+                 // Actions on selected item
+                if (selectedCartItemIndex > -1 && cart[selectedCartItemIndex]) {
+                    const selectedItem = cart[selectedCartItemIndex];
+                    if (e.key === '+' || e.key === '=') {
+                        e.preventDefault();
+                        updateQuantity(selectedItem.id, selectedItem.quantity + 1);
+                    }
+                    if (e.key === '-') {
+                        e.preventDefault();
+                        updateQuantity(selectedItem.id, selectedItem.quantity - 1);
+                    }
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        e.preventDefault();
+                        removeItem(selectedItem.id);
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [cart, selectedCartItemIndex, isPaymentModalOpen, isResumeModalOpen, updateQuantity, removeItem, handleHoldOrder, editingPriceFor]);
+    
+    const handlePriceUpdate = (productId: string, newPriceStr: string) => {
+        const newPrice = parseFloat(newPriceStr);
+        setCart(prev => prev.map(item => {
+            if (item.id === productId && !isNaN(newPrice) && newPrice >= 0) {
+                return { ...item, price: newPrice, originalPrice: item.originalPrice ?? productsMap.get(item.id)!.price };
+            }
+            return item;
+        }));
+    };
+
 
     return (
-        <div className="relative flex flex-col lg:flex-row h-[calc(100vh-10rem)] gap-6">
+        <div className={`relative flex flex-col lg:flex-row h-[calc(100vh-10rem)] gap-6 ${isReturnMode ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
              {showSuccessMessage && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full text-lg font-semibold z-20">
                     Sale Completed Successfully!
                 </div>
             )}
+             {isTrainingMode && (
+                <TrainingGuide
+                    onClose={handleEndTraining}
+                    elementRefs={{ searchRef, productGridRef, cartRef, chargeButtonRef, holdButtonRef, resumeButtonRef }}
+                    setCart={setCart}
+                    setIsPaymentModalOpen={setIsPaymentModalOpen}
+                    resetTrainingState={resetTrainingState}
+                    products={products}
+                    cart={cart}
+                    heldOrders={heldOrders}
+                    setHeldOrders={setHeldOrders}
+                    setIsResumeModalOpen={setIsResumeModalOpen}
+                    handleResumeOrder={handleResumeOrder}
+                    resetCart={resetCart}
+                />
+            )}
+            {isDiscountModalOpen && (
+                <DiscountModal
+                    onClose={() => setIsDiscountModalOpen(false)}
+                    onApply={(type, value) => {
+                        setDiscount({ type, value });
+                        setIsDiscountModalOpen(false);
+                    }}
+                />
+            )}
+             {isAgeVerificationModalOpen && (
+                <AgeVerificationModal
+                    isOpen={isAgeVerificationModalOpen}
+                    minimumAge={ageVerificationSettings.minimumAge}
+                    onSuccess={handleVerificationSuccess}
+                    onClose={() => {
+                        setIsAgeVerificationModalOpen(false);
+                        setProductForVerification(null);
+                    }}
+                />
+            )}
             {/* Products Grid */}
             <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl shadow-md flex flex-col">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-                     <input 
-                        type="text" 
-                        placeholder="Search products..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-4 pr-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                     <div className="flex gap-4 items-center justify-between">
+                        <input 
+                            ref={searchRef}
+                            type="text" 
+                            placeholder="Scan or Search products... (F1)"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-4 pr-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                         {canManageUsers && (
+                            <button
+                                onClick={handleStartTraining}
+                                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-400 text-yellow-900 font-semibold hover:bg-yellow-500 transition-colors"
+                                title="Start Training Mode"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10.394 2.08a1 1 0 00-1.788 0l-7 14a1 1 0 00.894 1.42h14a1 1 0 00.894-1.42l-7-14zM10 9a1 1 0 011 1v4a1 1 0 11-2 0v-4a1 1 0 011-1zm-1-3a1 1 0 112 0 1 1 0 01-2 0z" />
+                                </svg>
+                                <span>Train</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
-                <div className="p-4 overflow-y-auto">
+                <div ref={productGridRef} className="p-4 overflow-y-auto">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filteredProducts.map(product => (
-                            <div key={product.id} onClick={() => addToCart(product)} className={`relative cursor-pointer border dark:border-slate-700 rounded-lg p-2 text-center group transition-all hover:shadow-lg hover:border-indigo-500 hover:scale-105 ${product.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                {product.stock <= 0 && <span className="absolute top-1 right-1 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full z-10">Out of Stock</span>}
+                            <div key={product.id} onClick={() => addToCart(product)} className={`relative cursor-pointer border dark:border-slate-700 rounded-lg p-2 text-center group transition-all hover:shadow-lg hover:border-indigo-500 hover:scale-105 ${(product.stock <= 0 && !isReturnMode) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                {(product.stock <= 0 && !isReturnMode) && <span className="absolute top-1 right-1 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full z-10">Out of Stock</span>}
+                                {product.isAgeRestricted && <span className="absolute top-1 left-1 text-xs bg-orange-400 text-white px-1.5 py-0.5 rounded-full z-10">ID Req.</span>}
                                  <img src={product.imageUrl} alt={product.name} className="w-full h-24 object-cover rounded-md mb-2"/>
                                 <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">{product.name}</h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Stock: {product.stock}</p>
@@ -204,14 +472,22 @@ const POSPage: React.FC = () => {
             </div>
 
             {/* Cart/Order */}
-            <div className="w-full lg:w-96 bg-white dark:bg-slate-800 rounded-xl shadow-md flex flex-col">
+            <div ref={cartRef} className="w-full lg:w-96 bg-white dark:bg-slate-800 rounded-xl shadow-md flex flex-col">
                  <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold">Current Order ({cart.length} {cart.length === 1 ? 'item' : 'items'})</h2>
+                     <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold">{isReturnMode ? 'Process Return' : `Current Order (${cart.length})`}</h2>
+                         {canProcessReturn && (
+                            <button onClick={() => setIsReturnMode(!isReturnMode)} className={`px-3 py-1 text-sm font-semibold rounded-full ${isReturnMode ? 'bg-red-600 text-white' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                {isReturnMode ? 'Return Mode' : 'Sale Mode'}
+                            </button>
+                         )}
+                    </div>
                      <div className="mt-2 space-y-2">
                         <div>
-                            <label htmlFor="pos-customer" className="sr-only">Customer</label>
+                            <label htmlFor="pos-customer" className="sr-only">Customer (F2)</label>
                             <select 
-                                id="pos-customer" 
+                                id="pos-customer"
+                                ref={customerSelectRef}
                                 value={selectedCustomerId} 
                                 onChange={e => setSelectedCustomerId(e.target.value)}
                                 className="block w-full text-sm rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
@@ -236,12 +512,27 @@ const POSPage: React.FC = () => {
                         <p className="text-center text-slate-500 dark:text-slate-400 mt-8">Your cart is empty.</p>
                     ) : (
                         <ul className="space-y-3">
-                            {cart.map(item => (
-                                <li key={item.id} className="flex items-center space-x-3">
+                            {cart.map((item, index) => (
+                                <li key={item.id} className={`flex items-center space-x-3 p-1 rounded-md transition-colors ${selectedCartItemIndex === index ? 'bg-indigo-100 dark:bg-indigo-900/50' : ''}`}>
                                     <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-md object-cover flex-shrink-0"/>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-semibold text-sm truncate" title={item.name}>{item.name}</p>
-                                        <p className="text-xs text-slate-500">{item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                        {editingPriceFor === item.id ? (
+                                            <input
+                                                type="number"
+                                                value={item.price}
+                                                onChange={e => handlePriceUpdate(item.id, e.target.value)}
+                                                onBlur={() => setEditingPriceFor(null)}
+                                                onKeyDown={e => e.key === 'Enter' && setEditingPriceFor(null)}
+                                                autoFocus
+                                                className="w-20 text-xs bg-white dark:bg-slate-900 rounded-md border border-indigo-500"
+                                            />
+                                        ) : (
+                                            <p onClick={() => canChangePrice && setEditingPriceFor(item.id)} className={`text-xs ${item.originalPrice ? 'text-orange-500' : 'text-slate-500'} ${canChangePrice ? 'cursor-pointer' : ''}`}>
+                                                {item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                                {item.originalPrice && <span className="line-through ml-1">{item.originalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="flex-shrink-0">
                                         <div className={`flex items-center border rounded-md transition-colors ${cartErrors[item.id] ? 'border-red-500' : 'dark:border-slate-600'}`}>
@@ -252,7 +543,7 @@ const POSPage: React.FC = () => {
                                                 type="number"
                                                 value={item.quantity}
                                                 onChange={(e) => updateQuantity(item.id, parseInt(e.target.value, 10) || 0)}
-                                                className={`w-12 text-center bg-transparent focus:outline-none text-sm font-semibold ${cartErrors[item.id] ? 'text-red-500' : ''}`}
+                                                className={`w-12 text-center bg-transparent focus:outline-none text-sm font-semibold training-cart-item-quantity ${cartErrors[item.id] ? 'text-red-500' : ''}`}
                                                 aria-label="Item quantity"
                                             />
                                             <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-2 py-1 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-r-md" aria-label="Increase quantity">
@@ -275,28 +566,52 @@ const POSPage: React.FC = () => {
                         <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
                         <span className="font-medium">{subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                     </div>
+                     {canApplyDiscount && (
+                        <div className="flex justify-between text-sm">
+                           <button onClick={() => setIsDiscountModalOpen(true)} className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                               {discount ? 'Edit Discount' : 'Add Discount'}
+                           </button>
+                            {discount && <span className="font-medium text-red-500">(-{discountAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })})</span>}
+                        </div>
+                    )}
                     <div className="flex justify-between text-sm">
                         <span className="text-slate-600 dark:text-slate-400">Tax (8%)</span>
                         <span className="font-medium">{tax.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-xl">
+                    <div className={`flex justify-between font-bold text-xl ${isReturnMode ? 'text-red-500' : ''}`}>
                         <span>Total</span>
                         <span>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                     </div>
-                    <button onClick={() => setIsPaymentModalOpen(true)} className="w-full bg-green-500 text-white p-3 rounded-lg font-bold text-lg hover:bg-green-600 disabled:bg-green-300" disabled={cart.length === 0}>
-                        Charge
+                    <div className="grid grid-cols-2 gap-2">
+                        <button ref={holdButtonRef} onClick={handleHoldOrder} className="w-full bg-yellow-500 text-yellow-900 p-2 rounded-lg font-bold text-base hover:bg-yellow-600 disabled:bg-yellow-300" disabled={cart.length === 0}>
+                            Hold (F6)
+                        </button>
+                         <button ref={resumeButtonRef} onClick={() => setIsResumeModalOpen(true)} className="w-full bg-blue-500 text-white p-2 rounded-lg font-bold text-base hover:bg-blue-600">
+                            Resume (F7)
+                        </button>
+                    </div>
+                    <button ref={chargeButtonRef} onClick={() => setIsPaymentModalOpen(true)} className={`w-full p-3 rounded-lg font-bold text-lg text-white ${isReturnMode ? 'bg-red-500 hover:bg-red-600 disabled:bg-red-300' : 'bg-green-500 hover:bg-green-600 disabled:bg-green-300'}`} disabled={cart.length === 0}>
+                        {isReturnMode ? 'Process Return' : 'Charge (Enter)'}
                     </button>
                 </div>
             </div>
 
             {isPaymentModalOpen && (
-                <PaymentModal 
+                <SplitPaymentModal 
                     total={total}
                     onClose={() => setIsPaymentModalOpen(false)}
                     onConfirm={handleConfirmPayment}
-                    paymentMethods={paymentMethods}
                 />
             )}
+            {completedSale && (
+                <SaleReceipt sale={completedSale} onClose={handleCloseReceipt} />
+            )}
+            <ResumeOrderModal
+                isOpen={isResumeModalOpen}
+                onClose={() => setIsResumeModalOpen(false)}
+                heldOrders={heldOrders}
+                onResume={handleResumeOrder}
+            />
         </div>
     );
 };

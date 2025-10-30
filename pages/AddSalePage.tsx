@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { CartItem, Customer } from '../types';
@@ -32,6 +33,7 @@ const AddSalePage: React.FC = () => {
             customer: { id: customer.id, name: customer.name },
             items: cart,
             total,
+            payments: [{ methodId: 'pay_cash', amount: total }], // Default payment method for manual entry
             passportNumber,
             nationality
         });

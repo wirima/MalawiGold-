@@ -2,6 +2,10 @@ import React, { createContext, useState, useContext, useMemo } from 'react';
 import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod } from '../types';
 import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS } from '../data/mockData';
 
+interface AgeVerificationSettings {
+    minimumAge: number;
+}
+
 interface AuthContextType {
     currentUser: User | null;
     setCurrentUser: (user: User) => void;
@@ -72,7 +76,8 @@ interface AuthContextType {
     sales: Sale[];
     drafts: Draft[];
     quotations: Quotation[];
-    addSale: (saleData: Omit<Sale, 'id' | 'date'>) => void;
+    addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Sale;
+    voidSale: (saleId: string) => void;
     addDraft: (draftData: Omit<Draft, 'id' | 'date'>) => void;
     updateDraft: (updatedDraft: Draft) => void;
     deleteDraft: (draftId: string) => void;
@@ -95,6 +100,9 @@ interface AuthContextType {
     addPaymentMethod: (data: Omit<PaymentMethod, 'id'>) => void;
     updatePaymentMethod: (method: PaymentMethod) => void;
     deletePaymentMethod: (methodId: string) => void;
+    // Settings
+    ageVerificationSettings: AgeVerificationSettings;
+    updateAgeVerificationSettings: (age: number, restrictedIds: string[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -124,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
     const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(MOCK_EXPENSE_CATEGORIES);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(MOCK_PAYMENT_METHODS);
+    const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21 });
 
 
     const rolesMap = useMemo(() => new Map(roles.map(role => [role.id, role])), [roles]);
@@ -414,15 +423,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // #endregion
 
     // #region Sell Management
-    const addSale = (saleData: Omit<Sale, 'id' | 'date'>) => {
+    const addSale = (saleData: Omit<Sale, 'id' | 'date'>): Sale => {
         const newSale: Sale = {
-            id: `sale_${Date.now()}`,
+            id: `SALE${Date.now()}`,
             date: new Date().toISOString(),
             ...saleData,
         };
         setSales(prev => [newSale, ...prev]);
 
-        // Update product stock
+        // Update product stock based on sale status
         setProducts(prevProducts => {
             const productUpdates = new Map<string, number>();
             for (const item of saleData.items) {
@@ -431,8 +440,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             return prevProducts.map(product => {
                 if (productUpdates.has(product.id)) {
-                    const soldQty = productUpdates.get(product.id)!;
-                    return { ...product, stock: Math.max(0, product.stock - soldQty) };
+                    const transactionQty = productUpdates.get(product.id)!;
+                    let newStock = product.stock;
+                    if (saleData.status === 'return') {
+                        newStock += transactionQty; // Add stock back for returns
+                    } else { // 'completed'
+                        newStock -= transactionQty; // Deduct stock for sales
+                    }
+                    return { ...product, stock: Math.max(0, newStock) };
+                }
+                return product;
+            });
+        });
+        
+        return newSale;
+    };
+
+    const voidSale = (saleId: string) => {
+        const saleToVoid = sales.find(s => s.id === saleId);
+        if (!saleToVoid || saleToVoid.status === 'voided') return;
+
+        // Set sale status to voided
+        setSales(prev => prev.map(s => s.id === saleId ? { ...s, status: 'voided' } : s));
+
+        // Adjust stock based on original sale type
+        setProducts(prevProducts => {
+            const productUpdates = new Map<string, number>();
+            for (const item of saleToVoid.items) {
+                productUpdates.set(item.id, item.quantity);
+            }
+
+            return prevProducts.map(product => {
+                if (productUpdates.has(product.id)) {
+                    const transactionQty = productUpdates.get(product.id)!;
+                    let newStock = product.stock;
+
+                    // Reverse the original stock movement
+                    if (saleToVoid.status === 'return') {
+                        newStock -= transactionQty; // It was a return, so we deduct stock to void
+                    } else { // 'completed'
+                        newStock += transactionQty; // It was a sale, so we add stock back to void
+                    }
+                    return { ...product, stock: Math.max(0, newStock) };
                 }
                 return product;
             });
@@ -509,12 +558,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPaymentMethods(prev => prev.map(p => p.id === updatedMethod.id ? updatedMethod : p));
     };
     const deletePaymentMethod = (methodId: string) => {
-        if (sales.some(s => s.paymentMethodId === methodId)) {
+        if (sales.some(s => s.payments.some(p => p.methodId === methodId))) {
             throw new Error('Cannot delete payment method. It is in use by one or more sales records.');
         }
         setPaymentMethods(prev => prev.filter(p => p.id !== methodId));
     };
     // #endregion
+    
+    // #region Settings Management
+    const updateAgeVerificationSettings = (age: number, restrictedIds: string[]) => {
+        setAgeVerificationSettings({ minimumAge: age });
+        const restrictedIdSet = new Set(restrictedIds);
+        setProducts(prevProducts => prevProducts.map(p => ({
+            ...p,
+            isAgeRestricted: restrictedIdSet.has(p.id)
+        })));
+    };
+    // #endregion
+
 
     const value = {
         currentUser,
@@ -571,6 +632,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         drafts,
         quotations,
         addSale,
+        voidSale,
         addDraft,
         updateDraft,
         deleteDraft,
@@ -590,6 +652,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addPaymentMethod,
         updatePaymentMethod,
         deletePaymentMethod,
+        ageVerificationSettings,
+        updateAgeVerificationSettings,
     };
 
     return (

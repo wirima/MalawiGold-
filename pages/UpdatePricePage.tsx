@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Product } from '../types';
@@ -17,6 +14,12 @@ const UpdatePricePage: React.FC = () => {
 
     // State for pending price changes: Record<productId, newPrice>
     const [pendingChanges, setPendingChanges] = useState<Record<string, { costPrice?: number; price?: number }>>({});
+    
+    // State for percentage update
+    const [percentUpdate, setPercentUpdate] = useState('');
+    const [percentType, setPercentType] = useState<'increase' | 'decrease'>('increase');
+    const [priceFieldToUpdate, setPriceFieldToUpdate] = useState<'price' | 'costPrice'>('price');
+
 
     const canUpdatePrice = hasPermission('products:update_price');
     const hasUnsavedChanges = Object.keys(pendingChanges).length > 0;
@@ -87,6 +90,36 @@ const UpdatePricePage: React.FC = () => {
         downloadCSV('update_prices_template.csv', headers, data);
     };
 
+    const handleApplyPercentage = () => {
+        const percentage = parseFloat(percentUpdate);
+        if (isNaN(percentage) || percentage < 0) {
+            return;
+        }
+
+        const newChanges = { ...pendingChanges };
+
+        filteredProducts.forEach(product => {
+            const currentPrice = pendingChanges[product.id]?.[priceFieldToUpdate] ?? product[priceFieldToUpdate];
+            let newPrice;
+
+            if (percentType === 'increase') {
+                newPrice = currentPrice * (1 + percentage / 100);
+            } else { // decrease
+                newPrice = currentPrice * (1 - percentage / 100);
+            }
+            
+            // Round to 2 decimal places to avoid floating point issues
+            newPrice = Math.round(newPrice * 100) / 100;
+
+            newChanges[product.id] = {
+                ...newChanges[product.id],
+                [priceFieldToUpdate]: newPrice
+            };
+        });
+
+        setPendingChanges(newChanges);
+    };
+
     if (!canUpdatePrice) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center">
@@ -132,6 +165,54 @@ const UpdatePricePage: React.FC = () => {
                         <option value="all">All Brands</option>
                         {brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
                     </select>
+                </div>
+                 <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <h3 className="text-md font-semibold text-slate-800 dark:text-slate-200">Bulk Update by Percentage</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Apply a percentage change to all currently filtered products.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        <div>
+                            <label htmlFor="percentUpdate" className="block text-sm font-medium">Percentage (%)</label>
+                            <input
+                                type="number"
+                                id="percentUpdate"
+                                value={percentUpdate}
+                                onChange={e => setPercentUpdate(e.target.value)}
+                                placeholder="e.g., 10"
+                                className={`${inputClasses} mt-1`}
+                            />
+                        </div>
+                         <div>
+                            <label htmlFor="priceFieldToUpdate" className="block text-sm font-medium">Apply to</label>
+                            <select
+                                id="priceFieldToUpdate"
+                                value={priceFieldToUpdate}
+                                onChange={e => setPriceFieldToUpdate(e.target.value as any)}
+                                className={`${selectClasses} mt-1`}
+                            >
+                                <option value="price">Selling Price</option>
+                                <option value="costPrice">Cost Price</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="percentType" className="block text-sm font-medium">Action</label>
+                            <select
+                                id="percentType"
+                                value={percentType}
+                                onChange={e => setPercentType(e.target.value as any)}
+                                className={`${selectClasses} mt-1`}
+                            >
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                            </select>
+                        </div>
+                        <button
+                            onClick={handleApplyPercentage}
+                            disabled={!percentUpdate || parseFloat(percentUpdate) <= 0 || filteredProducts.length === 0}
+                            className="w-full px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Apply to Filtered ({filteredProducts.length})
+                        </button>
+                    </div>
                 </div>
                  <div className="mt-4 flex justify-end items-center gap-2">
                     <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">
