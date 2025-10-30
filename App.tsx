@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -62,6 +63,7 @@ import DeploymentPage from './pages/DeploymentPage';
 import PrintLabelsPage from './pages/PrintLabelsPage';
 import SaleReceiptPage from './pages/SaleReceiptPage';
 import AgeVerificationSettingsPage from './pages/AgeVerificationSettingsPage';
+import CustomerDemandReportPage from './pages/reports/CustomerDemandReportPage';
 
 const App: React.FC = () => {
   return (
@@ -146,6 +148,7 @@ const App: React.FC = () => {
                 <Route path="/reports/register" element={<RegisterReportPage />} />
                 <Route path="/reports/sales-rep" element={<SalesRepReportPage />} />
                 <Route path="/reports/activity-log" element={<ActivityLogPage />} />
+                <Route path="/reports/customer-demand" element={<CustomerDemandReportPage />} />
 
                 {/* User Management Routes */}
                 <Route path="/users" element={<UsersRolesPage />} />

@@ -1,5 +1,6 @@
 
 
+
 export interface Brand {
   id: string;
   name: string;
@@ -182,6 +183,14 @@ export interface Expense {
   description: string;
 }
 
+export interface CustomerRequest {
+  id: string;
+  text: string;
+  cashierId: string;
+  cashierName: string;
+  date: string;
+}
+
 export type Permission = 
   | 'dashboard:view'
   // Products
@@ -228,6 +237,7 @@ export type Permission =
   | 'expense:manage'
   // Reports
   | 'reports:view'
+  | 'reports:customer_demand'
   // Users
   | 'users:view'
   | 'users:manage'

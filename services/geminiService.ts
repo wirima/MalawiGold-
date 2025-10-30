@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Sale } from '../types';
+import { Sale, CustomerRequest } from '../types';
 import { MOCK_CATEGORIES } from '../data/mockData';
 
 export const getBusinessInsights = async (salesData: Sale[]): Promise<string> => {
@@ -94,4 +94,44 @@ export const getSalesAnalysisInsights = async (salesData: Sale[], dateRange: { s
     console.error("Error generating sales analysis with Gemini API:", error);
     throw new Error("Failed to generate sales analysis. Please check the API configuration.");
   }
+};
+
+export const getCustomerDemandAnalysis = async (requests: CustomerRequest[]): Promise<string> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const rawRequestsText = requests.map(r => `- "${r.text}" (logged by ${r.cashierName} on ${new Date(r.date).toLocaleDateString()})`).join('\n');
+
+    if (rawRequestsText.length === 0) {
+        return "There are no customer requests to analyze.";
+    }
+
+    const prompt = `
+        You are a senior purchasing analyst for a retail store. 
+        You have received the following raw log of items that customers asked for but were not available.
+
+        Customer Request Log:
+        ${rawRequestsText}
+
+        Based on this log, provide an intelligent analysis and actionable recommendations. Your report should include:
+        1.  **Top Requested Items:** Identify and consolidate recurring requests into a clear list of the most-demanded products (e.g., if you see "oat milk latte" and "oat milk", consolidate under "Oat Milk").
+        2.  **Emerging Trends:** Are there any keywords or themes that suggest a new market trend? (e.g., "gluten-free", "organic", "vegan options").
+        3.  **Actionable Stocking Recommendations:** Provide 3-5 concrete suggestions for new products the store should consider stocking, based directly on the customer feedback. Phrase these as direct advice to the store manager.
+
+        Format your response in clean, professional Markdown. Use headings, bold text, and lists to make the analysis easy to read and act upon.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error generating demand analysis with Gemini API:", error);
+        throw new Error("Failed to generate demand analysis. Please check the API configuration.");
+    }
 };

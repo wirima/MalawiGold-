@@ -1,10 +1,4 @@
-
-
-
-
-
-
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
@@ -16,6 +10,7 @@ export const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
     { id: 'pay_cash', name: 'Cash' },
     { id: 'pay_card', name: 'Card' },
     { id: 'pay_qr', name: 'QR Code' },
+    { id: 'pay_nfc', name: 'NFC / Tap to Pay' },
     { id: 'pay_airtel', name: 'Airtel Money' },
     { id: 'pay_changu', name: 'PayChangu' },
     { id: 'pay_tnm', name: 'TNM Mpamba' },
@@ -268,6 +263,12 @@ export const MOCK_QUOTATIONS: Quotation[] = [
     }
 ];
 
+export const MOCK_CUSTOMER_REQUESTS: CustomerRequest[] = [
+    { id: 'CR001', text: 'A customer asked for gluten-free muffins.', cashierId: 'USER003', cashierName: 'Casey Cashier', date: '2023-10-30T14:00:00Z' },
+    { id: 'CR002', text: 'Several people wanted oat milk for their lattes today.', cashierId: 'USER003', cashierName: 'Casey Cashier', date: '2023-10-30T14:00:00Z' },
+    { id: 'CR003', text: 'Someone was looking for cold brew coffee.', cashierId: 'USER004', cashierName: 'David Jones', date: '2023-10-29T18:00:00Z' },
+];
+
 export const MOCK_ROLES: Role[] = [
     {
         id: 'admin',
@@ -283,7 +284,7 @@ export const MOCK_ROLES: Role[] = [
             'stock_transfer:view', 'stock_transfer:manage',
             'stock_adjustment:view', 'stock_adjustment:manage',
             'expense:view', 'expense:manage',
-            'reports:view',
+            'reports:view', 'reports:customer_demand',
             'users:view', 'users:manage',
             'notifications:manage',
             'settings:view',
@@ -311,7 +312,7 @@ export const MOCK_ROLES: Role[] = [
             'pos:apply_discount', 'pos:change_price', 'pos:process_return', 'pos:void_sale',
             'shipping:view', 'shipping:manage',
             'stock_adjustment:view', 'stock_adjustment:manage',
-            'reports:view',
+            'reports:view', 'reports:customer_demand',
             'users:view',
             'settings:view',
             'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations'

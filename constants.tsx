@@ -27,7 +27,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'stock_transfer:view', 'stock_transfer:manage',
     'stock_adjustment:view', 'stock_adjustment:manage',
     'expense:view', 'expense:manage',
-    'reports:view',
+    'reports:view', 'reports:customer_demand',
     'users:view', 'users:manage',
     'notifications:manage',
     'settings:view',
@@ -158,6 +158,7 @@ export const NAV_ITEMS: NavItem[] = [
       { path: '/reports/register', label: 'Register Report' },
       { path: '/reports/sales-rep', label: 'Sales Representative Report' },
       { path: '/reports/activity-log', label: 'Activity Log' },
+      { path: '/reports/customer-demand', label: 'Customer Demand Report', permission: 'reports:customer_demand' },
     ]
   },
   { path: '/users', label: 'User Management', icon: <NavIcon>{ICONS.USERS}</NavIcon>, permission: 'users:view' },
