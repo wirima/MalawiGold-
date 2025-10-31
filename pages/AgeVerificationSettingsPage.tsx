@@ -3,11 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { Product } from '../types';
 
 const AgeVerificationSettingsPage: React.FC = () => {
-    const { products, ageVerificationSettings, updateAgeVerificationSettings, hasPermission } = useAuth();
+    const { products, categories, ageVerificationSettings, updateAgeVerificationSettings, hasPermission } = useAuth();
 
     const [localAge, setLocalAge] = useState(ageVerificationSettings.minimumAge);
     const [restrictedIds, setRestrictedIds] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
     const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
@@ -19,10 +20,11 @@ const AgeVerificationSettingsPage: React.FC = () => {
 
     const filteredProducts = useMemo(() => {
         return products.filter(p =>
-            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+            (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             p.sku.toLowerCase().includes(searchTerm.toLowerCase())) &&
+            (categoryFilter === 'all' || p.categoryId === categoryFilter)
         );
-    }, [products, searchTerm]);
+    }, [products, searchTerm, categoryFilter]);
 
     const handleToggleProduct = (productId: string) => {
         setRestrictedIds(prev => {
@@ -35,6 +37,23 @@ const AgeVerificationSettingsPage: React.FC = () => {
             return newSet;
         });
     };
+    
+    const handleSelectAllFiltered = () => {
+        setRestrictedIds(prev => {
+            const newSet = new Set(prev);
+            filteredProducts.forEach(p => newSet.add(p.id));
+            return newSet;
+        });
+    };
+
+    const handleDeselectAllFiltered = () => {
+        setRestrictedIds(prev => {
+            const newSet = new Set(prev);
+            filteredProducts.forEach(p => newSet.delete(p.id));
+            return newSet;
+        });
+    };
+
 
     const handleSave = () => {
         updateAgeVerificationSettings(localAge, Array.from(restrictedIds));
@@ -78,16 +97,37 @@ const AgeVerificationSettingsPage: React.FC = () => {
                 <div>
                     <h3 className="text-lg font-medium text-slate-900 dark:text-white">Restricted Products</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Select all products that should trigger an age check.</p>
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="mt-2 block w-full max-w-sm rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
-                    />
+                     <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                            type="text"
+                            placeholder="Search by name or SKU..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                        <select
+                            value={categoryFilter}
+                            onChange={e => setCategoryFilter(e.target.value)}
+                            className="block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option value="all">All Categories</option>
+                            {categories.map(category => (
+                                <option key={category.id} value={category.id}>{category.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                        <button onClick={handleSelectAllFiltered} className="px-3 py-1 text-sm rounded-md bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">
+                            Select All Filtered ({filteredProducts.length})
+                        </button>
+                         <button onClick={handleDeselectAllFiltered} className="px-3 py-1 text-sm rounded-md bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500">
+                            Deselect All Filtered
+                        </button>
+                    </div>
                      <div className="mt-4 border rounded-lg dark:border-slate-700 max-h-96 overflow-y-auto">
                         <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-700">
+                            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-700 z-10">
                                 <tr>
                                     <th className="px-6 py-3 text-left font-medium">Product</th>
                                     <th className="px-6 py-3 text-center font-medium">Requires Verification</th>

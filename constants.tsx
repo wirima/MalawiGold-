@@ -48,10 +48,10 @@ export interface NavItem {
     subItems?: Omit<NavItem, 'icon' | 'subItems'>[];
 }
 
-export const NAV_ITEMS: NavItem[] = [
-  { path: '/', label: 'Dashboard', icon: <NavIcon>{ICONS.DASHBOARD}</NavIcon>, permission: 'dashboard:view' },
+export const getNavItems = (t: (key: string) => string): NavItem[] => [
+  { path: '/', label: t('dashboard'), icon: <NavIcon>{ICONS.DASHBOARD}</NavIcon>, permission: 'dashboard:view' },
   { 
-    label: 'Contacts', 
+    label: t('contacts'),
     icon: <NavIcon>{ICONS.CONTACTS}</NavIcon>,
     permission: 'contacts:view',
     subItems: [
@@ -62,7 +62,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   { 
-    label: 'Products', 
+    label: t('products'),
     icon: <NavIcon>{ICONS.PRODUCTS}</NavIcon>, 
     permission: 'products:view',
     subItems: [
@@ -81,7 +81,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   { 
-    label: 'Purchases', 
+    label: t('purchases'),
     icon: <NavIcon>{ICONS.PURCHASES}</NavIcon>,
     permission: 'purchases:view',
     subItems: [
@@ -91,7 +91,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   { 
-    label: 'Sell', 
+    label: t('sell'),
     icon: <NavIcon>{ICONS.SELL}</NavIcon>,
     permission: 'sell:view',
     subItems: [
@@ -110,7 +110,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    label: 'Stock Transfers',
+    label: t('stockTransfers'),
     icon: <NavIcon>{ICONS.STOCK_TRANSFERS}</NavIcon>,
     permission: 'stock_transfer:view',
     subItems: [
@@ -119,7 +119,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    label: 'Stock Adjustments',
+    label: t('stockAdjustments'),
     icon: <NavIcon>{ICONS.STOCK_ADJUSTMENTS}</NavIcon>,
     permission: 'stock_adjustment:view',
     subItems: [
@@ -128,7 +128,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    label: 'Expenses',
+    label: t('expenses'),
     icon: <NavIcon>{ICONS.EXPENSES}</NavIcon>,
     permission: 'expense:view',
     subItems: [
@@ -138,7 +138,7 @@ export const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    label: 'Reports',
+    label: t('reports'),
     icon: <NavIcon>{ICONS.REPORTS}</NavIcon>,
     permission: 'reports:view',
     subItems: [
@@ -161,18 +161,18 @@ export const NAV_ITEMS: NavItem[] = [
       { path: '/reports/customer-demand', label: 'Customer Demand Report', permission: 'reports:customer_demand' },
     ]
   },
-  { path: '/users', label: 'User Management', icon: <NavIcon>{ICONS.USERS}</NavIcon>, permission: 'users:view' },
-  { path: '/notification-templates', label: 'Notification Templates', icon: <NavIcon>{ICONS.NOTIFICATIONS}</NavIcon>, permission: 'notifications:manage' },
+  { path: '/users', label: t('userManagement'), icon: <NavIcon>{ICONS.USERS}</NavIcon>, permission: 'users:view' },
+  { path: '/notification-templates', label: t('notificationTemplates'), icon: <NavIcon>{ICONS.NOTIFICATIONS}</NavIcon>, permission: 'notifications:manage' },
   { 
-    label: 'Settings', 
+    label: t('settings'),
     icon: <NavIcon>{ICONS.SETTINGS}</NavIcon>, 
     permission: 'settings:view',
     subItems: [
-        { path: '/settings', label: 'General Settings' },
-        { path: '/settings/locations', label: 'Business Locations', permission: 'settings:locations' },
-        { path: '/settings/payment-methods', label: 'Payment Methods', permission: 'settings:payment' },
-        { path: '/settings/age-verification', label: 'Age Verification', permission: 'settings:age_verification' },
-        { path: '/settings/deployment', label: 'Deployment', permission: 'settings:view' }
+        { path: '/settings', label: t('generalSettings') },
+        { path: '/settings/locations', label: t('businessLocations'), permission: 'settings:locations' },
+        { path: '/settings/payment-methods', label: t('paymentMethods'), permission: 'settings:payment' },
+        { path: '/settings/age-verification', label: t('ageVerification'), permission: 'settings:age_verification' },
+        { path: '/settings/deployment', label: t('deployment'), permission: 'settings:view' }
     ]
   }
 ];

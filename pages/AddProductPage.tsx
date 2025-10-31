@@ -28,7 +28,7 @@ const Tooltip: React.FC<{ text: string }> = ({ text }) => (
 
 
 const AddProductPage: React.FC = () => {
-    const { brands, categories, units, businessLocations, addProduct, hasPermission, addBrand } = useAuth();
+    const { products, brands, categories, units, businessLocations, addProduct, hasPermission, addBrand } = useAuth();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState<Omit<Product, 'id' | 'imageUrl' | 'brandId'>>({
@@ -47,6 +47,7 @@ const AddProductPage: React.FC = () => {
         description: '',
         taxAmount: 0,
         taxType: 'percentage',
+        isAgeRestricted: false,
     });
     
     const [brandName, setBrandName] = useState('');
@@ -74,7 +75,6 @@ const AddProductPage: React.FC = () => {
         const newErrors = { name: '', sku: '', costPrice: '', price: '', brand: '' };
         let isValid = true;
         if (!formData.name.trim()) { newErrors.name = 'Product name is required.'; isValid = false; }
-        if (!formData.sku.trim()) { newErrors.sku = 'SKU is required.'; isValid = false; }
         if (formData.costPrice <= 0) { newErrors.costPrice = 'Cost price must be a positive number.'; isValid = false; }
         if (formData.price <= 0) { newErrors.price = 'Selling price must be a positive number.'; isValid = false; }
         if (!brandName.trim()) { newErrors.brand = 'Brand is required.'; isValid = false; }
@@ -85,6 +85,17 @@ const AddProductPage: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
+            let finalSku = formData.sku.trim();
+            if (!finalSku) {
+                const numericSkus = products
+                    .map(p => parseInt(p.sku, 10))
+                    .filter(num => !isNaN(num));
+                
+                const maxSku = numericSkus.length > 0 ? Math.max(...numericSkus) : 0;
+                
+                finalSku = (maxSku < 100000 ? 100001 : maxSku + 1).toString();
+            }
+            
             // Find or create brand
             let brandId: string;
             const existingBrand = brands.find(b => b.name.toLowerCase() === brandName.trim().toLowerCase());
@@ -95,7 +106,7 @@ const AddProductPage: React.FC = () => {
                 brandId = newBrand.id;
             }
 
-            const productData = { ...formData, brandId };
+            const productData = { ...formData, sku: finalSku, brandId };
             addProduct(productData, imagePreview);
             navigate('/products');
         }
@@ -160,7 +171,7 @@ const AddProductPage: React.FC = () => {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="sku" className="block text-sm font-medium">SKU*<Tooltip text="Stock Keeping Unit. Must be unique for each product." /></label>
+                                <label htmlFor="sku" className="block text-sm font-medium">SKU<Tooltip text="Leave blank to auto-generate a unique numeric SKU." /></label>
                                 <input type="text" id="sku" name="sku" value={formData.sku} onChange={handleChange} className={`${baseInputClasses} ${errors.sku ? errorInputClasses : ''}`} />
                                 {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
                             </div>
@@ -233,6 +244,15 @@ const AddProductPage: React.FC = () => {
                             <div className="ml-3 text-sm">
                                 <label htmlFor="isNotForSale" className="font-medium text-gray-700 dark:text-gray-300">Not for selling</label>
                                 <p className="text-gray-500 dark:text-gray-400">If checked, product will not be displayed in POS screen.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start">
+                            <div className="flex items-center h-5">
+                                <input id="isAgeRestricted" name="isAgeRestricted" type="checkbox" checked={formData.isAgeRestricted} onChange={handleChange} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                            </div>
+                            <div className="ml-3 text-sm">
+                                <label htmlFor="isAgeRestricted" className="font-medium text-gray-700 dark:text-gray-300">Requires Age Verification</label>
+                                <p className="text-gray-500 dark:text-gray-400">If checked, this product will prompt for age verification at the POS.</p>
                             </div>
                         </div>
                     </div>

@@ -67,29 +67,24 @@ const SaleReceiptPage: React.FC = () => {
                     <p><span className="font-bold">Customer:</span> {sale.customer.name}</p>
                     <p><span className="font-bold">Sale ID:</span> {sale.id}</p>
                 </div>
-                <table className="w-full mt-4 text-xs">
-                    <thead>
-                        <tr className="border-b-2 border-dashed">
-                            <th className="text-left py-1">Item</th>
-                            <th className="text-center py-1">Qty</th>
-                            <th className="text-right py-1">Price</th>
-                            <th className="text-right py-1">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sale.items.map(item => (
-                             <tr key={item.id} className="border-b border-dashed">
-                                <td className="py-1">
-                                    {item.name}
-                                    {item.originalPrice && <span className="block text-slate-500">(Price overridden)</span>}
-                                </td>
-                                <td className="text-center py-1">{item.quantity}</td>
-                                <td className="text-right py-1">{item.price.toFixed(2)}</td>
-                                <td className="text-right py-1">{(item.price * item.quantity).toFixed(2)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                <div className="mt-4 border-t-2 border-b-2 border-dashed py-2 text-xs">
+                    {sale.items.map(item => (
+                        <div key={item.id} className="mb-2 last:mb-0">
+                            <div className="flex justify-between">
+                                <span className="font-bold flex-1 break-words pr-2">{item.name}</span>
+                                <span className="font-bold text-right">{(item.price * item.quantity).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500 dark:text-slate-400 pl-2">
+                                <span>{item.quantity} x {item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                {item.originalPrice && (
+                                    <span className="text-orange-500">
+                                        (Orig. {item.originalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })})
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
                 <div className="mt-4 text-xs">
                     <div className="flex justify-between">
                         <span>Subtotal:</span>

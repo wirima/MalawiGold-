@@ -1,7 +1,8 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Permission } from '../types';
+import { useTranslation } from '../src/i18n';
+import LanguageSwitcher from '../src/components/LanguageSwitcher';
 
 const Icon: React.FC<{ path: string }> = ({ path }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -9,7 +10,8 @@ const Icon: React.FC<{ path: string }> = ({ path }) => (
     </svg>
 );
 
-const SETTINGS_TABS: { id: string; label: string; icon: React.ReactNode; permission: Permission; content: React.ReactNode }[] = [
+const getSettingsTabs = (t: (key: string) => string) => [
+    { id: 'language', label: t('language'), icon: <Icon path="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10-5-10M6.088 21L11 11.007 15.912 21" />, permission: 'settings:view', content: <div>Language settings form...</div> },
     { id: 'tax', label: 'Tax Rates', icon: <Icon path="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" />, permission: 'settings:tax', content: <div>Tax settings form...</div> },
     { id: 'product', label: 'Product', icon: <Icon path="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />, permission: 'settings:product', content: <div>Product settings form...</div> },
     { id: 'contact', label: 'Contact', icon: <Icon path="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />, permission: 'settings:contact', content: <div>Contact settings form...</div> },
@@ -29,11 +31,14 @@ const SETTINGS_TABS: { id: string; label: string; icon: React.ReactNode; permiss
 
 const SettingsPage: React.FC = () => {
     const { hasPermission } = useAuth();
+    const { t } = useTranslation();
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
+    const settingsTabs = useMemo(() => getSettingsTabs(t), [t]);
+
     const visibleTabs = useMemo(() => {
-        return SETTINGS_TABS.filter(tab => hasPermission(tab.permission));
-    }, [hasPermission]);
+        return settingsTabs.filter(tab => hasPermission(tab.permission as Permission));
+    }, [hasPermission, settingsTabs]);
     
     useEffect(() => {
         if (!activeTabId && visibleTabs.length > 0) {
@@ -47,10 +52,42 @@ const SettingsPage: React.FC = () => {
 
     const activeTab = visibleTabs.find(tab => tab.id === activeTabId);
 
+    const renderContent = () => {
+        if (!activeTab) return null;
+        
+        if (activeTab.id === 'language') {
+            return (
+                <div className="space-y-4 max-w-sm">
+                    <div>
+                        <label htmlFor="language-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                           {t('selectLanguage')}
+                        </label>
+                        <div className="mt-1">
+                            <LanguageSwitcher />
+                        </div>
+                         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            {t('languageSettingsDescription')}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Placeholder for other settings
+        return (
+             <fieldset disabled className="space-y-6 opacity-60">
+                <div className="p-6 border dark:border-slate-700 rounded-lg">
+                    {activeTab.content}
+                    <p className="text-center text-sm text-slate-500 mt-8">These settings are disabled for this demo.</p>
+                </div>
+             </fieldset>
+        );
+    };
+
     return (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md flex flex-col md:flex-row min-h-[calc(100vh-8rem)]">
-            <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 p-4 md:p-6">
-                <h2 className="text-lg font-bold mb-4">Settings</h2>
+            <aside className="w-full md:w-64 border-b md:border-b-0 md:border-e border-slate-200 dark:border-slate-700 p-4 md:p-6">
+                <h2 className="text-lg font-bold mb-4">{t('settings')}</h2>
                 <nav className="flex flex-row md:flex-col gap-1">
                     {visibleTabs.map(tab => (
                         <button
@@ -73,40 +110,7 @@ const SettingsPage: React.FC = () => {
                      <div key={activeTab.id}>
                         <h1 className="text-2xl font-bold mb-1">{activeTab.label}</h1>
                         <p className="text-slate-500 dark:text-slate-400 mb-6">Manage {activeTab.label.toLowerCase()} for your application.</p>
-                         <fieldset disabled className="space-y-6 opacity-60">
-                            <div className="p-6 border dark:border-slate-700 rounded-lg">
-                                 {/* This is just one example, you would build out a unique form for each tab */}
-                                 {activeTab.id === 'pos' && (
-                                     <>
-                                        <h3 className="font-bold text-lg mb-4">Payment Methods</h3>
-                                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md">
-                                            <label htmlFor="cash_enabled" className="font-medium">Cash</label>
-                                            <input type="checkbox" id="cash_enabled" defaultChecked className="h-4 w-4 rounded" />
-                                        </div>
-                                         <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md mt-2">
-                                            <label htmlFor="card_enabled" className="font-medium">Card</label>
-                                            <input type="checkbox" id="card_enabled" defaultChecked className="h-4 w-4 rounded" />
-                                        </div>
-                                     </>
-                                 )}
-                                  {activeTab.id === 'prefixes' && (
-                                     <>
-                                        <h3 className="font-bold text-lg mb-4">Record Numbering</h3>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label htmlFor="sale_prefix">Sale Prefix</label>
-                                                <input type="text" id="sale_prefix" defaultValue="SALE-" className="mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent"/>
-                                            </div>
-                                             <div>
-                                                <label htmlFor="purchase_prefix">Purchase Prefix</label>
-                                                <input type="text" id="purchase_prefix" defaultValue="PO-" className="mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent"/>
-                                            </div>
-                                        </div>
-                                     </>
-                                 )}
-                                 <p className="text-center text-sm text-slate-500 mt-8">These settings are disabled for this demo.</p>
-                            </div>
-                         </fieldset>
+                        {renderContent()}
                      </div>
                 ) : (
                     <div className="text-center py-20">
