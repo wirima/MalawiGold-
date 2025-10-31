@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Product, BarcodeType, Brand } from '../types';
 
@@ -30,8 +31,9 @@ const Tooltip: React.FC<{ text: string }> = ({ text }) => (
 const AddProductPage: React.FC = () => {
     const { products, brands, categories, units, businessLocations, addProduct, hasPermission, addBrand } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
-    const [formData, setFormData] = useState<Omit<Product, 'id' | 'imageUrl' | 'brandId'>>({
+    const getInitialFormData = useCallback(() => ({
         name: '',
         sku: '',
         categoryId: categories[0]?.id || '',
@@ -48,14 +50,51 @@ const AddProductPage: React.FC = () => {
         taxAmount: 0,
         taxType: 'percentage',
         isAgeRestricted: false,
-    });
-    
+    }), [categories, units, businessLocations]);
+
+    const [formData, setFormData] = useState<Omit<Product, 'id' | 'imageUrl' | 'brandId'>>(getInitialFormData());
     const [brandName, setBrandName] = useState('');
     const [brandSuggestions, setBrandSuggestions] = useState<Brand[]>([]);
     const [showBrandSuggestions, setShowBrandSuggestions] = useState(false);
-
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [errors, setErrors] = useState({ name: '', sku: '', costPrice: '', price: '', brand: '' });
+    
+    const resetForm = useCallback(() => {
+        setFormData(getInitialFormData());
+        setBrandName('');
+        setImagePreview(null);
+        setErrors({ name: '', sku: '', costPrice: '', price: '', brand: '' });
+    }, [getInitialFormData]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const duplicateId = params.get('duplicate_from');
+    
+        if (duplicateId) {
+            const productToDuplicate = products.find(p => p.id === duplicateId);
+            if (productToDuplicate) {
+                // Destructure to remove fields we don't want to copy directly
+                const { id, imageUrl, brandId, sku, name, ...rest } = productToDuplicate;
+                
+                setFormData({
+                    ...rest,
+                    name: `Copy of ${name}`,
+                    sku: '', // Clear SKU for auto-generation or manual input
+                });
+    
+                const brand = brands.find(b => b.id === brandId);
+                if (brand) {
+                    setBrandName(brand.name);
+                }
+                // We don't copy the image by default
+                setImagePreview(null);
+            }
+             // Clean the URL so a refresh doesn't trigger duplication again
+            navigate('/products/add', { replace: true });
+        }
+    }, [location.search, products, brands, navigate]);
+
 
     if (!hasPermission('products:add')) {
         return (
@@ -108,7 +147,7 @@ const AddProductPage: React.FC = () => {
 
             const productData = { ...formData, sku: finalSku, brandId };
             addProduct(productData, imagePreview);
-            navigate('/products');
+            setIsSuccessModalOpen(true);
         }
     };
 
@@ -154,6 +193,7 @@ const AddProductPage: React.FC = () => {
 
 
     return (
+        <>
         <form onSubmit={handleSubmit} noValidate>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
                 <div className="p-6 border-b dark:border-slate-700">
@@ -345,6 +385,39 @@ const AddProductPage: React.FC = () => {
                 </div>
             </div>
         </form>
+        {isSuccessModalOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md">
+                    <div className="p-6 text-center">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50">
+                             <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Product Added Successfully!</h3>
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">What would you like to do next?</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsSuccessModalOpen(false);
+                                resetForm();
+                            }}
+                            className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600"
+                        >
+                            Add Another Product
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/products')}
+                            className="w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 font-medium text-white hover:bg-indigo-700"
+                        >
+                            View All Products
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 };
 

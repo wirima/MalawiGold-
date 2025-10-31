@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -280,6 +278,10 @@ const ProductsPage: React.FC = () => {
         return { text: 'In Stock', count: product.stock, className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' };
     };
 
+    const productGoal = 500;
+    const productCount = products.length;
+    const progressPercentage = Math.min((productCount / productGoal) * 100, 100);
+
     return (
         <>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
@@ -348,6 +350,15 @@ const ProductsPage: React.FC = () => {
                             Clear Filters
                         </button>
                     </div>
+                    <div className="mt-6">
+                        <div className="flex justify-between items-center mb-1">
+                            <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300">Product Count</h3>
+                            <span className="text-sm font-semibold">{productCount} / {productGoal}</span>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                        </div>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
@@ -397,7 +408,7 @@ const ProductsPage: React.FC = () => {
                                             <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">({stockStatus.count})</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 whitespace-nowrap space-x-4">
                                         <button 
                                             onClick={() => handleEditProduct(product)}
                                             disabled={!canManageProducts}
@@ -405,6 +416,14 @@ const ProductsPage: React.FC = () => {
                                         >
                                             Edit
                                         </button>
+                                        <Link
+                                            to={`/products/add?duplicate_from=${product.id}`}
+                                            className={`font-medium text-blue-600 dark:text-blue-500 hover:underline ${!canAddProducts ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                                            aria-disabled={!canAddProducts}
+                                            title={!canAddProducts ? "You don't have permission to add products" : "Duplicate this product"}
+                                        >
+                                            Duplicate
+                                        </Link>
                                     </td>
                                 </tr>
                             )}) : (
