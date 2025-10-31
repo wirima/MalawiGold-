@@ -38,14 +38,21 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
     };
 
     const handlePaymentMethodClick = (methodId: string) => {
-        const amount = parseFloat(currentAmount) || Math.max(0, remaining);
-        if (amount > 0) {
-            if (methodId === 'pay_nfc') {
-                setNfcAmount(amount);
-                setIsNfcModalOpen(true);
-            } else {
-                addPayment(methodId, amount);
-            }
+        let amount = parseFloat(currentAmount) || Math.max(0, remaining);
+        if (amount <= 0.005) return; // use tolerance
+
+        // Cap payment amount to remaining balance for non-cash methods
+        if (methodId !== 'pay_cash' && amount > remaining) {
+            amount = remaining;
+        }
+
+        if (amount <= 0.005) return; // check again after capping
+
+        if (methodId === 'pay_nfc') {
+            setNfcAmount(amount);
+            setIsNfcModalOpen(true);
+        } else {
+            addPayment(methodId, amount);
         }
     };
     
@@ -59,8 +66,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
     };
 
     const paymentMethodsMap = useMemo(() => new Map(paymentMethods.map(p => [p.id, p.name])), [paymentMethods]);
-    const cashMethodId = paymentMethods.find(p => p.name.toLowerCase() === 'cash')?.id;
-    const changeDue = cashMethodId && totalPaid > total ? totalPaid - total : 0;
+    const changeDue = totalPaid - total;
     const isFullyPaid = remaining <= 0.005; // Use a small tolerance for floating point math
     
     // Keyboard shortcuts for payment modal
@@ -83,18 +89,17 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                 const nfcMethod = paymentMethods.find(p => p.id === 'pay_nfc');
 
                 if (e.key.toLowerCase() === 'c' && cashMethod) addPayment(cashMethod.id, amount);
-                if (e.key.toLowerCase() === 'r' && cardMethod) addPayment(cardMethod.id, amount);
-                if (e.key.toLowerCase() === 'q' && qrMethod) addPayment(qrMethod.id, amount);
+                if (e.key.toLowerCase() === 'r' && cardMethod) handlePaymentMethodClick('pay_card');
+                if (e.key.toLowerCase() === 'q' && qrMethod) handlePaymentMethodClick('pay_qr');
                 if (e.key.toLowerCase() === 't' && nfcMethod) {
-                    setNfcAmount(amount);
-                    setIsNfcModalOpen(true);
+                    handlePaymentMethodClick('pay_nfc');
                 }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isFullyPaid, onConfirm, payments, currentAmount, remaining, paymentMethods, addPayment]);
+    }, [isFullyPaid, onConfirm, payments, currentAmount, remaining, paymentMethods, addPayment, handlePaymentMethodClick]);
 
     return (
         <>
@@ -137,7 +142,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                                     )}
                                 </div>
                             </div>
-                            {changeDue > 0 && (
+                            {changeDue > 0.005 && (
                                 <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-lg text-center">
                                     <p className="text-sm text-blue-800 dark:text-blue-300">Change Due</p>
                                     <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{changeDue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>

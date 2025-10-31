@@ -92,11 +92,23 @@ const SalesAnalysisReportPage: React.FC = () => {
                     categoryPerformance[productDetails.categoryId].revenue += item.quantity * item.price;
                 }
             });
+            
+            let saleRevenueAllocated = 0;
+            const saleTotalRevenue = sale.total;
 
-            if (!paymentMethodPerformance[sale.paymentMethodId]) {
-                paymentMethodPerformance[sale.paymentMethodId] = { revenue: 0 };
-            }
-            paymentMethodPerformance[sale.paymentMethodId].revenue += sale.total;
+            sale.payments.forEach(payment => {
+                if (!paymentMethodPerformance[payment.methodId]) {
+                    paymentMethodPerformance[payment.methodId] = { revenue: 0 };
+                }
+
+                const remainingRevenueToAllocate = saleTotalRevenue - saleRevenueAllocated;
+                const revenueForThisPayment = Math.min(payment.amount, remainingRevenueToAllocate);
+                
+                if (revenueForThisPayment > 0) {
+                    paymentMethodPerformance[payment.methodId].revenue += revenueForThisPayment;
+                    saleRevenueAllocated += revenueForThisPayment;
+                }
+            });
         });
 
         const topProducts = Object.entries(productPerformance).map(([id, data]) => ({

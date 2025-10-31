@@ -292,16 +292,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setStockTransfers(prev => [newTransfer, ...prev]);
 
-        // Deduct stock for transferred items
+        // Process stock updates for the transfer
         setProducts(prevProducts => {
-            const updates = new Map(transferData.items.map(item => [item.id, item.quantity]));
-            return prevProducts.map(p => {
-                if (updates.has(p.id)) {
-                    const newStock = p.stock - updates.get(p.id)!;
-                    return { ...p, stock: Math.max(0, newStock) };
+            const newProducts = [...prevProducts];
+
+            for (const item of transferData.items) {
+                // Find and decrease stock at source location
+                const sourceProductIndex = newProducts.findIndex(p =>
+                    p.sku === item.sku && p.businessLocationId === transferData.fromLocationId
+                );
+                
+                if (sourceProductIndex > -1) {
+                    const currentStock = newProducts[sourceProductIndex].stock;
+                    newProducts[sourceProductIndex] = {
+                        ...newProducts[sourceProductIndex],
+                        stock: Math.max(0, currentStock - item.quantity),
+                    };
                 }
-                return p;
-            });
+
+                // Find and increase stock at destination location
+                const destProductIndex = newProducts.findIndex(p =>
+                    p.sku === item.sku && p.businessLocationId === transferData.toLocationId
+                );
+                if (destProductIndex > -1) {
+                    const currentStock = newProducts[destProductIndex].stock;
+                    newProducts[destProductIndex] = {
+                        ...newProducts[destProductIndex],
+                        stock: currentStock + item.quantity,
+                    };
+                } else {
+                    // if product does not exist in destination location, create it
+                    const productInfo = products.find(p => p.sku === item.sku); // get generic info from any instance of the product
+                    if (productInfo) {
+                        const newProductAtDest: Product = {
+                            ...productInfo,
+                            id: `prod_${Date.now()}_${item.sku}`, // new unique ID
+                            businessLocationId: transferData.toLocationId,
+                            stock: item.quantity,
+                        };
+                        newProducts.push(newProductAtDest);
+                    }
+                }
+            }
+            return newProducts;
         });
     };
     // #endregion
