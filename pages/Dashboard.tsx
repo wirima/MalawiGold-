@@ -54,9 +54,9 @@ const Dashboard: React.FC = () => {
                     </button>
                     {error && <p className="text-red-500 mt-4">{error}</p>}
                     {insights && (
-                        <div className="mt-6 prose prose-slate dark:prose-invert max-w-none">
-                           <pre className="whitespace-pre-wrap bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg font-sans text-sm">{insights}</pre>
-                        </div>
+                        <div className="mt-6 prose prose-slate dark:prose-invert max-w-none bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg"
+                             dangerouslySetInnerHTML={{ __html: insights }}
+                        />
                     )}
                 </div>
 
