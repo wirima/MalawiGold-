@@ -15,11 +15,12 @@ interface Item {
 // Modal Component
 const FeatureFormModal: React.FC<{
     item: Item | null;
+    items: Item[];
     fields: FormField[];
     onClose: () => void;
     onSave: (data: any) => void;
     itemDisplayName: string;
-}> = ({ item, fields, onClose, onSave, itemDisplayName }) => {
+}> = ({ item, items, fields, onClose, onSave, itemDisplayName }) => {
     const isEditing = !!item;
     const initialFormState = fields.reduce((acc, field) => {
         acc[field.name] = item?.[field.name] ?? (field.type === 'number' ? 0 : '');
@@ -38,6 +39,17 @@ const FeatureFormModal: React.FC<{
                 isValid = false;
             }
         });
+
+        // Add uniqueness check for the 'name' field, if it exists and there isn't already a "required" error
+        const nameField = fields.find(f => f.name === 'name');
+        if (nameField && formData.name && !newErrors.name) {
+            const trimmedName = String(formData.name).trim().toLowerCase();
+            if (items.some(i => String(i.name).trim().toLowerCase() === trimmedName && i.id !== item?.id)) {
+                newErrors.name = `A ${itemDisplayName} with this name already exists.`;
+                isValid = false;
+            }
+        }
+        
         setErrors(newErrors);
         return isValid;
     };
@@ -185,6 +197,7 @@ const ProductFeatureManagementPage: React.FC<ProductFeatureManagementPageProps> 
             {isModalOpen && (
                 <FeatureFormModal
                     item={editingItem}
+                    items={items}
                     fields={formFields}
                     onClose={handleCloseModal}
                     onSave={handleSave}

@@ -114,6 +114,13 @@ const AddProductPage: React.FC = () => {
         const newErrors = { name: '', sku: '', costPrice: '', price: '', brand: '' };
         let isValid = true;
         if (!formData.name.trim()) { newErrors.name = 'Product name is required.'; isValid = false; }
+        
+        const trimmedSku = formData.sku.trim();
+        if (trimmedSku && products.some(p => p.sku.toLowerCase() === trimmedSku.toLowerCase())) {
+            newErrors.sku = 'This SKU already exists. Leave blank to auto-generate.';
+            isValid = false;
+        }
+
         if (formData.costPrice <= 0) { newErrors.costPrice = 'Cost price must be a positive number.'; isValid = false; }
         if (formData.price <= 0) { newErrors.price = 'Selling price must be a positive number.'; isValid = false; }
         if (!brandName.trim()) { newErrors.brand = 'Brand is required.'; isValid = false; }
@@ -390,7 +397,7 @@ const AddProductPage: React.FC = () => {
                 <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md">
                     <div className="p-6 text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50">
-                             <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                             <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
                         <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Product Added Successfully!</h3>
                         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">What would you like to do next?</p>

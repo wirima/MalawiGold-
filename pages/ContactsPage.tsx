@@ -13,10 +13,11 @@ const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-5
 const CustomerFormModal: React.FC<{
     customer: Customer | null;
     customers: Customer[];
+    suppliers: Supplier[];
     customerGroups: CustomerGroup[];
     onClose: () => void;
     onSave: (customerData: Customer | Omit<Customer, 'id'>) => void;
-}> = ({ customer, customers, customerGroups, onClose, onSave }) => {
+}> = ({ customer, customers, suppliers, customerGroups, onClose, onSave }) => {
     const isEditing = !!customer;
     const [formData, setFormData] = useState({
         name: '',
@@ -52,24 +53,28 @@ const CustomerFormModal: React.FC<{
     const validate = () => {
         const newErrors = { name: '', email: '', phone: '' };
         let isValid = true;
-        if (!formData.name.trim()) {
+        const trimmedName = formData.name.trim();
+        const trimmedEmail = formData.email.trim().toLowerCase();
+        const trimmedPhone = formData.phone.trim();
+
+        if (!trimmedName) {
             newErrors.name = 'Customer name is required.';
             isValid = false;
-        } else if (customers.some(c => c.name.toLowerCase() === formData.name.trim().toLowerCase() && c.id !== customer?.id)) {
-            newErrors.name = 'A customer with this name already exists.';
+        } else if (customers.some(c => c.name.toLowerCase() === trimmedName.toLowerCase() && c.id !== customer?.id) || suppliers.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
+            newErrors.name = 'A contact with this name already exists.';
             isValid = false;
         }
 
-        if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+        if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
             newErrors.email = 'Please enter a valid email address.';
             isValid = false;
-        } else if (formData.email.trim() && customers.some(c => c.email.toLowerCase() === formData.email.trim().toLowerCase() && c.id !== customer?.id)) {
-            newErrors.email = 'This email is already in use by another customer.';
+        } else if (trimmedEmail && (customers.some(c => c.email.toLowerCase() === trimmedEmail && c.id !== customer?.id) || suppliers.some(s => s.email.toLowerCase() === trimmedEmail))) {
+            newErrors.email = 'This email is already in use by another contact.';
             isValid = false;
         }
 
-        if (formData.phone.trim() && customers.some(c => c.phone === formData.phone.trim() && c.id !== customer?.id)) {
-            newErrors.phone = 'This phone number is already in use by another customer.';
+        if (trimmedPhone && (customers.some(c => c.phone === trimmedPhone && c.id !== customer?.id) || suppliers.some(s => s.phone === trimmedPhone))) {
+            newErrors.phone = 'This phone number is already in use by another contact.';
             isValid = false;
         }
 
@@ -136,9 +141,10 @@ const CustomerFormModal: React.FC<{
 const SupplierFormModal: React.FC<{
     supplier: Supplier | null;
     suppliers: Supplier[];
+    customers: Customer[];
     onClose: () => void;
     onSave: (supplierData: Supplier | Omit<Supplier, 'id'>) => void;
-}> = ({ supplier, suppliers, onClose, onSave }) => {
+}> = ({ supplier, suppliers, customers, onClose, onSave }) => {
     const isEditing = !!supplier;
     const [formData, setFormData] = useState({
         name: '',
@@ -175,24 +181,28 @@ const SupplierFormModal: React.FC<{
     const validate = () => {
         const newErrors = { name: '', email: '', phone: '' };
         let isValid = true;
-        if (!formData.name.trim()) {
+        const trimmedName = formData.name.trim();
+        const trimmedEmail = formData.email.trim().toLowerCase();
+        const trimmedPhone = formData.phone.trim();
+
+        if (!trimmedName) {
             newErrors.name = 'Contact name is required.';
             isValid = false;
-        } else if (suppliers.some(s => s.name.toLowerCase() === formData.name.trim().toLowerCase() && s.id !== supplier?.id)) {
-            newErrors.name = 'A supplier with this name already exists.';
+        } else if (suppliers.some(s => s.name.toLowerCase() === trimmedName.toLowerCase() && s.id !== supplier?.id) || customers.some(c => c.name.toLowerCase() === trimmedName.toLowerCase())) {
+            newErrors.name = 'A contact with this name already exists.';
             isValid = false;
         }
 
-        if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+        if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
             newErrors.email = 'Please enter a valid email address.';
             isValid = false;
-        } else if (formData.email.trim() && suppliers.some(s => s.email.toLowerCase() === formData.email.trim().toLowerCase() && s.id !== supplier?.id)) {
-            newErrors.email = 'This email is already in use by another supplier.';
+        } else if (trimmedEmail && (suppliers.some(s => s.email.toLowerCase() === trimmedEmail && s.id !== supplier?.id) || customers.some(c => c.email.toLowerCase() === trimmedEmail))) {
+            newErrors.email = 'This email is already in use by another contact.';
             isValid = false;
         }
         
-        if (formData.phone.trim() && suppliers.some(s => s.phone === formData.phone.trim() && s.id !== supplier?.id)) {
-            newErrors.phone = 'This phone number is already in use by another supplier.';
+        if (trimmedPhone && (suppliers.some(s => s.phone === trimmedPhone && s.id !== supplier?.id) || customers.some(c => c.phone === trimmedPhone))) {
+            newErrors.phone = 'This phone number is already in use by another contact.';
             isValid = false;
         }
         setErrors(newErrors);
@@ -572,8 +582,8 @@ const ContactsPage: React.FC = () => {
                 {activeTabData?.content}
             </div>
             
-            {modal === 'customer' && <CustomerFormModal customer={editingCustomer} customers={customers} customerGroups={customerGroups} onClose={handleCloseModal} onSave={handleSaveCustomer} />}
-            {modal === 'supplier' && <SupplierFormModal supplier={editingSupplier} suppliers={suppliers} onClose={handleCloseModal} onSave={handleSaveSupplier} />}
+            {modal === 'customer' && <CustomerFormModal customer={editingCustomer} customers={customers} suppliers={suppliers} customerGroups={customerGroups} onClose={handleCloseModal} onSave={handleSaveCustomer} />}
+            {modal === 'supplier' && <SupplierFormModal supplier={editingSupplier} suppliers={suppliers} customers={customers} onClose={handleCloseModal} onSave={handleSaveSupplier} />}
             {modal === 'group' && <CustomerGroupFormModal group={editingGroup} onClose={handleCloseModal} onSave={handleSaveGroup} />}
             {confirmationState && <ConfirmationModal 
                 isOpen={confirmationState.isOpen}

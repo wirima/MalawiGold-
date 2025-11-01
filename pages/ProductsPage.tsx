@@ -20,13 +20,14 @@ const Tooltip: React.FC<{ text: string }> = ({ text }) => (
 
 const ProductFormModal: React.FC<{
     product: Product | null;
+    products: Product[];
     brands: Brand[];
     categories: Category[];
     units: Unit[];
     businessLocations: BusinessLocation[];
     onClose: () => void;
     onSave: (productData: Product) => void;
-}> = ({ product, brands, categories, units, businessLocations, onClose, onSave }) => {
+}> = ({ product, products, brands, categories, units, businessLocations, onClose, onSave }) => {
     const [formData, setFormData] = useState({
         name: product?.name || '',
         sku: product?.sku || '',
@@ -71,10 +72,16 @@ const ProductFormModal: React.FC<{
             newErrors.name = 'Product name is required.';
             isValid = false;
         }
-        if (!formData.sku.trim()) {
+        
+        const trimmedSku = formData.sku.trim();
+        if (!trimmedSku) {
             newErrors.sku = 'SKU is required.';
             isValid = false;
+        } else if (products.some(p => p.sku.toLowerCase() === trimmedSku.toLowerCase() && p.id !== product?.id)) {
+            newErrors.sku = 'This SKU is already in use by another product.';
+            isValid = false;
         }
+
         if (formData.costPrice <= 0) {
             newErrors.costPrice = 'Cost price must be a positive number.';
             isValid = false;
@@ -480,6 +487,7 @@ const ProductsPage: React.FC = () => {
             {isModalOpen && (
                 <ProductFormModal 
                     product={editingProduct}
+                    products={products}
                     brands={brands}
                     categories={categories}
                     units={units}

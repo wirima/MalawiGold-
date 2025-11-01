@@ -5,14 +5,87 @@ import { ALL_PERMISSIONS } from '../constants';
 
 type Tab = 'users' | 'roles';
 
+// Helper component for displaying a group of permissions
+const PermissionGroup: React.FC<{
+    groupName: string;
+    groupPermissions: Permission[];
+    selectedPermissions: Permission[];
+    onGroupChange: (groupPermissions: Permission[], checked: boolean) => void;
+    onPermissionChange: (permission: Permission, checked: boolean) => void;
+}> = ({ groupName, groupPermissions, selectedPermissions, onGroupChange, onPermissionChange }) => {
+    const checkboxRef = React.useRef<HTMLInputElement>(null);
+
+    const areAllSelected = useMemo(() => groupPermissions.every(p => selectedPermissions.includes(p)), [groupPermissions, selectedPermissions]);
+    const someSelected = useMemo(() => groupPermissions.some(p => selectedPermissions.includes(p)), [groupPermissions, selectedPermissions]);
+
+    useEffect(() => {
+        if (checkboxRef.current) {
+            checkboxRef.current.indeterminate = someSelected && !areAllSelected;
+        }
+    }, [someSelected, areAllSelected]);
+
+    return (
+        <div className="border dark:border-slate-700 rounded-lg">
+            <div className="p-3 bg-slate-50 dark:bg-slate-700/50 border-b dark:border-slate-700 rounded-t-lg">
+                <div className="relative flex items-start">
+                    <div className="flex items-center h-5">
+                        <input
+                            id={`group-${groupName}`}
+                            type="checkbox"
+                            ref={checkboxRef}
+                            checked={areAllSelected}
+                            onChange={e => onGroupChange(groupPermissions, e.target.checked)}
+                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-300 dark:border-slate-600 rounded"
+                        />
+                    </div>
+                    <div className="ml-3 text-sm">
+                        <label htmlFor={`group-${groupName}`} className="font-bold text-slate-800 dark:text-slate-200 capitalize">{groupName.replace(/_/g, ' ')}</label>
+                    </div>
+                </div>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {groupPermissions.map(permission => (
+                    <div key={permission} className="relative flex items-start">
+                        <div className="flex items-center h-5">
+                            <input
+                                id={`permission-${permission}`}
+                                type="checkbox"
+                                checked={selectedPermissions.includes(permission)}
+                                onChange={e => onPermissionChange(permission, e.target.checked)}
+                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-300 dark:border-slate-600 rounded"
+                            />
+                        </div>
+                        <div className="ml-3 text-sm">
+                            <label htmlFor={`permission-${permission}`} className="font-medium text-slate-700 dark:text-slate-300 capitalize">{permission.split(':')[1].replace(/_/g, ' ')}</label>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
 // Modal component for adding/editing roles
 const RoleModal: React.FC<{
     role: Partial<Role>;
+    roles: Role[];
     onClose: () => void;
     onSave: (role: Partial<Role>) => void;
-}> = ({ role: initialRole, onClose, onSave }) => {
+}> = ({ role: initialRole, roles, onClose, onSave }) => {
     const [role, setRole] = useState(initialRole);
     const [errors, setErrors] = useState({ name: '' });
+
+    const groupedPermissions = useMemo(() => {
+        return ALL_PERMISSIONS.reduce((acc, permission) => {
+            const [groupName] = permission.split(':');
+            if (!acc[groupName]) {
+                acc[groupName] = [];
+            }
+            acc[groupName].push(permission);
+            return acc;
+        }, {} as Record<string, Permission[]>);
+    }, []);
 
     const handlePermissionChange = (permission: Permission, checked: boolean) => {
         setRole(prev => {
@@ -26,12 +99,30 @@ const RoleModal: React.FC<{
             return { ...prev, permissions: Array.from(permissions) };
         });
     };
+
+    const handleGroupPermissionChange = (groupPermissions: Permission[], checked: boolean) => {
+        setRole(prev => {
+            if (!prev) return prev;
+            const permissions = new Set(prev.permissions || []);
+            if (checked) {
+                groupPermissions.forEach(p => permissions.add(p));
+            } else {
+                groupPermissions.forEach(p => permissions.delete(p));
+            }
+            return { ...prev, permissions: Array.from(permissions) };
+        });
+    };
     
     const validate = () => {
         const newErrors = { name: '' };
         let isValid = true;
-        if (!role || !role.name || !role.name.trim()) {
+        const trimmedName = role?.name?.trim();
+
+        if (!role || !trimmedName) {
             newErrors.name = 'Role name is required.';
+            isValid = false;
+        } else if (roles.some(r => r.name.toLowerCase() === trimmedName.toLowerCase() && r.id !== role?.id)) {
+            newErrors.name = 'A role with this name already exists.';
             isValid = false;
         }
         setErrors(newErrors);
@@ -51,7 +142,7 @@ const RoleModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} noValidate className="flex flex-col h-full">
                     <div className="p-6 border-b dark:border-slate-700">
                         <h2 className="text-xl font-bold">{role.id ? 'Edit Role' : 'Add New Role'}</h2>
@@ -82,23 +173,16 @@ const RoleModal: React.FC<{
                         </div>
                         <div>
                             <h3 className="text-md font-medium text-slate-900 dark:text-white">Permissions</h3>
-                            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {ALL_PERMISSIONS.map(permission => (
-                                    <div key={permission} className="relative flex items-start">
-                                        <div className="flex items-center h-5">
-                                            <input
-                                                id={`permission-${permission}`}
-                                                name="permissions"
-                                                type="checkbox"
-                                                checked={(role.permissions || []).includes(permission)}
-                                                onChange={e => handlePermissionChange(permission, e.target.checked)}
-                                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-300 dark:border-slate-600 rounded"
-                                            />
-                                        </div>
-                                        <div className="ml-3 text-sm">
-                                            <label htmlFor={`permission-${permission}`} className="font-medium text-slate-700 dark:text-slate-300 capitalize">{permission.replace(':', ': ')}</label>
-                                        </div>
-                                    </div>
+                             <div className="mt-2 space-y-4">
+                                {Object.entries(groupedPermissions).map(([groupName, groupPermissions]) => (
+                                    <PermissionGroup
+                                        key={groupName}
+                                        groupName={groupName}
+                                        groupPermissions={groupPermissions}
+                                        selectedPermissions={role.permissions || []}
+                                        onGroupChange={handleGroupPermissionChange}
+                                        onPermissionChange={handlePermissionChange}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -116,10 +200,11 @@ const RoleModal: React.FC<{
 // Modal component for adding/editing users
 const UserFormModal: React.FC<{
     user: User | null;
+    users: User[];
     roles: Role[];
     onClose: () => void;
     onSave: (userData: User | Omit<User, 'id'>) => void;
-}> = ({ user, roles, onClose, onSave }) => {
+}> = ({ user, users, roles, onClose, onSave }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [roleId, setRoleId] = useState('');
@@ -141,17 +226,21 @@ const UserFormModal: React.FC<{
     const validate = () => {
         const newErrors = { name: '', email: '', roleId: '' };
         let isValid = true;
+        const trimmedEmail = email.trim().toLowerCase();
 
         if (!name.trim()) {
             newErrors.name = 'Full Name is required.';
             isValid = false;
         }
 
-        if (!email.trim()) {
+        if (!trimmedEmail) {
             newErrors.email = 'Email Address is required.';
             isValid = false;
-        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+        } else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
             newErrors.email = 'Please enter a valid email address.';
+            isValid = false;
+        } else if (users.some(u => u.email.toLowerCase() === trimmedEmail && u.id !== user?.id)) {
+            newErrors.email = 'This email address is already in use.';
             isValid = false;
         }
         
@@ -534,6 +623,7 @@ const UsersRolesPage: React.FC = () => {
             {isRoleModalOpen && selectedRole && (
                 <RoleModal 
                     role={selectedRole}
+                    roles={roles}
                     onClose={() => setIsRoleModalOpen(false)}
                     onSave={handleSaveRole}
                 />
@@ -541,6 +631,7 @@ const UsersRolesPage: React.FC = () => {
             {isUserFormModalOpen && (
                 <UserFormModal
                     user={selectedUser}
+                    users={users}
                     roles={roles}
                     onClose={() => setIsUserFormModalOpen(false)}
                     onSave={handleSaveUser}
