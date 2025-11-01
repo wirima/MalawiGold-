@@ -2,17 +2,41 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Product } from '../types';
 
+const ToggleSwitch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; label: string; description: string; }> = ({ checked, onChange, label, description }) => (
+    <div>
+        <label htmlFor="toggle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            {label}
+        </label>
+        <div className="flex items-center mt-1">
+            <button
+                type="button"
+                className={`${checked ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                role="switch"
+                aria-checked={checked}
+                onClick={() => onChange(!checked)}
+            >
+                <span
+                    aria-hidden="true"
+                    className={`${checked ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                />
+            </button>
+            <span className="ml-3 text-sm text-slate-500 dark:text-slate-400">{description}</span>
+        </div>
+    </div>
+);
+
+
 const AgeVerificationSettingsPage: React.FC = () => {
     const { products, categories, ageVerificationSettings, updateAgeVerificationSettings, hasPermission } = useAuth();
 
-    const [localAge, setLocalAge] = useState(ageVerificationSettings.minimumAge);
+    const [settings, setSettings] = useState(ageVerificationSettings);
     const [restrictedIds, setRestrictedIds] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
-        setLocalAge(ageVerificationSettings.minimumAge);
+        setSettings(ageVerificationSettings);
         setRestrictedIds(new Set(products.filter(p => p.isAgeRestricted).map(p => p.id)));
     }, [ageVerificationSettings, products]);
 
@@ -56,7 +80,7 @@ const AgeVerificationSettingsPage: React.FC = () => {
 
 
     const handleSave = () => {
-        updateAgeVerificationSettings(localAge, Array.from(restrictedIds));
+        updateAgeVerificationSettings(settings, Array.from(restrictedIds));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
     };
@@ -88,12 +112,20 @@ const AgeVerificationSettingsPage: React.FC = () => {
                     <input
                         type="number"
                         id="minimum-age"
-                        value={localAge}
-                        onChange={e => setLocalAge(parseInt(e.target.value, 10) || 18)}
+                        value={settings.minimumAge}
+                        onChange={e => setSettings(s => ({ ...s, minimumAge: parseInt(e.target.value, 10) || 18 }))}
                         min="1"
                         className="mt-1 block w-full max-w-xs rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
                     />
                 </div>
+
+                <ToggleSwitch
+                    label="Enable ID Scanning"
+                    description="Allow camera and hardware scanners for age verification at POS."
+                    checked={settings.isIdScanningEnabled}
+                    onChange={(checked) => setSettings(s => ({ ...s, isIdScanningEnabled: checked }))}
+                />
+
                 <div>
                     <h3 className="text-lg font-medium text-slate-900 dark:text-white">Restricted Products</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Select all products that should trigger an age check.</p>

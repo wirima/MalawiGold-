@@ -4,6 +4,7 @@ import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUS
 
 interface AgeVerificationSettings {
     minimumAge: number;
+    isIdScanningEnabled: boolean;
 }
 
 interface AuthContextType {
@@ -102,7 +103,7 @@ interface AuthContextType {
     deletePaymentMethod: (methodId: string) => void;
     // Settings
     ageVerificationSettings: AgeVerificationSettings;
-    updateAgeVerificationSettings: (age: number, restrictedIds: string[]) => void;
+    updateAgeVerificationSettings: (settings: AgeVerificationSettings, restrictedIds: string[]) => void;
     // Customer Requests
     customerRequests: CustomerRequest[];
     addCustomerRequests: (requestsText: string, cashier: User) => void;
@@ -135,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
     const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(MOCK_EXPENSE_CATEGORIES);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(MOCK_PAYMENT_METHODS);
-    const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21 });
+    const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: false });
     const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(MOCK_CUSTOMER_REQUESTS);
 
 
@@ -603,8 +604,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // #endregion
     
     // #region Settings Management
-    const updateAgeVerificationSettings = (age: number, restrictedIds: string[]) => {
-        setAgeVerificationSettings({ minimumAge: age });
+    const updateAgeVerificationSettings = (settings: AgeVerificationSettings, restrictedIds: string[]) => {
+        setAgeVerificationSettings(settings);
         const restrictedIdSet = new Set(restrictedIds);
         setProducts(prevProducts => prevProducts.map(p => ({
             ...p,

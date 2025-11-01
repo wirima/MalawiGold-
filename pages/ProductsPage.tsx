@@ -213,6 +213,9 @@ const ProductsPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(200);
+
     const isFiltered = useMemo(() => searchTerm !== '' || categoryFilter !== 'all' || stockFilter !== 'all' || locationFilter !== 'all', [searchTerm, categoryFilter, stockFilter, locationFilter]);
 
     const handleClearFilters = () => {
@@ -259,6 +262,18 @@ const ProductsPage: React.FC = () => {
                 return true;
             });
     }, [products, searchTerm, categoryFilter, stockFilter, locationFilter, categoriesMap, brandsMap]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, categoryFilter, stockFilter, locationFilter, itemsPerPage]);
+
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredProducts.slice(startIndex, endIndex);
+    }, [filteredProducts, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     
     const selectClasses = "w-full pl-4 pr-10 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500";
 
@@ -277,10 +292,6 @@ const ProductsPage: React.FC = () => {
         if (product.stock <= product.reorderPoint) return { text: 'Low Stock', count: product.stock, className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' };
         return { text: 'In Stock', count: product.stock, className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' };
     };
-
-    const productGoal = 500;
-    const productCount = products.length;
-    const progressPercentage = Math.min((productCount / productGoal) * 100, 100);
 
     return (
         <>
@@ -350,16 +361,45 @@ const ProductsPage: React.FC = () => {
                             Clear Filters
                         </button>
                     </div>
-                    <div className="mt-6">
-                        <div className="flex justify-between items-center mb-1">
-                            <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300">Product Count</h3>
-                            <span className="text-sm font-semibold">{productCount} / {productGoal}</span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
-                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                </div>
+
+                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="itemsPerPage" className="text-sm font-medium">Products per page:</label>
+                        <select
+                            id="itemsPerPage"
+                            value={itemsPerPage}
+                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                            className="rounded-lg bg-slate-100 dark:bg-slate-700 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value={200}>200</option>
+                            <option value={500}>500</option>
+                            <option value={1000}>1000</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                            Page {currentPage} of {totalPages > 0 ? totalPages : 1} ({filteredProducts.length} products)
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
                         </div>
                     </div>
                 </div>
+
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
                         <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
@@ -376,7 +416,7 @@ const ProductsPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredProducts.length > 0 ? filteredProducts.map(product => {
+                            {paginatedProducts.length > 0 ? paginatedProducts.map(product => {
                                 const stockStatus = getStockStatus(product);
                                 return (
                                 <tr key={product.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/50">

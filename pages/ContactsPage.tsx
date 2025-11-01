@@ -12,10 +12,11 @@ const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-5
 // #region Modals
 const CustomerFormModal: React.FC<{
     customer: Customer | null;
+    customers: Customer[];
     customerGroups: CustomerGroup[];
     onClose: () => void;
     onSave: (customerData: Customer | Omit<Customer, 'id'>) => void;
-}> = ({ customer, customerGroups, onClose, onSave }) => {
+}> = ({ customer, customers, customerGroups, onClose, onSave }) => {
     const isEditing = !!customer;
     const [formData, setFormData] = useState({
         name: '',
@@ -24,7 +25,7 @@ const CustomerFormModal: React.FC<{
         address: '',
         customerGroupId: customerGroups[0]?.id || ''
     });
-    const [errors, setErrors] = useState({ name: '', email: '' });
+    const [errors, setErrors] = useState({ name: '', email: '', phone: '' });
 
     useEffect(() => {
         if (customer) {
@@ -44,21 +45,34 @@ const CustomerFormModal: React.FC<{
                 customerGroupId: customerGroups[0]?.id || ''
             });
         }
-        setErrors({ name: '', email: '' });
+        setErrors({ name: '', email: '', phone: '' });
     }, [customer, customerGroups]);
 
 
     const validate = () => {
-        const newErrors = { name: '', email: '' };
+        const newErrors = { name: '', email: '', phone: '' };
         let isValid = true;
         if (!formData.name.trim()) {
             newErrors.name = 'Customer name is required.';
             isValid = false;
+        } else if (customers.some(c => c.name.toLowerCase() === formData.name.trim().toLowerCase() && c.id !== customer?.id)) {
+            newErrors.name = 'A customer with this name already exists.';
+            isValid = false;
         }
+
         if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
             newErrors.email = 'Please enter a valid email address.';
             isValid = false;
+        } else if (formData.email.trim() && customers.some(c => c.email.toLowerCase() === formData.email.trim().toLowerCase() && c.id !== customer?.id)) {
+            newErrors.email = 'This email is already in use by another customer.';
+            isValid = false;
         }
+
+        if (formData.phone.trim() && customers.some(c => c.phone === formData.phone.trim() && c.id !== customer?.id)) {
+            newErrors.phone = 'This phone number is already in use by another customer.';
+            isValid = false;
+        }
+
         setErrors(newErrors);
         return isValid;
     };
@@ -95,7 +109,8 @@ const CustomerFormModal: React.FC<{
                         </div>
                          <div>
                             <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className={baseInputClasses} />
+                            <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className={`${baseInputClasses} ${errors.phone ? errorInputClasses : ''}`} />
+                            {errors.phone && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.phone}</p>}
                         </div>
                         <div>
                             <label htmlFor="customerGroupId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Customer Group</label>
@@ -120,9 +135,10 @@ const CustomerFormModal: React.FC<{
 
 const SupplierFormModal: React.FC<{
     supplier: Supplier | null;
+    suppliers: Supplier[];
     onClose: () => void;
     onSave: (supplierData: Supplier | Omit<Supplier, 'id'>) => void;
-}> = ({ supplier, onClose, onSave }) => {
+}> = ({ supplier, suppliers, onClose, onSave }) => {
     const isEditing = !!supplier;
     const [formData, setFormData] = useState({
         name: '',
@@ -131,7 +147,7 @@ const SupplierFormModal: React.FC<{
         phone: '',
         address: ''
     });
-    const [errors, setErrors] = useState({ name: '', email: '' });
+    const [errors, setErrors] = useState({ name: '', email: '', phone: '' });
 
     useEffect(() => {
         // This effect ensures the form is always populated with the correct data for editing,
@@ -153,18 +169,30 @@ const SupplierFormModal: React.FC<{
                 address: ''
             });
         }
-        setErrors({ name: '', email: '' });
+        setErrors({ name: '', email: '', phone: '' });
     }, [supplier]);
 
     const validate = () => {
-        const newErrors = { name: '', email: '' };
+        const newErrors = { name: '', email: '', phone: '' };
         let isValid = true;
         if (!formData.name.trim()) {
             newErrors.name = 'Contact name is required.';
             isValid = false;
+        } else if (suppliers.some(s => s.name.toLowerCase() === formData.name.trim().toLowerCase() && s.id !== supplier?.id)) {
+            newErrors.name = 'A supplier with this name already exists.';
+            isValid = false;
         }
+
         if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
             newErrors.email = 'Please enter a valid email address.';
+            isValid = false;
+        } else if (formData.email.trim() && suppliers.some(s => s.email.toLowerCase() === formData.email.trim().toLowerCase() && s.id !== supplier?.id)) {
+            newErrors.email = 'This email is already in use by another supplier.';
+            isValid = false;
+        }
+        
+        if (formData.phone.trim() && suppliers.some(s => s.phone === formData.phone.trim() && s.id !== supplier?.id)) {
+            newErrors.phone = 'This phone number is already in use by another supplier.';
             isValid = false;
         }
         setErrors(newErrors);
@@ -205,7 +233,8 @@ const SupplierFormModal: React.FC<{
                         </div>
                         <div>
                             <label htmlFor="phone" className="block text-sm font-medium">Phone</label>
-                            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={baseInputClasses} />
+                            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={`${baseInputClasses} ${errors.phone ? errorInputClasses : ''}`} />
+                            {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                         </div>
                         <div>
                             <label htmlFor="address" className="block text-sm font-medium">Address</label>
@@ -543,8 +572,8 @@ const ContactsPage: React.FC = () => {
                 {activeTabData?.content}
             </div>
             
-            {modal === 'customer' && <CustomerFormModal customer={editingCustomer} customerGroups={customerGroups} onClose={handleCloseModal} onSave={handleSaveCustomer} />}
-            {modal === 'supplier' && <SupplierFormModal supplier={editingSupplier} onClose={handleCloseModal} onSave={handleSaveSupplier} />}
+            {modal === 'customer' && <CustomerFormModal customer={editingCustomer} customers={customers} customerGroups={customerGroups} onClose={handleCloseModal} onSave={handleSaveCustomer} />}
+            {modal === 'supplier' && <SupplierFormModal supplier={editingSupplier} suppliers={suppliers} onClose={handleCloseModal} onSave={handleSaveSupplier} />}
             {modal === 'group' && <CustomerGroupFormModal group={editingGroup} onClose={handleCloseModal} onSave={handleSaveGroup} />}
             {confirmationState && <ConfirmationModal 
                 isOpen={confirmationState.isOpen}
@@ -603,7 +632,7 @@ const ConfirmationModal: React.FC<{
                 <div className="p-6">
                     <div className="flex items-start">
                         <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg className="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+                            <svg className="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
                             </svg>
                         </div>
