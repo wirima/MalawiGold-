@@ -62,6 +62,7 @@ import PrintLabelsPage from './pages/PrintLabelsPage';
 import SaleReceiptPage from './pages/SaleReceiptPage';
 import AgeVerificationSettingsPage from './pages/AgeVerificationSettingsPage';
 import CustomerDemandReportPage from './pages/reports/CustomerDemandReportPage';
+import BrandingSettingsPage from './pages/BrandingSettingsPage';
 
 const App: React.FC = () => {
   return (
@@ -156,6 +157,7 @@ const App: React.FC = () => {
                   {/* Settings & Notifications */}
                   <Route path="/notification-templates" element={<NotFoundPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings/branding" element={<BrandingSettingsPage />} />
                   <Route path="/settings/locations" element={<BusinessLocationsPage />} />
                   <Route path="/settings/payment-methods" element={<PaymentMethodsPage />} />
                   <Route path="/settings/age-verification" element={<AgeVerificationSettingsPage />} />

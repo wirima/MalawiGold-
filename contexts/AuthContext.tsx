@@ -1,11 +1,19 @@
 import React, { createContext, useState, useContext, useMemo } from 'react';
-import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest } from '../types';
+import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings } from '../types';
 import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS } from '../data/mockData';
 
 interface AgeVerificationSettings {
     minimumAge: number;
     isIdScanningEnabled: boolean;
 }
+
+const DEFAULT_BRANDING: BrandingSettings = {
+    businessName: 'Gemini POS',
+    logoUrl: '',
+    address: '123 AI Street, Tech City, 12345',
+    phone: '(555) 123-4567',
+    website: 'www.example.com'
+};
 
 interface AuthContextType {
     currentUser: User | null;
@@ -104,6 +112,9 @@ interface AuthContextType {
     // Settings
     ageVerificationSettings: AgeVerificationSettings;
     updateAgeVerificationSettings: (settings: AgeVerificationSettings, restrictedIds: string[]) => void;
+    brandingSettings: BrandingSettings;
+    updateBrandingSettings: (settings: Partial<BrandingSettings>) => void;
+    resetBrandingSettings: () => void;
     // Customer Requests
     customerRequests: CustomerRequest[];
     addCustomerRequests: (requestsText: string, cashier: User) => void;
@@ -138,6 +149,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(MOCK_PAYMENT_METHODS);
     const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: false });
     const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(MOCK_CUSTOMER_REQUESTS);
+    const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(() => {
+        try {
+            const storedSettings = window.localStorage.getItem('gemini-pos-branding');
+            if (storedSettings) {
+                return { ...DEFAULT_BRANDING, ...JSON.parse(storedSettings) };
+            }
+        } catch (error) {
+            console.error("Failed to load branding settings from local storage:", error);
+        }
+        return DEFAULT_BRANDING;
+    });
 
 
     const rolesMap = useMemo(() => new Map(roles.map(role => [role.id, role])), [roles]);
@@ -612,6 +634,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAgeRestricted: restrictedIdSet.has(p.id)
         })));
     };
+    
+    const updateBrandingSettings = (settings: Partial<BrandingSettings>) => {
+        setBrandingSettings(prev => {
+            const newSettings = { ...prev, ...settings };
+            try {
+                window.localStorage.setItem('gemini-pos-branding', JSON.stringify(newSettings));
+            } catch (error) {
+                console.error("Failed to save branding settings to local storage:", error);
+            }
+            return newSettings;
+        });
+    };
+
+    const resetBrandingSettings = () => {
+        try {
+            window.localStorage.removeItem('gemini-pos-branding');
+        } catch (error) {
+            console.error("Failed to remove branding settings from local storage:", error);
+        }
+        setBrandingSettings(DEFAULT_BRANDING);
+    };
     // #endregion
 
     // #region Customer Request Management
@@ -706,6 +749,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deletePaymentMethod,
         ageVerificationSettings,
         updateAgeVerificationSettings,
+        brandingSettings,
+        updateBrandingSettings,
+        resetBrandingSettings,
         customerRequests,
         addCustomerRequests,
     };

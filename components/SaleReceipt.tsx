@@ -8,7 +8,7 @@ interface SaleReceiptProps {
 }
 
 const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
-    const { paymentMethods } = useAuth();
+    const { paymentMethods, brandingSettings } = useAuth();
     const paymentMethodsMap = useMemo(() => new Map(paymentMethods.map(p => [p.id, p.name])), [paymentMethods]);
 
     useEffect(() => {
@@ -86,8 +86,13 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
                 )}
                 <div id="print-section" className="p-6 overflow-y-auto text-slate-800 dark:text-slate-200">
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold">Gemini POS</h2>
-                        <p className="text-sm text-slate-500">{sale.status === 'return' ? 'Return Receipt' : 'Sale Receipt'}</p>
+                        {brandingSettings.logoUrl && (
+                            <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="mx-auto h-16 object-contain mb-2" />
+                        )}
+                        <h2 className="text-2xl font-bold">{brandingSettings.businessName}</h2>
+                        <p className="text-xs text-slate-500">{brandingSettings.address}</p>
+                        <p className="text-xs text-slate-500">{brandingSettings.phone}</p>
+                        <p className="text-sm text-slate-500 mt-2">{sale.status === 'return' ? 'Return Receipt' : 'Sale Receipt'}</p>
                     </div>
                     <div className="mt-4 text-xs text-slate-600 dark:text-slate-400">
                         <p><span className="font-bold">Date:</span> {new Date(sale.date).toLocaleString()}</p>

@@ -8,7 +8,7 @@ import { useTranslation } from '../src/i18n';
 const Sidebar: React.FC = () => {
     const location = useLocation();
     const [openSubMenu, setOpenSubMenu] = useState<string | null>('Sell');
-    const { hasPermission } = useAuth();
+    const { hasPermission, brandingSettings } = useAuth();
     const { t } = useTranslation();
 
     const navItems = useMemo(() => getNavItems(t), [t]);
@@ -35,8 +35,12 @@ const Sidebar: React.FC = () => {
 
     return (
         <aside className="w-64 bg-white dark:bg-slate-800 border-e border-slate-200 dark:border-slate-700 flex-shrink-0 flex flex-col">
-            <div className="flex items-center justify-center h-20 border-b border-slate-200 dark:border-slate-700">
-                <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Gemini POS</h1>
+            <div className="flex items-center justify-center h-20 border-b border-slate-200 dark:border-slate-700 px-4">
+                {brandingSettings.logoUrl ? (
+                    <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="h-12 max-w-full object-contain" />
+                ) : (
+                    <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 truncate">{brandingSettings.businessName}</h1>
+                )}
             </div>
             <nav className="flex-1 px-4 py-4 overflow-y-auto">
                 <ul className="space-y-2">

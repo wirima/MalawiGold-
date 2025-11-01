@@ -276,3 +276,11 @@ export interface User {
     email: string;
     roleId: Role['id'];
 }
+
+export interface BrandingSettings {
+    businessName: string;
+    logoUrl: string;
+    address: string;
+    phone: string;
+    website?: string;
+}

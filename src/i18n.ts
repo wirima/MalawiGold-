@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
 
 // Define available languages
@@ -47,6 +48,7 @@ const translations: Record<LanguageCode, Record<string, string>> = {
         ageVerification: "Age Verification",
         deployment: "Deployment",
         language: "Language",
+        branding: "Branding",
         selectLanguage: "Select Language",
         languageSettingsDescription: "Choose the display language for the application."
     },
@@ -82,6 +84,7 @@ const translations: Record<LanguageCode, Record<string, string>> = {
         ageVerification: "التحقق من العمر",
         deployment: "النشر",
         language: "اللغة",
+        branding: "العلامة التجارية",
         selectLanguage: "اختر اللغة",
         languageSettingsDescription: "اختر لغة عرض التطبيق."
     },
@@ -117,6 +120,7 @@ const translations: Record<LanguageCode, Record<string, string>> = {
         ageVerification: "Kutsimikizira Zaka",
         deployment: "Kutumiza",
         language: "Chilankhulo",
+        branding: "Chizindikiro",
         selectLanguage: "Sankhani Chilankhulo",
         languageSettingsDescription: "Sankhani chilankhulo chowonetsera pulogalamuyi."
     },

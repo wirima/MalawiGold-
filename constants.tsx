@@ -169,6 +169,7 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     permission: 'settings:view',
     subItems: [
         { path: '/settings', label: t('generalSettings') },
+        { path: '/settings/branding', label: t('branding'), permission: 'settings:view' },
         { path: '/settings/locations', label: t('businessLocations'), permission: 'settings:locations' },
         { path: '/settings/payment-methods', label: t('paymentMethods'), permission: 'settings:payment' },
         { path: '/settings/age-verification', label: t('ageVerification'), permission: 'settings:age_verification' },
