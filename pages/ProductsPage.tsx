@@ -1,0 +1,410 @@
+
+
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Product, Brand, Category, Unit, BusinessLocation } from '../types';
+
+const baseInputClasses = "mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500";
+const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-500 focus:ring-red-500";
+
+const ProductFormModal: React.FC<{
+    product: Product | null;
+    brands: Brand[];
+    categories: Category[];
+    units: Unit[];
+    businessLocations: BusinessLocation[];
+    onClose: () => void;
+    onSave: (productData: Product) => void;
+}> = ({ product, brands, categories, units, businessLocations, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        name: product?.name || '',
+        sku: product?.sku || '',
+        categoryId: product?.categoryId || categories[0]?.id || '',
+        brandId: product?.brandId || brands[0]?.id || '',
+        unitId: product?.unitId || units[0]?.id || '',
+        businessLocationId: product?.businessLocationId || businessLocations[0]?.id || '',
+        costPrice: product?.costPrice || 0,
+        price: product?.price || 0,
+        stock: product?.stock || 0,
+        reorderPoint: product?.reorderPoint || 0,
+        isNotForSale: product?.isNotForSale || false,
+    });
+    const [errors, setErrors] = useState({ name: '', sku: '', costPrice: '', price: '' });
+
+    useEffect(() => {
+        if (product) {
+            setFormData({
+                name: product.name,
+                sku: product.sku,
+                categoryId: product.categoryId,
+                brandId: product.brandId,
+                unitId: product.unitId,
+                businessLocationId: product.businessLocationId,
+                costPrice: product.costPrice,
+                price: product.price,
+                stock: product.stock,
+                reorderPoint: product.reorderPoint,
+                isNotForSale: product.isNotForSale,
+            });
+        }
+    }, [product]);
+
+    const validate = () => {
+        const newErrors = { name: '', sku: '', costPrice: '', price: '' };
+        let isValid = true;
+        if (!formData.name.trim()) {
+            newErrors.name = 'Product name is required.';
+            isValid = false;
+        }
+        if (!formData.sku.trim()) {
+            newErrors.sku = 'SKU is required.';
+            isValid = false;
+        }
+        if (formData.costPrice <= 0) {
+            newErrors.costPrice = 'Cost price must be a positive number.';
+            isValid = false;
+        }
+        if (formData.price <= 0) {
+            newErrors.price = 'Price must be a positive number.';
+            isValid = false;
+        }
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (validate() && product) {
+            onSave({ ...product, ...formData });
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            setFormData(prev => ({...prev, [name]: (e.target as HTMLInputElement).checked }));
+        } else {
+            const numValue = (name === 'price' || name === 'stock' || name === 'reorderPoint' || name === 'costPrice') ? parseFloat(value) : value;
+            setFormData(prev => ({ ...prev, [name]: numValue }));
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <form onSubmit={handleSubmit} noValidate>
+                    <div className="p-6 border-b dark:border-slate-700">
+                        <h2 className="text-xl font-bold">Edit Product</h2>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
+                        <div>
+                            <label htmlFor="name" className="block text-sm font-medium">Product Name*</label>
+                            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={`${baseInputClasses} ${errors.name ? errorInputClasses : ''}`} />
+                            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="sku" className="block text-sm font-medium">SKU*</label>
+                            <input type="text" id="sku" name="sku" value={formData.sku} onChange={handleChange} className={`${baseInputClasses} ${errors.sku ? errorInputClasses : ''}`} />
+                            {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="costPrice" className="block text-sm font-medium">Cost Price*</label>
+                            <input type="number" id="costPrice" name="costPrice" value={formData.costPrice} onChange={handleChange} step="0.01" min="0" className={`${baseInputClasses} ${errors.costPrice ? errorInputClasses : ''}`} />
+                            {errors.costPrice && <p className="mt-1 text-sm text-red-600">{errors.costPrice}</p>}
+                        </div>
+                         <div>
+                            <label htmlFor="price" className="block text-sm font-medium">Selling Price*</label>
+                            <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" className={`${baseInputClasses} ${errors.price ? errorInputClasses : ''}`} />
+                            {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+                        </div>
+                         <div>
+                            <label htmlFor="stock" className="block text-sm font-medium">Stock</label>
+                            <input type="number" id="stock" name="stock" value={formData.stock} onChange={handleChange} min="0" className={baseInputClasses} />
+                        </div>
+                         <div>
+                            <label htmlFor="reorderPoint" className="block text-sm font-medium">Reorder Point</label>
+                            <input type="number" id="reorderPoint" name="reorderPoint" value={formData.reorderPoint} onChange={handleChange} min="0" className={baseInputClasses} />
+                        </div>
+                         <div>
+                            <label htmlFor="categoryId" className="block text-sm font-medium">Category</label>
+                            <select id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} className={baseInputClasses}>
+                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="brandId" className="block text-sm font-medium">Brand</label>
+                            <select id="brandId" name="brandId" value={formData.brandId} onChange={handleChange} className={baseInputClasses}>
+                                {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="unitId" className="block text-sm font-medium">Unit</label>
+                            <select id="unitId" name="unitId" value={formData.unitId} onChange={handleChange} className={baseInputClasses}>
+                                {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="businessLocationId" className="block text-sm font-medium">Business Location</label>
+                            <select id="businessLocationId" name="businessLocationId" value={formData.businessLocationId} onChange={handleChange} className={baseInputClasses}>
+                                {businessLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                            </select>
+                        </div>
+                         <div className="md:col-span-2">
+                            <div className="flex items-start">
+                                <div className="flex items-center h-5">
+                                    <input
+                                        id="isNotForSale"
+                                        name="isNotForSale"
+                                        type="checkbox"
+                                        checked={formData.isNotForSale}
+                                        onChange={handleChange}
+                                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                    />
+                                </div>
+                                <div className="ml-3 text-sm">
+                                    <label htmlFor="isNotForSale" className="font-medium text-gray-700 dark:text-gray-300">This product is not for sale</label>
+                                    <p className="text-gray-500 dark:text-gray-400">If checked, it won't appear in the POS screen.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t flex justify-end gap-3">
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</button>
+                        <button type="submit" className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+const ProductsPage: React.FC = () => {
+    const { products, brands, categories, units, businessLocations, hasPermission, updateProduct } = useAuth();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [stockFilter, setStockFilter] = useState('all');
+    const [locationFilter, setLocationFilter] = useState('all');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+    const isFiltered = useMemo(() => searchTerm !== '' || categoryFilter !== 'all' || stockFilter !== 'all' || locationFilter !== 'all', [searchTerm, categoryFilter, stockFilter, locationFilter]);
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setCategoryFilter('all');
+        setStockFilter('all');
+        setLocationFilter('all');
+    };
+
+    const canManageProducts = hasPermission('products:manage');
+    const canAddProducts = hasPermission('products:add');
+    
+    const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories]);
+    const brandsMap = useMemo(() => new Map(brands.map(b => [b.id, b.name])), [brands]);
+    const locationsMap = useMemo(() => new Map(businessLocations.map(l => [l.id, l.name])), [businessLocations]);
+
+    const filteredProducts = useMemo(() => {
+        return products
+            .filter(product => {
+                const lowercasedTerm = searchTerm.toLowerCase();
+                if (!lowercasedTerm) return true;
+
+                const categoryName = categoriesMap.get(product.categoryId)?.toLowerCase() || '';
+                const brandName = brandsMap.get(product.brandId)?.toLowerCase() || '';
+
+                return (
+                    product.name.toLowerCase().includes(lowercasedTerm) ||
+                    product.sku.toLowerCase().includes(lowercasedTerm) ||
+                    categoryName.includes(lowercasedTerm) ||
+                    brandName.includes(lowercasedTerm)
+                );
+            })
+            .filter(product =>
+                categoryFilter === 'all' || product.categoryId === categoryFilter
+            )
+            .filter(product =>
+                locationFilter === 'all' || product.businessLocationId === locationFilter
+            )
+            .filter(product => {
+                if (stockFilter === 'all') return true;
+                if (stockFilter === 'in_stock') return product.stock > product.reorderPoint;
+                if (stockFilter === 'low_stock') return product.stock > 0 && product.stock <= product.reorderPoint;
+                if (stockFilter === 'out_of_stock') return product.stock === 0;
+                return true;
+            });
+    }, [products, searchTerm, categoryFilter, stockFilter, locationFilter, categoriesMap, brandsMap]);
+    
+    const selectClasses = "w-full pl-4 pr-10 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500";
+
+    const handleEditProduct = (product: Product) => {
+        setEditingProduct(product);
+        setIsModalOpen(true);
+    };
+
+    const handleSaveProduct = (data: Product) => {
+        updateProduct(data);
+        setIsModalOpen(false);
+    };
+
+    const getStockStatus = (product: Product) => {
+        if (product.stock === 0) return { text: 'Out of Stock', count: product.stock, className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' };
+        if (product.stock <= product.reorderPoint) return { text: 'Low Stock', count: product.stock, className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' };
+        return { text: 'In Stock', count: product.stock, className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' };
+    };
+
+    return (
+        <>
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold">Products</h1>
+                            <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your products inventory.</p>
+                        </div>
+                         <Link 
+                            to="/products/add"
+                            className={`bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold whitespace-nowrap order-first md:order-last ${!canAddProducts ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={(e) => !canAddProducts && e.preventDefault()}
+                            aria-disabled={!canAddProducts}
+                            title={!canAddProducts ? "You don't have permission to add products" : ""}
+                        >
+                            Add Product
+                        </Link>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <input 
+                            type="text" 
+                            placeholder="Search by name, SKU, brand, category..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-4 pr-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:col-span-2 lg:col-span-1"
+                        />
+                         <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className={selectClasses}
+                            aria-label="Filter by category"
+                        >
+                            <option value="all">All Categories</option>
+                            {categories.map(category => (
+                                <option key={category.id} value={category.id}>{category.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                            className={selectClasses}
+                            aria-label="Filter by location"
+                        >
+                            <option value="all">All Locations</option>
+                            {businessLocations.map(location => (
+                                <option key={location.id} value={location.id}>{location.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={stockFilter}
+                            onChange={(e) => setStockFilter(e.target.value)}
+                            className={selectClasses}
+                            aria-label="Filter by stock status"
+                        >
+                            <option value="all">All Stock Statuses</option>
+                            <option value="in_stock">In Stock</option>
+                            <option value="low_stock">Low Stock</option>
+                            <option value="out_of_stock">Out of Stock</option>
+                        </select>
+                        <button
+                            onClick={handleClearFilters}
+                            disabled={!isFiltered}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+                        <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
+                            <tr>
+                                <th scope="col" className="px-6 py-3">Image</th>
+                                <th scope="col" className="px-6 py-3">Product Name</th>
+                                <th scope="col" className="px-6 py-3">SKU</th>
+                                <th scope="col" className="px-6 py-3">Category</th>
+                                <th scope="col" className="px-6 py-3">Brand</th>
+                                <th scope="col" className="px-6 py-3">Location</th>
+                                <th scope="col" className="px-6 py-3">Price</th>
+                                <th scope="col" className="px-6 py-3">Stock Status</th>
+                                <th scope="col" className="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProducts.length > 0 ? filteredProducts.map(product => {
+                                const stockStatus = getStockStatus(product);
+                                return (
+                                <tr key={product.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/50">
+                                    <td className="px-6 py-4">
+                                        <Link to={`/products/${product.id}`}>
+                                            <img src={product.imageUrl} alt={product.name} className="w-12 h-12 rounded-md object-cover transition-transform hover:scale-110"/>
+                                        </Link>
+                                    </td>
+                                    <th scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                                        <Link to={`/products/${product.id}`} className="hover:underline">
+                                            {product.name}
+                                        </Link>
+                                        {product.isNotForSale && (
+                                            <span className="ml-2 bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                Not for Sale
+                                            </span>
+                                        )}
+                                    </th>
+                                    <td className="px-6 py-4">{product.sku}</td>
+                                    <td className="px-6 py-4">{categoriesMap.get(product.categoryId)}</td>
+                                    <td className="px-6 py-4">{brandsMap.get(product.brandId)}</td>
+                                    <td className="px-6 py-4">{locationsMap.get(product.businessLocationId)}</td>
+                                    <td className="px-6 py-4">{product.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.className}`}>
+                                                {stockStatus.text}
+                                            </span>
+                                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">({stockStatus.count})</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <button 
+                                            onClick={() => handleEditProduct(product)}
+                                            disabled={!canManageProducts}
+                                            className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}) : (
+                                <tr>
+                                    <td colSpan={9} className="text-center py-10 text-slate-500 dark:text-slate-400">
+                                        No products found matching your criteria.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {isModalOpen && (
+                <ProductFormModal 
+                    product={editingProduct}
+                    brands={brands}
+                    categories={categories}
+                    units={units}
+                    businessLocations={businessLocations}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={handleSaveProduct}
+                />
+            )}
+        </>
+    );
+};
+
+export default ProductsPage;

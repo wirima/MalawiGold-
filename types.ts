@@ -1,0 +1,247 @@
+
+
+export interface Brand {
+  id: string;
+  name: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
+export interface Unit {
+  id: string;
+  name: string;
+  shortName: string;
+}
+
+export interface Variation {
+  id: string;
+  name: string;
+}
+
+export interface VariationValue {
+  id: string;
+  variationId: string;
+  name: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  categoryId: string;
+  brandId: string;
+  unitId: string;
+  businessLocationId: string;
+  costPrice: number;
+  price: number;
+  stock: number;
+  reorderPoint: number;
+  imageUrl: string;
+  isNotForSale: boolean;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  customerGroupId: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
+export interface CustomerGroup {
+    id: string;
+    name: string;
+    discountPercentage: number;
+}
+
+export interface CartItem extends Product {
+  quantity: number;
+}
+
+export interface PaymentMethod {
+    id: string;
+    name: string;
+}
+
+export interface Sale {
+  id: string;
+  date: string;
+  customer: Pick<Customer, 'id' | 'name'>;
+  items: CartItem[];
+  total: number;
+  paymentMethodId: string;
+  passportNumber?: string;
+  nationality?: string;
+}
+
+export interface Shipment {
+  id: string;
+  saleId: string;
+  customerName: string;
+  shippingAddress: string;
+  trackingNumber: string;
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+}
+
+export interface Purchase {
+  id: string;
+  date: string;
+  supplier: Pick<Supplier, 'id' | 'name'>;
+  items: CartItem[];
+  total: number;
+}
+
+export interface PurchaseReturn {
+  id: string;
+  date: string;
+  supplier: Pick<Supplier, 'id' | 'name'>;
+  items: CartItem[];
+  total: number;
+}
+
+export interface Draft {
+  id: string;
+  date: string;
+  customer: Pick<Customer, 'id' | 'name'>;
+  items: CartItem[];
+  total: number;
+}
+
+export interface Quotation {
+  id: string;
+  date: string;
+  customer: Pick<Customer, 'id' | 'name'>;
+  items: CartItem[];
+  total: number;
+  expiryDate: string;
+}
+
+export type StockAdjustmentType = 'addition' | 'subtraction';
+
+export interface StockAdjustment {
+    id: string;
+    date: string;
+    productId: string;
+    type: StockAdjustmentType;
+    quantity: number;
+    reason: string;
+}
+
+export interface BusinessLocation {
+    id: string;
+    name: string;
+}
+
+export interface StockTransfer {
+    id: string;
+    date: string;
+    fromLocationId: string;
+    toLocationId: string;
+    items: CartItem[];
+    status: 'in_transit' | 'completed';
+}
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+}
+
+export interface Expense {
+  id: string;
+  date: string;
+  categoryId: string;
+  amount: number;
+  description: string;
+}
+
+export type Permission = 
+  | 'dashboard:view'
+  // Products
+  | 'products:view'
+  | 'products:manage'
+  | 'products:add'
+  | 'products:update_price'
+  | 'products:print_labels'
+  | 'products:variations'
+  | 'products:import'
+  | 'products:import_stock'
+  | 'products:price_groups'
+  | 'products:units'
+  | 'products:categories'
+  | 'products:brands'
+  | 'products:warranties'
+  // Contacts
+  | 'contacts:view'
+  | 'contacts:manage'
+  | 'contacts:import'
+  // Purchases
+  | 'purchases:view'
+  | 'purchases:manage'
+  // Sell
+  | 'sell:view'
+  | 'sell:pos'
+  | 'sell:sales'
+  | 'sell:manage'
+  | 'shipping:view'
+  | 'shipping:manage'
+  | 'discounts:view'
+  // Stock
+  | 'stock_transfer:view'
+  | 'stock_transfer:manage'
+  | 'stock_adjustment:view'
+  | 'stock_adjustment:manage'
+  // Expenses
+  | 'expense:view'
+  | 'expense:manage'
+  // Reports
+  | 'reports:view'
+  // Users
+  | 'users:view'
+  | 'users:manage'
+  // Notifications
+  | 'notifications:manage'
+  // Settings
+  | 'settings:view'
+  | 'settings:tax'
+  | 'settings:product'
+  | 'settings:contact'
+  | 'settings:sale'
+  | 'settings:pos'
+  | 'settings:purchases'
+  | 'settings:payment'
+  | 'settings:dashboard'
+  | 'settings:system'
+  | 'settings:prefixes'
+  | 'settings:email'
+  | 'settings:sms'
+  | 'settings:reward_points'
+  | 'settings:modules'
+  | 'settings:custom_labels'
+  | 'settings:locations';
+
+export interface Role {
+    id: string;
+    name: string;
+    description: string;
+    permissions: Permission[];
+}
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    roleId: Role['id'];
+}
