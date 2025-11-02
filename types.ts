@@ -1,14 +1,5 @@
-
-import * as React from 'react';
-
-// FIX: Project-wide type issue where JSX elements are not recognized.
-// This redeclares the global JSX namespace to include React's intrinsic elements,
-// making all standard HTML elements available in JSX across the project.
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends React.JSX.IntrinsicElements {}
-  }
-}
+// FIX: Add React import and global JSX namespace declaration to fix project-wide JSX type issues.
+// The global declaration below was causing type conflicts and has been removed.
 
 export interface Brand {
   id: string;

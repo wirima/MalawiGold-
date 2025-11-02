@@ -56,19 +56,22 @@ const UpdatePricePage: React.FC = () => {
     const handleSaveChanges = () => {
         if (!hasUnsavedChanges) return;
         
-        const updates: Product[] = products.map(p => {
-            if (pendingChanges[p.id]) {
+        const updatesToSave: Pick<Product, 'id' | 'price' | 'costPrice'>[] = 
+            Object.keys(pendingChanges).map(productId => {
+                const product = products.find(p => p.id === productId);
+                if (!product) return null;
+                
+                const changes = pendingChanges[productId];
                 return {
-                    ...p,
-                    costPrice: pendingChanges[p.id].costPrice ?? p.costPrice,
-                    price: pendingChanges[p.id].price ?? p.price,
+                    id: productId,
+                    costPrice: changes.costPrice ?? product.costPrice,
+                    price: changes.price ?? product.price,
                 };
-            }
-            return p;
-        }).filter(p => !!pendingChanges[p.id]);
+            }).filter((p): p is Pick<Product, 'id' | 'price' | 'costPrice'> => p !== null);
 
-        // This is a simplified update; in a real app, you might just send the changed fields
-        updates.forEach(p => updateMultipleProducts([{id: p.id, price: p.price, costPrice: p.costPrice}]));
+        if (updatesToSave.length > 0) {
+            updateMultipleProducts(updatesToSave);
+        }
         
         setPendingChanges({});
     };

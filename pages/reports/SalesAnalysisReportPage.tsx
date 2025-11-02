@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getSalesAnalysisInsights } from '../../services/geminiService';
@@ -13,9 +14,20 @@ const ReportSection: React.FC<{ title: string; children: React.ReactNode }> = ({
 );
 
 const SalesAnalysisReportPage: React.FC = () => {
-    const { sales, products, categories, hasPermission, paymentMethods } = useAuth();
+    const { sales, products, categories, hasPermission, paymentMethods, currentUser, roles } = useAuth();
     const today = new Date().toISOString().split('T')[0];
-    const [dateRange, setDateRange] = useState({ start: '', end: today });
+
+    const userRole = useMemo(() => currentUser ? roles.find(r => r.id === currentUser.roleId) : null, [currentUser, roles]);
+    const isManager = userRole?.name === 'Manager (Supervisor)';
+
+    const oneMonthAgoString = useMemo(() => {
+        if (!isManager) return undefined;
+        const d = new Date();
+        d.setMonth(d.getMonth() - 1);
+        return d.toISOString().split('T')[0];
+    }, [isManager]);
+    
+    const [dateRange, setDateRange] = useState({ start: isManager ? oneMonthAgoString || '' : '', end: today });
     const [insights, setInsights] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
@@ -34,9 +46,21 @@ const SalesAnalysisReportPage: React.FC = () => {
     };
 
     const filteredSales = useMemo(() => {
+        const oneMonthAgoDate = isManager ? new Date() : null;
+        if (isManager && oneMonthAgoDate) {
+            oneMonthAgoDate.setMonth(oneMonthAgoDate.getMonth() - 1);
+            oneMonthAgoDate.setHours(0, 0, 0, 0);
+        }
+
         return sales.filter(sale => {
-            if (!dateRange.start && !dateRange.end) return true;
             const saleDate = new Date(sale.date);
+
+            // Server-side enforcement for manager
+            if (isManager && oneMonthAgoDate && saleDate < oneMonthAgoDate) {
+                return false;
+            }
+
+            // UI filter
             const startDate = dateRange.start ? new Date(dateRange.start) : null;
             if (startDate) startDate.setHours(0, 0, 0, 0);
             const endDate = dateRange.end ? new Date(dateRange.end) : null;
@@ -46,7 +70,8 @@ const SalesAnalysisReportPage: React.FC = () => {
             if (endDate && saleDate > endDate) return false;
             return true;
         });
-    }, [sales, dateRange]);
+    }, [sales, dateRange, isManager]);
+
 
     const reportData = useMemo(() => {
         if (filteredSales.length === 0) {
@@ -171,12 +196,17 @@ const SalesAnalysisReportPage: React.FC = () => {
                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label htmlFor="start" className="text-sm font-medium text-slate-600 dark:text-slate-300">Start Date</label>
-                        <input type="date" name="start" id="start" value={dateRange.start} onChange={handleDateChange} className={`${dateInputClasses} mt-1`} />
+                        <input type="date" name="start" id="start" value={dateRange.start} onChange={handleDateChange} className={`${dateInputClasses} mt-1`} min={oneMonthAgoString} />
                     </div>
                     <div>
                         <label htmlFor="end" className="text-sm font-medium text-slate-600 dark:text-slate-300">End Date</label>
                         <input type="date" name="end" id="end" value={dateRange.end} onChange={handleDateChange} className={`${dateInputClasses} mt-1`} />
                     </div>
+                     {isManager && (
+                        <div className="md:col-span-3 text-sm text-yellow-600 dark:text-yellow-400">
+                            As a Manager, you can only view sales data from the last month.
+                        </div>
+                    )}
                 </div>
             </div>
 

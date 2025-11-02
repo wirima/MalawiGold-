@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Role, Permission } from '../types';
@@ -176,19 +177,21 @@ const RoleModal: React.FC<{
                         </div>
                     </div>
 
-                    <div className="px-6 pb-6 flex-1 overflow-y-auto">
-                        <h3 className="text-md font-medium text-slate-900 dark:text-white mb-2">Permissions</h3>
-                        <div className="space-y-4">
-                            {Object.entries(groupedPermissions).map(([groupName, groupPermissions]) => (
-                                <PermissionGroup
-                                    key={groupName}
-                                    groupName={groupName}
-                                    groupPermissions={groupPermissions}
-                                    selectedPermissions={role.permissions || []}
-                                    onGroupChange={handleGroupPermissionChange}
-                                    onPermissionChange={handlePermissionChange}
-                                />
-                            ))}
+                    <div className="flex-1 overflow-hidden">
+                        <div className="h-full overflow-y-auto px-6 pb-6">
+                            <h3 className="text-md font-medium text-slate-900 dark:text-white mb-2">Permissions</h3>
+                            <div className="space-y-4">
+                                {Object.entries(groupedPermissions).map(([groupName, groupPermissions]) => (
+                                    <PermissionGroup
+                                        key={groupName}
+                                        groupName={groupName}
+                                        groupPermissions={groupPermissions}
+                                        selectedPermissions={role.permissions || []}
+                                        onGroupChange={handleGroupPermissionChange}
+                                        onPermissionChange={handlePermissionChange}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
 
