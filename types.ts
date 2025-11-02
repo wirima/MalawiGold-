@@ -1,4 +1,5 @@
-
+// FIX: Removed a problematic global JSX declaration that was causing errors with intrinsic elements (e.g., 'div'). With this removed, the standard React JSX typings will be used.
+import React from 'react';
 
 
 export interface Brand {
@@ -202,6 +203,7 @@ export type Permission =
   | 'products:variations'
   | 'products:import'
   | 'products:import_stock'
+  | 'products:import_units'
   | 'products:price_groups'
   | 'products:units'
   | 'products:categories'

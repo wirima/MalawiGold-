@@ -602,7 +602,7 @@ interface TableProps<T> {
     renderRow: (item: T) => React.ReactNode;
 }
 
-const Table = <T extends {id: string}>({ headers, data, renderRow }: TableProps<T>) => (
+const Table = <T extends {id: string},>({ headers, data, renderRow }: TableProps<T>) => (
     <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
         <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
             <tr>

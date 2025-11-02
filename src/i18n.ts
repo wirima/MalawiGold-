@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
 
 // Define available languages
@@ -150,7 +148,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     }, []);
 
-    // FIX: Memoize `t` function to prevent re-creation on every render.
     const t = useCallback((key: string): string => {
         return translations[language]?.[key] || translations.en[key] || key;
     }, [language]);
@@ -160,20 +157,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         document.documentElement.dir = languages[language]?.dir || 'ltr';
         localStorage.setItem('gemini-pos-lang', language);
         document.title = t('appTitle');
-        // FIX: Add `t` to the dependency array as it's used inside the effect.
     }, [language, t]);
 
-    // FIX: Memoize `changeLanguage` to ensure it has a stable identity.
     const changeLanguage = useCallback((lang: LanguageCode) => {
         if (languages[lang]) {
             setLanguage(lang);
         }
     }, []);
 
-    // FIX: Correctly memoize the context value, including all its dependencies.
     const value = useMemo(() => ({ language, changeLanguage, t }), [language, changeLanguage, t]);
 
-    // FIX: Replace JSX with React.createElement to resolve parsing errors in a .ts file.
     return React.createElement(LanguageContext.Provider, { value: value }, children);
 };
 
