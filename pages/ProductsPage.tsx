@@ -1,8 +1,10 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Product, Brand, Category, Unit, BusinessLocation } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const baseInputClasses = "mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500";
 const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-500 focus:ring-red-500";
@@ -212,13 +214,15 @@ const ProductFormModal: React.FC<{
 
 
 const ProductsPage: React.FC = () => {
-    const { products, brands, categories, units, businessLocations, hasPermission, updateProduct } = useAuth();
+    const { products, brands, categories, units, businessLocations, hasPermission, updateProduct, deleteProduct } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [stockFilter, setStockFilter] = useState('all');
     const [locationFilter, setLocationFilter] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
+    const [apiError, setApiError] = useState<string | null>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(200);
@@ -234,6 +238,7 @@ const ProductsPage: React.FC = () => {
 
     const canManageProducts = hasPermission('products:manage');
     const canAddProducts = hasPermission('products:add');
+    const canDeleteProducts = hasPermission('products:delete');
     
     const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories]);
     const brandsMap = useMemo(() => new Map(brands.map(b => [b.id, b.name])), [brands]);
@@ -294,6 +299,23 @@ const ProductsPage: React.FC = () => {
         setIsModalOpen(false);
     };
 
+    const handleDeleteProduct = (product: Product) => {
+        setApiError(null);
+        setConfirmDelete(product);
+    };
+
+    const confirmDeletion = () => {
+        if (confirmDelete) {
+            try {
+                deleteProduct(confirmDelete.id);
+            } catch (error: any) {
+                setApiError(error.message);
+            } finally {
+                setConfirmDelete(null);
+            }
+        }
+    };
+
     const getStockStatus = (product: Product) => {
         if (product.stock === 0) return { text: 'Out of Stock', count: product.stock, className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' };
         if (product.stock <= product.reorderPoint) return { text: 'Low Stock', count: product.stock, className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' };
@@ -304,6 +326,15 @@ const ProductsPage: React.FC = () => {
         <>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
                 <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    {apiError && (
+                        <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong className="font-bold">Error: </strong>
+                            <span className="block sm:inline">{apiError}</span>
+                            <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => setApiError(null)}>
+                                <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                            </span>
+                        </div>
+                    )}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h1 className="text-2xl font-bold">Products</h1>
@@ -463,6 +494,13 @@ const ProductsPage: React.FC = () => {
                                         >
                                             Edit
                                         </button>
+                                        <button
+                                            onClick={() => handleDeleteProduct(product)}
+                                            disabled={!canDeleteProducts}
+                                            className="font-medium text-red-600 dark:text-red-500 hover:underline disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed"
+                                        >
+                                            Delete
+                                        </button>
                                         <Link
                                             to={`/products/add?duplicate_from=${product.id}`}
                                             className={`font-medium text-blue-600 dark:text-blue-500 hover:underline ${!canAddProducts ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
@@ -494,6 +532,15 @@ const ProductsPage: React.FC = () => {
                     businessLocations={businessLocations}
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveProduct}
+                />
+            )}
+            {confirmDelete && (
+                <ConfirmationModal
+                    isOpen={!!confirmDelete}
+                    title="Delete Product"
+                    message={`Are you sure you want to delete "${confirmDelete.name}"? This action cannot be undone.`}
+                    onClose={() => setConfirmDelete(null)}
+                    onConfirm={confirmDeletion}
                 />
             )}
         </>

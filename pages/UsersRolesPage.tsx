@@ -1,7 +1,9 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Role, Permission } from '../types';
 import { ALL_PERMISSIONS } from '../constants';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 type Tab = 'users' | 'roles';
 
@@ -144,13 +146,14 @@ const RoleModal: React.FC<{
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} noValidate className="flex flex-col h-full">
-                    <div className="p-6 border-b dark:border-slate-700">
+                    <div className="p-6 border-b dark:border-slate-700 flex-shrink-0">
                         <h2 className="text-xl font-bold">{role.id ? 'Edit Role' : 'Add New Role'}</h2>
                     </div>
-                    <div className="p-6 space-y-4 overflow-y-auto">
+
+                    <div className="p-6 space-y-4 flex-shrink-0">
                         <div>
                             <label htmlFor="roleName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Role Name*</label>
-                            <input 
+                            <input
                                 type="text"
                                 id="roleName"
                                 value={role.name || ''}
@@ -167,26 +170,28 @@ const RoleModal: React.FC<{
                                 id="roleDescription"
                                 value={role.description || ''}
                                 onChange={e => setRole(prev => prev ? {...prev, description: e.target.value} : null)}
-                                rows={3}
+                                rows={2}
                                 className="mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
                             />
                         </div>
-                        <div>
-                            <h3 className="text-md font-medium text-slate-900 dark:text-white">Permissions</h3>
-                             <div className="mt-2 space-y-4">
-                                {Object.entries(groupedPermissions).map(([groupName, groupPermissions]) => (
-                                    <PermissionGroup
-                                        key={groupName}
-                                        groupName={groupName}
-                                        groupPermissions={groupPermissions}
-                                        selectedPermissions={role.permissions || []}
-                                        onGroupChange={handleGroupPermissionChange}
-                                        onPermissionChange={handlePermissionChange}
-                                    />
-                                ))}
-                            </div>
+                    </div>
+
+                    <div className="px-6 pb-6 flex-1 overflow-y-auto">
+                        <h3 className="text-md font-medium text-slate-900 dark:text-white mb-2">Permissions</h3>
+                        <div className="space-y-4">
+                            {Object.entries(groupedPermissions).map(([groupName, groupPermissions]) => (
+                                <PermissionGroup
+                                    key={groupName}
+                                    groupName={groupName}
+                                    groupPermissions={groupPermissions}
+                                    selectedPermissions={role.permissions || []}
+                                    onGroupChange={handleGroupPermissionChange}
+                                    onPermissionChange={handlePermissionChange}
+                                />
+                            ))}
                         </div>
                     </div>
+
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 flex justify-end gap-3 flex-shrink-0">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</button>
                         <button type="submit" className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Save Role</button>
@@ -435,47 +440,6 @@ const UsersRolesPage: React.FC = () => {
             </button>
         </div>
     );
-
-    const ConfirmationModal: React.FC<{
-        isOpen: boolean;
-        onClose: () => void;
-        onConfirm: () => void;
-        title: string;
-        message: string;
-    }> = ({ isOpen, onClose, onConfirm, title, message }) => {
-        if (!isOpen) return null;
-
-        return (
-            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="dialog-title">
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-                    <div className="p-6">
-                        <div className="flex items-start">
-                            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
-                                <svg className="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
-                                </svg>
-                            </div>
-                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <h3 className="text-lg leading-6 font-bold text-slate-900 dark:text-white" id="dialog-title">{title}</h3>
-                                <div className="mt-2">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">{message}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 sm:flex sm:flex-row-reverse rounded-b-lg">
-                        <button type="button" onClick={onConfirm} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
-                            Confirm Delete
-                        </button>
-                        <button type="button" onClick={() => setConfirmationState(null)} className="mt-3 w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto sm:text-sm">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
 
     const renderUsersTable = () => (
         <Table<User>

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useMemo } from 'react';
-import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings } from '../types';
-import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS } from '../data/mockData';
+import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument } from '../types';
+import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS } from '../data/mockData';
 
 interface AgeVerificationSettings {
     minimumAge: number;
@@ -33,6 +33,7 @@ interface AuthContextType {
     products: Product[];
     addProduct: (productData: Omit<Product, 'id' | 'imageUrl'>, imageDataUrl?: string | null) => void;
     updateProduct: (product: Product) => void;
+    deleteProduct: (productId: string) => void;
     updateMultipleProducts: (updatedProducts: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => void;
     brands: Brand[];
     addBrand: (brandData: Omit<Brand, 'id'>) => Brand;
@@ -87,6 +88,7 @@ interface AuthContextType {
     quotations: Quotation[];
     addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Sale;
     voidSale: (saleId: string) => void;
+    updateSaleWithEmail: (saleId: string, email: string) => void;
     addDraft: (draftData: Omit<Draft, 'id' | 'date'>) => void;
     updateDraft: (updatedDraft: Draft) => void;
     deleteDraft: (draftId: string) => void;
@@ -109,6 +111,11 @@ interface AuthContextType {
     addPaymentMethod: (data: Omit<PaymentMethod, 'id'>) => void;
     updatePaymentMethod: (method: PaymentMethod) => void;
     deletePaymentMethod: (methodId: string) => void;
+    // Product Documents
+    productDocuments: ProductDocument[];
+    addProductDocument: (docData: Omit<ProductDocument, 'id'>) => void;
+    updateProductDocument: (doc: ProductDocument) => void;
+    deleteProductDocument: (docId: string) => void;
     // Settings
     ageVerificationSettings: AgeVerificationSettings;
     updateAgeVerificationSettings: (settings: AgeVerificationSettings, restrictedIds: string[]) => void;
@@ -147,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
     const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(MOCK_EXPENSE_CATEGORIES);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(MOCK_PAYMENT_METHODS);
+    const [productDocuments, setProductDocuments] = useState<ProductDocument[]>(MOCK_PRODUCT_DOCUMENTS);
     const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: false });
     const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(MOCK_CUSTOMER_REQUESTS);
     const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(() => {
@@ -233,6 +241,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updateProduct = (updatedProduct: Product) => {
         setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+    };
+
+    const deleteProduct = (productId: string) => {
+        // Safeguard: Check if product is in any transaction
+        const isProductInUse = 
+            sales.some(sale => sale.items.some(item => item.id === productId)) ||
+            purchases.some(purchase => purchase.items.some(item => item.id === productId)) ||
+            purchaseReturns.some(pr => pr.items.some(item => item.id === productId)) ||
+            stockAdjustments.some(sa => sa.productId === productId) ||
+            stockTransfers.some(st => st.items.some(item => item.id === productId));
+
+        if (isProductInUse) {
+            throw new Error("Cannot delete product. It is part of one or more transactions (sales, purchases, stock adjustments, etc.) and must be kept for historical records.");
+        }
+
+        setProducts(prev => prev.filter(p => p.id !== productId));
     };
 
     const updateMultipleProducts = (updatedProducts: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => {
@@ -548,6 +572,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
     };
 
+    const updateSaleWithEmail = (saleId: string, email: string) => {
+        setSales(prev => prev.map(s => s.id === saleId ? { ...s, customerEmailForDocs: email } : s));
+    };
+
     const addDraft = (draftData: Omit<Draft, 'id' | 'date'>) => {
         const newDraft: Draft = {
             id: `draft_${Date.now()}`,
@@ -625,6 +653,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     // #endregion
     
+    // #region Product Document Management
+    const addProductDocument = (docData: Omit<ProductDocument, 'id'>) => {
+        const newDoc: ProductDocument = { id: `doc_${Date.now()}`, ...docData };
+        setProductDocuments(prev => [...prev, newDoc]);
+    };
+    const updateProductDocument = (updatedDoc: ProductDocument) => {
+        setProductDocuments(prev => prev.map(d => d.id === updatedDoc.id ? updatedDoc : d));
+    };
+    const deleteProductDocument = (docId: string) => {
+        setProductDocuments(prev => prev.filter(d => d.id !== docId));
+    };
+    // #endregion
+
     // #region Settings Management
     const updateAgeVerificationSettings = (settings: AgeVerificationSettings, restrictedIds: string[]) => {
         setAgeVerificationSettings(settings);
@@ -687,6 +728,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         products,
         addProduct,
         updateProduct,
+        deleteProduct,
         updateMultipleProducts,
         brands, addBrand, updateBrand, deleteBrand,
         categories, addCategory, updateCategory, deleteCategory,
@@ -728,6 +770,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         quotations,
         addSale,
         voidSale,
+        updateSaleWithEmail,
         addDraft,
         updateDraft,
         deleteDraft,
@@ -747,6 +790,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addPaymentMethod,
         updatePaymentMethod,
         deletePaymentMethod,
+        productDocuments,
+        addProductDocument,
+        updateProductDocument,
+        deleteProductDocument,
         ageVerificationSettings,
         updateAgeVerificationSettings,
         brandingSettings,

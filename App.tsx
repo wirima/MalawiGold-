@@ -1,4 +1,6 @@
-import React, { lazy, Suspense } from 'react';
+
+
+import * as React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { OfflineProvider } from './contexts/OfflineContext';
@@ -14,65 +16,66 @@ const PageLoader: React.FC = () => (
 );
 
 // Lazy-load all page components
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const ProductsPage = lazy(() => import('./pages/ProductsPage'));
-const POSPage = lazy(() => import('./pages/POSPage'));
-const ContactsPage = lazy(() => import('./pages/ContactsPage'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
-const UsersRolesPage = lazy(() => import('./pages/UsersRolesPage'));
-const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
-const StockAdjustmentsPage = lazy(() => import('./pages/StockAdjustmentsPage'));
-const ImportContactsPage = lazy(() => import('./pages/ImportContactsPage'));
-const VariationsPage = lazy(() => import('./pages/VariationsPage'));
-const BrandsPage = lazy(() => import('./pages/BrandsPage'));
-const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
-const UnitsPage = lazy(() => import('./pages/UnitsPage'));
-const ImportUnitsPage = lazy(() => import('./pages/ImportUnitsPage'));
-const AddProductPage = lazy(() => import('./pages/AddProductPage'));
-const UpdatePricePage = lazy(() => import('./pages/UpdatePricePage'));
-const SalesListPage = lazy(() => import('./pages/SalesListPage'));
-const AddSalePage = lazy(() => import('./pages/AddSalePage'));
-const UnderConstructionPage = lazy(() => import('./pages/UnderConstructionPage'));
-const ListDraftsPage = lazy(() => import('./pages/ListDraftsPage'));
-const AddDraftPage = lazy(() => import('./pages/AddDraftPage'));
-const PurchasesPage = lazy(() => import('./pages/PurchasesPage'));
-const AddPurchasePage = lazy(() => import('./pages/AddPurchasePage'));
-const AddPurchaseReturnPage = lazy(() => import('./pages/AddPurchaseReturnPage'));
-const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
-const ExpenseCategoriesPage = lazy(() => import('./pages/ExpenseCategoriesPage'));
-const ProfitLossReportPage = lazy(() => import('./pages/reports/ProfitLossReportPage'));
-const PurchaseSaleReportPage = lazy(() => import('./pages/reports/PurchaseSaleReportPage'));
-const SalesAnalysisReportPage = lazy(() => import('./pages/reports/SalesAnalysisReportPage'));
-const TaxReportPage = lazy(() => import('./pages/reports/TaxReportPage'));
-const SupplierCustomerReportPage = lazy(() => import('./pages/reports/SupplierCustomerReportPage'));
-const CustomerGroupReportPage = lazy(() => import('./pages/reports/CustomerGroupReportPage'));
-const StockReportPage = lazy(() => import('./pages/reports/StockReportPage'));
-const StockAdjustmentReportPage = lazy(() => import('./pages/reports/StockAdjustmentReportPage'));
-const TrendingProductsReportPage = lazy(() => import('./pages/reports/TrendingProductsReportPage'));
-const ItemsReportPage = lazy(() => import('./pages/reports/ItemsReportPage'));
-const ProductPurchaseReportPage = lazy(() => import('./pages/reports/ProductPurchaseReportPage'));
-const ProductSellReportPage = lazy(() => import('./pages/reports/ProductSellReportPage'));
-const ExpenseReportPage = lazy(() => import('./pages/reports/ExpenseReportPage'));
-const RegisterReportPage = lazy(() => import('./pages/reports/RegisterReportPage'));
-const SalesRepReportPage = lazy(() => import('./pages/reports/SalesRepReportPage'));
-const ActivityLogPage = lazy(() => import('./pages/reports/ActivityLogPage'));
-const StockTransfersPage = lazy(() => import('./pages/StockTransfersPage'));
-const AddStockTransferPage = lazy(() => import('./pages/AddStockTransferPage'));
-const ShipmentsPage = lazy(() => import('./pages/ShipmentsPage'));
-const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
-const ListPurchaseReturnsPage = lazy(() => import('./pages/ListPurchaseReturnsPage'));
-const AddStockAdjustmentPage = lazy(() => import('./pages/AddStockAdjustmentPage'));
-const BusinessLocationsPage = lazy(() => import('./pages/BusinessLocationsPage'));
-const PaymentMethodsPage = lazy(() => import('./pages/PaymentMethodsPage'));
-const ImportProductsPage = lazy(() => import('./pages/ImportProductsPage'));
-const ImportOpeningStockPage = lazy(() => import('./pages/ImportOpeningStockPage'));
-const DeploymentPage = lazy(() => import('./pages/DeploymentPage'));
-const PrintLabelsPage = lazy(() => import('./pages/PrintLabelsPage'));
-const SaleReceiptPage = lazy(() => import('./pages/SaleReceiptPage'));
-const AgeVerificationSettingsPage = lazy(() => import('./pages/AgeVerificationSettingsPage'));
-const CustomerDemandReportPage = lazy(() => import('./pages/reports/CustomerDemandReportPage'));
-const BrandingSettingsPage = lazy(() => import('./pages/BrandingSettingsPage'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const ProductsPage = React.lazy(() => import('./pages/ProductsPage'));
+const POSPage = React.lazy(() => import('./pages/POSPage'));
+const ContactsPage = React.lazy(() => import('./pages/ContactsPage'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
+const UsersRolesPage = React.lazy(() => import('./pages/UsersRolesPage'));
+const UserProfilePage = React.lazy(() => import('./pages/UserProfilePage'));
+const StockAdjustmentsPage = React.lazy(() => import('./pages/StockAdjustmentsPage'));
+const ImportContactsPage = React.lazy(() => import('./pages/ImportContactsPage'));
+const VariationsPage = React.lazy(() => import('./pages/VariationsPage'));
+const BrandsPage = React.lazy(() => import('./pages/BrandsPage'));
+const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'));
+const UnitsPage = React.lazy(() => import('./pages/UnitsPage'));
+const ImportUnitsPage = React.lazy(() => import('./pages/ImportUnitsPage'));
+const AddProductPage = React.lazy(() => import('./pages/AddProductPage'));
+const UpdatePricePage = React.lazy(() => import('./pages/UpdatePricePage'));
+const SalesListPage = React.lazy(() => import('./pages/SalesListPage'));
+const AddSalePage = React.lazy(() => import('./pages/AddSalePage'));
+const UnderConstructionPage = React.lazy(() => import('./pages/UnderConstructionPage'));
+const ListDraftsPage = React.lazy(() => import('./pages/ListDraftsPage'));
+const AddDraftPage = React.lazy(() => import('./pages/AddDraftPage'));
+const PurchasesPage = React.lazy(() => import('./pages/PurchasesListPage'));
+const AddPurchasePage = React.lazy(() => import('./pages/AddPurchasePage'));
+const AddPurchaseReturnPage = React.lazy(() => import('./pages/AddPurchaseReturnPage'));
+const ExpensesPage = React.lazy(() => import('./pages/ExpensesPage'));
+const ExpenseCategoriesPage = React.lazy(() => import('./pages/ExpenseCategoriesPage'));
+const ProfitLossReportPage = React.lazy(() => import('./pages/reports/ProfitLossReportPage'));
+const PurchaseSaleReportPage = React.lazy(() => import('./pages/reports/PurchaseSaleReportPage'));
+const SalesAnalysisReportPage = React.lazy(() => import('./pages/reports/SalesAnalysisReportPage'));
+const TaxReportPage = React.lazy(() => import('./pages/reports/TaxReportPage'));
+const SupplierCustomerReportPage = React.lazy(() => import('./pages/reports/SupplierCustomerReportPage'));
+const CustomerGroupReportPage = React.lazy(() => import('./pages/reports/CustomerGroupReportPage'));
+const StockReportPage = React.lazy(() => import('./pages/reports/StockReportPage'));
+const StockAdjustmentReportPage = React.lazy(() => import('./pages/reports/StockAdjustmentReportPage'));
+const TrendingProductsReportPage = React.lazy(() => import('./pages/reports/TrendingProductsReportPage'));
+const ItemsReportPage = React.lazy(() => import('./pages/reports/ItemsReportPage'));
+const ProductPurchaseReportPage = React.lazy(() => import('./pages/reports/ProductPurchaseReportPage'));
+const ProductSellReportPage = React.lazy(() => import('./pages/reports/ProductSellReportPage'));
+const ExpenseReportPage = React.lazy(() => import('./pages/reports/ExpenseReportPage'));
+const RegisterReportPage = React.lazy(() => import('./pages/reports/RegisterReportPage'));
+const SalesRepReportPage = React.lazy(() => import('./pages/reports/SalesRepReportPage'));
+const ActivityLogPage = React.lazy(() => import('./pages/reports/ActivityLogPage'));
+const StockTransfersPage = React.lazy(() => import('./pages/StockTransfersPage'));
+const AddStockTransferPage = React.lazy(() => import('./pages/AddStockTransferPage'));
+const ShipmentsPage = React.lazy(() => import('./pages/ShipmentsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage'));
+const ListPurchaseReturnsPage = React.lazy(() => import('./pages/ListPurchaseReturnsPage'));
+const AddStockAdjustmentPage = React.lazy(() => import('./pages/AddStockAdjustmentPage'));
+const BusinessLocationsPage = React.lazy(() => import('./pages/BusinessLocationsPage'));
+const PaymentMethodsPage = React.lazy(() => import('./pages/PaymentMethodsPage'));
+const ImportProductsPage = React.lazy(() => import('./pages/ImportProductsPage'));
+const ImportOpeningStockPage = React.lazy(() => import('./pages/ImportOpeningStockPage'));
+const DeploymentPage = React.lazy(() => import('./pages/DeploymentPage'));
+const PrintLabelsPage = React.lazy(() => import('./pages/PrintLabelsPage'));
+const SaleReceiptPage = React.lazy(() => import('./pages/SaleReceiptPage'));
+const AgeVerificationSettingsPage = React.lazy(() => import('./pages/AgeVerificationSettingsPage'));
+const CustomerDemandReportPage = React.lazy(() => import('./pages/reports/CustomerDemandReportPage'));
+const BrandingSettingsPage = React.lazy(() => import('./pages/BrandingSettingsPage'));
+const ProductDocumentsPage = React.lazy(() => import('./pages/ProductDocumentsPage'));
 
 const App: React.FC = () => {
   return (
@@ -84,7 +87,7 @@ const App: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden">
               <Header />
               <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-800 p-4 sm:p-6 lg:p-8">
-                <Suspense fallback={<PageLoader />}>
+                <React.Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     {/* Products Routes */}
@@ -101,7 +104,7 @@ const App: React.FC = () => {
                     <Route path="/products/units/import" element={<ImportUnitsPage />} />
                     <Route path="/products/categories" element={<CategoriesPage />} />
                     <Route path="/products/brands" element={<BrandsPage />} />
-                    <Route path="/products/warranties" element={<NotFoundPage />} />
+                    <Route path="/products/documents" element={<ProductDocumentsPage />} />
 
                     {/* Contacts Routes */}
                     <Route path="/contacts" element={<ContactsPage />} />
@@ -179,7 +182,7 @@ const App: React.FC = () => {
                     {/* Catch-all */}
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
-                </Suspense>
+                </React.Suspense>
               </main>
             </div>
           </div>

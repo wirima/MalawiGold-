@@ -1,6 +1,14 @@
-// FIX: Removed a problematic global JSX declaration that was causing errors with intrinsic elements (e.g., 'div'). With this removed, the standard React JSX typings will be used.
-import React from 'react';
 
+import * as React from 'react';
+
+// FIX: Project-wide type issue where JSX elements are not recognized.
+// This redeclares the global JSX namespace to include React's intrinsic elements,
+// making all standard HTML elements available in JSX across the project.
+declare global {
+  namespace JSX {
+    interface IntrinsicElements extends React.JSX.IntrinsicElements {}
+  }
+}
 
 export interface Brand {
   id: string;
@@ -53,6 +61,16 @@ export interface Product {
   isAgeRestricted?: boolean;
 }
 
+export interface ProductDocument {
+  id: string;
+  name: string;
+  description: string;
+  productIds: string[];
+  fileUrl: string;
+  fileName: string;
+  fileType: 'coa' | 'warranty';
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -102,6 +120,7 @@ export interface Sale {
     value: number;
   };
   isQueued?: boolean;
+  customerEmailForDocs?: string;
 }
 
 export interface Shipment {
@@ -198,6 +217,7 @@ export type Permission =
   | 'products:view'
   | 'products:manage'
   | 'products:add'
+  | 'products:delete'
   | 'products:update_price'
   | 'products:print_labels'
   | 'products:variations'
@@ -208,7 +228,7 @@ export type Permission =
   | 'products:units'
   | 'products:categories'
   | 'products:brands'
-  | 'products:warranties'
+  | 'products:documents'
   // Contacts
   | 'contacts:view'
   | 'contacts:manage'

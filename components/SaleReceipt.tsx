@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Sale } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,8 +8,18 @@ interface SaleReceiptProps {
 }
 
 const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
-    const { paymentMethods, brandingSettings } = useAuth();
+    const { paymentMethods, brandingSettings, productDocuments, updateSaleWithEmail } = useAuth();
+    const [email, setEmail] = useState('');
+    const [emailSent, setEmailSent] = useState(false);
+
     const paymentMethodsMap = useMemo(() => new Map(paymentMethods.map(p => [p.id, p.name])), [paymentMethods]);
+
+    const associatedDocuments = useMemo(() => {
+        const saleProductIds = new Set(sale.items.map(item => item.id));
+        return productDocuments.filter(doc => 
+            doc.productIds.some(productId => saleProductIds.has(productId))
+        );
+    }, [sale.items, productDocuments]);
 
     useEffect(() => {
         // @ts-ignore
@@ -31,6 +41,15 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
     
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleSendEmail = () => {
+        if (email.trim() && /^\S+@\S+\.\S+$/.test(email.trim())) {
+            updateSaleWithEmail(sale.id, email);
+            setEmailSent(true);
+        } else {
+            alert('Please enter a valid email address.');
+        }
     };
 
     const subtotal = sale.items.reduce((acc, item) => {
@@ -157,6 +176,30 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
                         <p className="text-xs mt-2">Thank you for your business!</p>
                     </div>
                 </div>
+                {associatedDocuments.length > 0 && (
+                    <div className="p-4 bg-slate-100 dark:bg-slate-700/50 no-print">
+                        <h4 className="font-bold text-sm mb-2 text-slate-800 dark:text-slate-200">Email Documents</h4>
+                        <ul className="text-xs list-disc list-inside mb-3 text-slate-600 dark:text-slate-300">
+                            {associatedDocuments.map(doc => <li key={doc.id}><span className="font-semibold">{doc.fileType.toUpperCase()}:</span> {doc.name}</li>)}
+                        </ul>
+                        {emailSent || sale.customerEmailForDocs ? (
+                            <div className="text-center p-2 rounded-md bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-sm font-sans">
+                                Documents sent to {sale.customerEmailForDocs || email}!
+                            </div>
+                        ) : (
+                            <div className="flex gap-2 font-sans">
+                                <input 
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Customer's email address"
+                                    className="flex-1 block w-full text-sm rounded-md bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <button onClick={handleSendEmail} className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Send</button>
+                            </div>
+                        )}
+                    </div>
+                )}
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg no-print">
                     <button onClick={handlePrint} className="w-full inline-flex justify-center items-center gap-2 rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clipRule="evenodd" /></svg>

@@ -19,7 +19,7 @@ const ICONS = {
 
 export const ALL_PERMISSIONS: Permission[] = [
     'dashboard:view',
-    'products:view', 'products:manage', 'products:add', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:warranties',
+    'products:view', 'products:manage', 'products:add', 'products:delete', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:documents',
     'contacts:view', 'contacts:manage', 'contacts:import',
     'purchases:view', 'purchases:manage',
     'sell:view', 'sell:pos', 'sell:sales', 'sell:manage', 'shipping:view', 'shipping:manage', 'discounts:view',
@@ -77,7 +77,7 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
         { path: '/products/units', label: 'Units', permission: 'products:units' },
         { path: '/products/categories', label: 'Categories', permission: 'products:categories' },
         { path: '/products/brands', label: 'Brands', permission: 'products:brands' },
-        { path: '/products/warranties', label: 'Warranties', permission: 'products:warranties' },
+        { path: '/products/documents', label: 'Product Documents', permission: 'products:documents' },
     ]
   },
   { 

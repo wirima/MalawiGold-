@@ -1,4 +1,4 @@
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
@@ -297,6 +297,29 @@ export const MOCK_CUSTOMER_REQUESTS: CustomerRequest[] = [
     { id: 'CR003', text: 'Someone was looking for cold brew coffee.', cashierId: 'USER004', cashierName: 'David Jones', date: '2023-10-29T18:00:00Z' },
 ];
 
+const MOCK_PDF_URL = 'data:application/pdf;base64,JVBERi0xLjcgCiXi////////CiAxIDAgb2JqCiA8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PiAKZW5kb2JqCiAyIDAgb2JqCiA8PC9UeXBlL1BhZ2VzL0NvdW50IDEgL0tpZHNbMyAwIFJdPj4gCmVuZG9iagogMyAwIG9iagogPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9NZWRpYUJveFswIDAgNTk1IDg0Ml0vQ29udGVudHMgNCAwIFIvUmVzb3VyY2VzPDw+Pj4gCmVuZG9iagogNCAwIG9iagogPDwvTGVuZ3RoIDM+PiAKc3RyZWFtCiAKRU5DCmVuZHN0cmVhbQplbmRvYmoKICB4cmVmCiAwIDUKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEzIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMTEzIDAwMDAwIG4gCjAwMDAwMDAyMTggMDAwMDAgbiAKdHJhaWxlcgogIDw8L1Jvb3QgMSAwIFIvU2l6ZSA1Pj4Kc3RhcnR4cmVmCjI2NAolJUVPRgo=';
+
+export const MOCK_PRODUCT_DOCUMENTS: ProductDocument[] = [
+    {
+        id: 'DOC001',
+        name: 'CBD Oil - Certificate of Analysis',
+        description: '3rd party lab results for batch #481516',
+        productIds: ['PROD013'],
+        fileUrl: MOCK_PDF_URL,
+        fileName: 'COA_Batch_481516.pdf',
+        fileType: 'coa',
+    },
+    {
+        id: 'DOC002',
+        name: 'Standard 1-Year Warranty',
+        description: 'Limited 1-year warranty for electronic parts.',
+        productIds: [], // Not assigned to any product yet
+        fileUrl: MOCK_PDF_URL,
+        fileName: 'Standard_Warranty.pdf',
+        fileType: 'warranty',
+    }
+];
+
 export const MOCK_ROLES: Role[] = [
     {
         id: 'admin',
@@ -304,7 +327,7 @@ export const MOCK_ROLES: Role[] = [
         description: 'Has full access to all system features.',
         permissions: [
             'dashboard:view',
-            'products:view', 'products:manage', 'products:add', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:warranties',
+            'products:view', 'products:manage', 'products:add', 'products:delete', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:documents',
             'contacts:view', 'contacts:manage', 'contacts:import',
             'purchases:view', 'purchases:manage',
             'sell:view', 'sell:pos', 'sell:sales', 'sell:manage', 'shipping:view', 'shipping:manage', 'discounts:view',
@@ -327,11 +350,13 @@ export const MOCK_ROLES: Role[] = [
             'dashboard:view',
             'products:view',
             'products:manage',
+            'products:delete',
             'products:variations',
             'products:import',
             'products:import_stock',
             'products:import_units',
             'products:update_price',
+            'products:documents',
             'contacts:view',
             'contacts:manage',
             'purchases:view', 'purchases:manage',
