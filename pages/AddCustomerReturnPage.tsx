@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Sale, CartItem } from '../types';
@@ -29,6 +30,7 @@ const AddCustomerReturnPage: React.FC = () => {
     const selectedSale = useMemo(() => sales.find(s => s.id === selectedSaleId), [selectedSaleId, sales]);
     const totalRefund = useMemo(() => {
         // FIX: Explicitly type the 'item' parameter in the reduce callback to resolve type inference issues.
+        // Fix for: Operator '+' cannot be applied to types 'unknown' and 'number'.
         return Object.values(itemsToReturn).reduce((acc, item: { product: CartItem; quantity: number }) => {
             return acc + item.product.price * item.quantity;
         }, 0);

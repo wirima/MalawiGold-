@@ -1,10 +1,16 @@
 
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Product, Brand, Category, Unit, BusinessLocation } from '../types';
 import ConfirmationModal from '../components/ConfirmationModal';
+
+type SortableKeys = 'name' | 'sku' | 'categoryName' | 'brandName' | 'locationName' | 'price' | 'stock';
+type SortDirection = 'ascending' | 'descending';
+type SortConfig = {
+    key: SortableKeys;
+    direction: SortDirection;
+} | null;
 
 const baseInputClasses = "mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500";
 const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-500 focus:ring-red-500";
@@ -244,8 +250,17 @@ const ProductsPage: React.FC = () => {
     const brandsMap = useMemo(() => new Map(brands.map(b => [b.id, b.name])), [brands]);
     const locationsMap = useMemo(() => new Map(businessLocations.map(l => [l.id, l.name])), [businessLocations]);
 
+    // Sorting State and Logic
+    type SortableKeys = 'name' | 'sku' | 'categoryName' | 'brandName' | 'locationName' | 'price' | 'stock';
+    type SortDirection = 'ascending' | 'descending';
+    type SortConfig = {
+        key: SortableKeys;
+        direction: SortDirection;
+    } | null;
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'ascending' });
+
     const filteredProducts = useMemo(() => {
-        return products
+        let sortableProducts = products
             .filter(product => {
                 const lowercasedTerm = searchTerm.toLowerCase();
                 if (!lowercasedTerm) return true;
@@ -273,7 +288,46 @@ const ProductsPage: React.FC = () => {
                 if (stockFilter === 'out_of_stock') return product.stock === 0;
                 return true;
             });
-    }, [products, searchTerm, categoryFilter, stockFilter, locationFilter, categoriesMap, brandsMap]);
+
+        if (sortConfig !== null) {
+            sortableProducts.sort((a, b) => {
+                let aValue: any;
+                let bValue: any;
+
+                switch (sortConfig.key) {
+                    case 'categoryName':
+                        aValue = categoriesMap.get(a.categoryId) || '';
+                        bValue = categoriesMap.get(b.categoryId) || '';
+                        break;
+                    case 'brandName':
+                        aValue = brandsMap.get(a.brandId) || '';
+                        bValue = brandsMap.get(b.brandId) || '';
+                        break;
+                    case 'locationName':
+                        aValue = locationsMap.get(a.businessLocationId) || '';
+                        bValue = locationsMap.get(b.businessLocationId) || '';
+                        break;
+                    default:
+                        aValue = a[sortConfig.key as keyof Product];
+                        bValue = b[sortConfig.key as keyof Product];
+                }
+
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return aValue.localeCompare(bValue) * (sortConfig.direction === 'ascending' ? 1 : -1);
+                }
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        
+        return sortableProducts;
+    }, [products, searchTerm, categoryFilter, stockFilter, locationFilter, categoriesMap, brandsMap, locationsMap, sortConfig]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -321,6 +375,30 @@ const ProductsPage: React.FC = () => {
         if (product.stock <= product.reorderPoint) return { text: 'Low Stock', count: product.stock, className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' };
         return { text: 'In Stock', count: product.stock, className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' };
     };
+    
+    const requestSort = (key: SortableKeys) => {
+        let direction: SortDirection = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortIndicator = (key: SortableKeys) => {
+        if (!sortConfig || sortConfig.key !== key) {
+            return <span className="text-slate-400">▲▼</span>;
+        }
+        return sortConfig.direction === 'ascending' ? '▲' : '▼';
+    };
+
+    const SortableHeader: React.FC<{ sortKey: SortableKeys; children: React.ReactNode }> = ({ sortKey, children }) => (
+         <th scope="col" className="px-6 py-3">
+            <button onClick={() => requestSort(sortKey)} className="flex items-center gap-2 font-semibold">
+                {children}
+                <span className="text-indigo-400">{getSortIndicator(sortKey)}</span>
+            </button>
+        </th>
+    );
 
     return (
         <>
@@ -442,15 +520,15 @@ const ProductsPage: React.FC = () => {
                     <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
                         <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
                             <tr>
-                                <th scope="col" className="px-6 py-3">Image</th>
-                                <th scope="col" className="px-6 py-3">Product Name</th>
-                                <th scope="col" className="px-6 py-3">SKU</th>
-                                <th scope="col" className="px-6 py-3">Category</th>
-                                <th scope="col" className="px-6 py-3">Brand</th>
-                                <th scope="col" className="px-6 py-3">Location</th>
-                                <th scope="col" className="px-6 py-3">Price</th>
-                                <th scope="col" className="px-6 py-3">Stock Status</th>
-                                <th scope="col" className="px-6 py-3">Actions</th>
+                                <th scope="col" className="px-6 py-3 font-semibold">Image</th>
+                                <SortableHeader sortKey="name">Product Name</SortableHeader>
+                                <SortableHeader sortKey="sku">SKU</SortableHeader>
+                                <SortableHeader sortKey="categoryName">Category</SortableHeader>
+                                <SortableHeader sortKey="brandName">Brand</SortableHeader>
+                                <SortableHeader sortKey="locationName">Location</SortableHeader>
+                                <SortableHeader sortKey="price">Price</SortableHeader>
+                                <SortableHeader sortKey="stock">Stock Status</SortableHeader>
+                                <th scope="col" className="px-6 py-3 font-semibold">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
