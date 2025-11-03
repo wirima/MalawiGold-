@@ -1,7 +1,3 @@
-
-
-
-
 import * as React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -78,6 +74,9 @@ const AgeVerificationSettingsPage = React.lazy(() => import('./pages/AgeVerifica
 const CustomerDemandReportPage = React.lazy(() => import('./pages/reports/CustomerDemandReportPage'));
 const BrandingSettingsPage = React.lazy(() => import('./pages/BrandingSettingsPage'));
 const ProductDocumentsPage = React.lazy(() => import('./pages/ProductDocumentsPage'));
+const ListCustomerReturnsPage = React.lazy(() => import('./pages/ListCustomerReturnsPage'));
+const AddCustomerReturnPage = React.lazy(() => import('./pages/AddCustomerReturnPage'));
+const ReturnAnalysisReportPage = React.lazy(() => import('./pages/reports/ReturnAnalysisReportPage'));
 
 const App: React.FC = () => {
   return (
@@ -130,7 +129,8 @@ const App: React.FC = () => {
                     <Route path="/sell/drafts/edit/:draftId" element={<AddDraftPage />} />
                     <Route path="/sell/quotations/add" element={<UnderConstructionPage />} />
                     <Route path="/sell/quotations" element={<UnderConstructionPage />} />
-                    <Route path="/sell/returns" element={<UnderConstructionPage />} />
+                    <Route path="/sell/returns" element={<ListCustomerReturnsPage />} />
+                    <Route path="/sell/returns/add" element={<AddCustomerReturnPage />} />
                     <Route path="/sell/shipments" element={<ShipmentsPage />} />
                     <Route path="/sell/discounts" element={<UnderConstructionPage />} />
                     <Route path="/sell/import" element={<UnderConstructionPage />} />
@@ -166,6 +166,7 @@ const App: React.FC = () => {
                     <Route path="/reports/sales-rep" element={<SalesRepReportPage />} />
                     <Route path="/reports/activity-log" element={<ActivityLogPage />} />
                     <Route path="/reports/customer-demand" element={<CustomerDemandReportPage />} />
+                    <Route path="/reports/return-analysis" element={<ReturnAnalysisReportPage />} />
 
                     {/* User Management Routes */}
                     <Route path="/users" element={<UsersRolesPage />} />

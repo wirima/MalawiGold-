@@ -1,4 +1,4 @@
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
@@ -214,6 +214,18 @@ export const MOCK_SALES: Sale[] = [
     },
 ];
 
+export const MOCK_CUSTOMER_RETURNS: CustomerReturn[] = [
+    {
+        id: 'RET001',
+        date: '2023-10-28T11:00:00Z',
+        originalSaleId: 'SALE001',
+        customer: { id: MOCK_CUSTOMERS[0].id, name: MOCK_CUSTOMERS[0].name },
+        items: [{ ...MOCK_PRODUCTS[0], quantity: 1 }],
+        reason: 'The espresso tasted burnt, customer was not satisfied with the quality.',
+        total: 2.50,
+    }
+];
+
 export const MOCK_SHIPMENTS: Shipment[] = [
     {
         id: 'SHIP001',
@@ -330,12 +342,12 @@ export const MOCK_ROLES: Role[] = [
             'products:view', 'products:manage', 'products:add', 'products:delete', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:documents',
             'contacts:view', 'contacts:manage', 'contacts:import',
             'purchases:view', 'purchases:manage',
-            'sell:view', 'sell:pos', 'sell:sales', 'sell:manage', 'shipping:view', 'shipping:manage', 'discounts:view',
+            'sell:view', 'sell:pos', 'sell:sales', 'sell:manage', 'shipping:view', 'shipping:manage', 'discounts:view', 'returns:view', 'returns:manage',
             'pos:apply_discount', 'pos:change_price', 'pos:process_return', 'pos:void_sale',
             'stock_transfer:view', 'stock_transfer:manage',
             'stock_adjustment:view', 'stock_adjustment:manage',
             'expense:view', 'expense:manage',
-            'reports:view', 'reports:customer_demand',
+            'reports:view', 'reports:customer_demand', 'reports:return_analysis',
             'users:view', 'users:manage',
             'notifications:manage',
             'settings:view',
@@ -366,7 +378,8 @@ export const MOCK_ROLES: Role[] = [
             'pos:apply_discount', 'pos:change_price', 'pos:process_return', 'pos:void_sale',
             'shipping:view', 'shipping:manage',
             'stock_adjustment:view', 'stock_adjustment:manage',
-            'reports:view', 'reports:customer_demand',
+            'returns:view', 'returns:manage',
+            'reports:view', 'reports:customer_demand', 'reports:return_analysis',
             'users:view',
             'settings:view',
             'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations'

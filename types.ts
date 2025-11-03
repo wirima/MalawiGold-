@@ -114,6 +114,16 @@ export interface Sale {
   customerEmailForDocs?: string;
 }
 
+export interface CustomerReturn {
+  id: string;
+  date: string;
+  originalSaleId: string;
+  customer: Pick<Customer, 'id' | 'name'>;
+  items: CartItem[];
+  reason: string;
+  total: number;
+}
+
 export interface Shipment {
   id: string;
   saleId: string;
@@ -235,6 +245,8 @@ export type Permission =
   | 'shipping:view'
   | 'shipping:manage'
   | 'discounts:view'
+  | 'returns:view'
+  | 'returns:manage'
   // POS Specific
   | 'pos:apply_discount'
   | 'pos:change_price'
@@ -251,6 +263,7 @@ export type Permission =
   // Reports
   | 'reports:view'
   | 'reports:customer_demand'
+  | 'reports:return_analysis'
   // Users
   | 'users:view'
   | 'users:manage'

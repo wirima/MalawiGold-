@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useMemo } from 'react';
-import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument } from '../types';
-import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS } from '../data/mockData';
+import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn } from '../types';
+import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS } from '../data/mockData';
 
 interface AgeVerificationSettings {
     minimumAge: number;
@@ -89,6 +89,8 @@ interface AuthContextType {
     addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Sale;
     voidSale: (saleId: string) => void;
     updateSaleWithEmail: (saleId: string, email: string) => void;
+    customerReturns: CustomerReturn[];
+    addCustomerReturn: (returnData: Omit<CustomerReturn, 'id' | 'date'>) => void;
     addDraft: (draftData: Omit<Draft, 'id' | 'date'>) => void;
     updateDraft: (updatedDraft: Draft) => void;
     deleteDraft: (draftId: string) => void;
@@ -146,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [variations, setVariations] = useState<Variation[]>(MOCK_VARIATIONS);
     const [variationValues, setVariationValues] = useState<VariationValue[]>(MOCK_VARIATION_VALUES);
     const [sales, setSales] = useState<Sale[]>(MOCK_SALES);
+    const [customerReturns, setCustomerReturns] = useState<CustomerReturn[]>(MOCK_CUSTOMER_RETURNS);
     const [shipments, setShipments] = useState<Shipment[]>(MOCK_SHIPMENTS);
     const [drafts, setDrafts] = useState<Draft[]>(MOCK_DRAFTS);
     const [quotations, setQuotations] = useState<Quotation[]>(MOCK_QUOTATIONS);
@@ -576,6 +579,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSales(prev => prev.map(s => s.id === saleId ? { ...s, customerEmailForDocs: email } : s));
     };
 
+    const addCustomerReturn = (returnData: Omit<CustomerReturn, 'id' | 'date'>) => {
+        const newReturn: CustomerReturn = {
+            id: `RET-${Date.now().toString().slice(-4)}`,
+            date: new Date().toISOString(),
+            ...returnData,
+        };
+        setCustomerReturns(prev => [newReturn, ...prev]);
+
+        // Add returned items back to stock
+        setProducts(prevProducts => {
+            const stockUpdates = new Map<string, number>();
+            for (const item of returnData.items) {
+                stockUpdates.set(item.id, (stockUpdates.get(item.id) || 0) + item.quantity);
+            }
+            return prevProducts.map(p => {
+                if (stockUpdates.has(p.id)) {
+                    return { ...p, stock: p.stock + stockUpdates.get(p.id)! };
+                }
+                return p;
+            });
+        });
+    };
+
     const addDraft = (draftData: Omit<Draft, 'id' | 'date'>) => {
         const newDraft: Draft = {
             id: `draft_${Date.now()}`,
@@ -771,6 +797,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addSale,
         voidSale,
         updateSaleWithEmail,
+        customerReturns,
+        addCustomerReturn,
         addDraft,
         updateDraft,
         deleteDraft,

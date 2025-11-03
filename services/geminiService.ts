@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Sale, CustomerRequest } from '../types';
+import { Sale, CustomerRequest, CustomerReturn } from '../types';
 import { MOCK_CATEGORIES } from '../data/mockData';
 
 export const getBusinessInsights = async (salesData: Sale[]): Promise<string> => {
@@ -133,5 +133,51 @@ export const getCustomerDemandAnalysis = async (requests: CustomerRequest[]): Pr
     } catch (error) {
         console.error("Error generating demand analysis with Gemini API:", error);
         throw new Error("Failed to generate demand analysis. Please check the API configuration.");
+    }
+};
+
+export const getReturnAnalysisInsights = async (returns: CustomerReturn[]): Promise<string> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    if (returns.length === 0) {
+        return "<p>There are no customer returns to analyze in the selected period.</p>";
+    }
+
+    const simplifiedReturns = returns.map(r => ({
+        products_returned: r.items.map(item => ({ name: item.name, quantity: item.quantity })),
+        reason: r.reason
+    }));
+
+    const prompt = `
+        You are a Quality Control and Business Analyst for a retail business.
+        You have been provided with the following customer return data. Your task is to analyze it and provide actionable insights.
+
+        Customer Return Data (JSON format):
+        ${JSON.stringify(simplifiedReturns, null, 2)}
+
+        Provide a concise but insightful report covering these points:
+        1.  **Common Return Reasons:** Analyze the 'reason' texts and group them into 2-4 common themes (e.g., "Product Quality Issues", "Wrong Item/Size", "Customer Dissatisfaction").
+        2.  **Frequently Returned Products:** Identify the top 2-3 products that are being returned most often based on this data.
+        3.  **Actionable Insights & Recommendations:** Based on your analysis, provide three concrete, actionable recommendations for the business manager. For example:
+            - "The 'Espresso' is frequently returned with comments about a 'burnt taste'. Recommend reviewing the brewing process or coffee bean batch with the staff."
+            - "Several returns are for 'wrong size'. Suggest adding clearer size charts or training staff to assist with sizing."
+            - "If a specific product has a high return rate due to defects, recommend contacting the supplier or inspecting the current batch."
+
+        Format your response as clean, professional HTML. Use headings (e.g., <h4>), bold text (<strong> tags), and lists (<ul>, <li> tags). Do not include html, head, or body tags.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error generating return analysis with Gemini API:", error);
+        throw new Error("Failed to generate return analysis. Please check the API configuration.");
     }
 };
