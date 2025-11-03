@@ -115,7 +115,7 @@ interface AuthContextType {
     deletePaymentMethod: (methodId: string) => void;
     // Product Documents
     productDocuments: ProductDocument[];
-    addProductDocument: (docData: Omit<ProductDocument, 'id'>) => void;
+    addProductDocument: (docData: Omit<ProductDocument, 'id' | 'uploadedDate'>) => void;
     updateProductDocument: (doc: ProductDocument) => void;
     deleteProductDocument: (docId: string) => void;
     // Settings
@@ -680,8 +680,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // #endregion
     
     // #region Product Document Management
-    const addProductDocument = (docData: Omit<ProductDocument, 'id'>) => {
-        const newDoc: ProductDocument = { id: `doc_${Date.now()}`, ...docData };
+    const addProductDocument = (docData: Omit<ProductDocument, 'id' | 'uploadedDate'>) => {
+        const newDoc: ProductDocument = { 
+            id: `doc_${Date.now()}`, 
+            uploadedDate: new Date().toISOString(),
+            ...docData 
+        };
         setProductDocuments(prev => [...prev, newDoc]);
     };
     const updateProductDocument = (updatedDoc: ProductDocument) => {

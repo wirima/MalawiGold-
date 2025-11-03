@@ -60,6 +60,7 @@ export interface ProductDocument {
   fileUrl: string;
   fileName: string;
   fileType: 'coa' | 'warranty';
+  uploadedDate: string;
 }
 
 export interface Customer {

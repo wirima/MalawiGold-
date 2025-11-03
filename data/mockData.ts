@@ -320,6 +320,7 @@ export const MOCK_PRODUCT_DOCUMENTS: ProductDocument[] = [
         fileUrl: MOCK_PDF_URL,
         fileName: 'COA_Batch_481516.pdf',
         fileType: 'coa',
+        uploadedDate: '2023-10-25T10:00:00Z',
     },
     {
         id: 'DOC002',
@@ -329,6 +330,7 @@ export const MOCK_PRODUCT_DOCUMENTS: ProductDocument[] = [
         fileUrl: MOCK_PDF_URL,
         fileName: 'Standard_Warranty.pdf',
         fileType: 'warranty',
+        uploadedDate: '2023-09-15T14:30:00Z',
     }
 ];
 

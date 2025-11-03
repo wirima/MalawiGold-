@@ -7,7 +7,7 @@ const DocumentFormModal: React.FC<{
     doc: ProductDocument | null;
     products: Product[];
     onClose: () => void;
-    onSave: (data: ProductDocument | Omit<ProductDocument, 'id'>) => void;
+    onSave: (data: ProductDocument | Omit<ProductDocument, 'id' | 'uploadedDate'>) => void;
 }> = ({ doc, products, onClose, onSave }) => {
     const isEditing = !!doc;
     const [name, setName] = useState(doc?.name || '');
@@ -140,7 +140,7 @@ const ProductDocumentsPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingDoc, setEditingDoc] = useState<ProductDocument | null>(null);
 
-    const handleSave = (data: ProductDocument | Omit<ProductDocument, 'id'>) => {
+    const handleSave = (data: ProductDocument | Omit<ProductDocument, 'id' | 'uploadedDate'>) => {
         if ('id' in data) {
             updateProductDocument(data);
         } else {
@@ -179,6 +179,7 @@ const ProductDocumentsPage: React.FC = () => {
                                 <th className="px-6 py-3">Type</th>
                                 <th className="px-6 py-3">File</th>
                                 <th className="px-6 py-3">Associated Products</th>
+                                <th className="px-6 py-3">Date Uploaded</th>
                                 <th className="px-6 py-3">Actions</th>
                             </tr>
                         </thead>
@@ -202,6 +203,7 @@ const ProductDocumentsPage: React.FC = () => {
                                         </a>
                                     </td>
                                     <td className="px-6 py-4">{doc.productIds.length}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{new Date(doc.uploadedDate).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 space-x-2">
                                         <button onClick={() => { setEditingDoc(doc); setIsModalOpen(true); }} className="font-medium text-indigo-600 hover:underline">Edit</button>
                                         <button onClick={() => handleDelete(doc.id)} className="font-medium text-red-600 hover:underline">Delete</button>
