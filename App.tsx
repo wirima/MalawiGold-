@@ -1,6 +1,9 @@
+
+
 import * as React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { OfflineProvider } from './contexts/OfflineContext';
 import { LanguageProvider } from './src/i18n';
 import Sidebar from './components/Sidebar';
@@ -32,9 +35,10 @@ const AddProductPage = React.lazy(() => import('./pages/AddProductPage'));
 const UpdatePricePage = React.lazy(() => import('./pages/UpdatePricePage'));
 const SalesListPage = React.lazy(() => import('./pages/SalesListPage'));
 const AddSalePage = React.lazy(() => import('./pages/AddSalePage'));
-const UnderConstructionPage = React.lazy(() => import('./pages/UnderConstructionPage'));
 const ListDraftsPage = React.lazy(() => import('./pages/ListDraftsPage'));
 const AddDraftPage = React.lazy(() => import('./pages/AddDraftPage'));
+const ListQuotationsPage = React.lazy(() => import('./pages/ListQuotationsPage'));
+const AddQuotationPage = React.lazy(() => import('./pages/AddQuotationPage'));
 const PurchasesPage = React.lazy(() => import('./pages/PurchasesListPage'));
 const AddPurchasePage = React.lazy(() => import('./pages/AddPurchasePage'));
 const AddPurchaseReturnPage = React.lazy(() => import('./pages/AddPurchaseReturnPage'));
@@ -68,6 +72,7 @@ const PaymentMethodsPage = React.lazy(() => import('./pages/PaymentMethodsPage')
 const ImportProductsPage = React.lazy(() => import('./pages/ImportProductsPage'));
 const ImportOpeningStockPage = React.lazy(() => import('./pages/ImportOpeningStockPage'));
 const DeploymentPage = React.lazy(() => import('./pages/DeploymentPage'));
+const BackendArchitecturePage = React.lazy(() => import('./pages/BackendArchitecturePage'));
 const PrintLabelsPage = React.lazy(() => import('./pages/PrintLabelsPage'));
 const SaleReceiptPage = React.lazy(() => import('./pages/SaleReceiptPage'));
 const AgeVerificationSettingsPage = React.lazy(() => import('./pages/AgeVerificationSettingsPage'));
@@ -77,121 +82,135 @@ const ProductDocumentsPage = React.lazy(() => import('./pages/ProductDocumentsPa
 const ListCustomerReturnsPage = React.lazy(() => import('./pages/ListCustomerReturnsPage'));
 const AddCustomerReturnPage = React.lazy(() => import('./pages/AddCustomerReturnPage'));
 const ReturnAnalysisReportPage = React.lazy(() => import('./pages/reports/ReturnAnalysisReportPage'));
+const IntegrationsPage = React.lazy(() => import('./pages/IntegrationsPage'));
+const VendorApiConnectionPage = React.lazy(() => import('./pages/VendorApiConnectionPage'));
+const PaymentGatewayConnectionPage = React.lazy(() => import('./pages/PaymentGatewayConnectionPage'));
+const BankAccountsPage = React.lazy(() => import('./pages/BankAccountsPage'));
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <OfflineProvider>
-        <LanguageProvider>
-          <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-800 p-4 sm:p-6 lg:p-8">
-                <React.Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    {/* Products Routes */}
-                    <Route path="/products" element={<ProductsPage />} />
-                    <Route path="/products/:productId" element={<ProductDetailPage />} />
-                    <Route path="/products/add" element={<AddProductPage />} />
-                    <Route path="/products/update-price" element={<UpdatePricePage />} />
-                    <Route path="/products/print-labels" element={<PrintLabelsPage />} />
-                    <Route path="/products/variations" element={<VariationsPage />} />
-                    <Route path="/products/import" element={<ImportProductsPage />} />
-                    <Route path="/products/import-opening-stock" element={<ImportOpeningStockPage />} />
-                    <Route path="/products/selling-price-group" element={<NotFoundPage />} />
-                    <Route path="/products/units" element={<UnitsPage />} />
-                    <Route path="/products/units/import" element={<ImportUnitsPage />} />
-                    <Route path="/products/categories" element={<CategoriesPage />} />
-                    <Route path="/products/brands" element={<BrandsPage />} />
-                    <Route path="/products/documents" element={<ProductDocumentsPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <OfflineProvider>
+          <LanguageProvider>
+            <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+              <Sidebar />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-800 p-4 sm:p-6 lg:p-8">
+                  <React.Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      {/* Products Routes */}
+                      <Route path="/products" element={<ProductsPage />} />
+                      <Route path="/products/:productId" element={<ProductDetailPage />} />
+                      <Route path="/products/add" element={<AddProductPage />} />
+                      <Route path="/products/update-price" element={<UpdatePricePage />} />
+                      <Route path="/products/print-labels" element={<PrintLabelsPage />} />
+                      <Route path="/products/variations" element={<VariationsPage />} />
+                      <Route path="/products/import" element={<ImportProductsPage />} />
+                      <Route path="/products/import-opening-stock" element={<ImportOpeningStockPage />} />
+                      <Route path="/products/selling-price-group" element={<NotFoundPage />} />
+                      <Route path="/products/units" element={<UnitsPage />} />
+                      <Route path="/products/units/import" element={<ImportUnitsPage />} />
+                      <Route path="/products/categories" element={<CategoriesPage />} />
+                      <Route path="/products/brands" element={<BrandsPage />} />
+                      <Route path="/products/documents" element={<ProductDocumentsPage />} />
 
-                    {/* Contacts Routes */}
-                    <Route path="/contacts" element={<ContactsPage />} />
-                    <Route path="/contacts/suppliers" element={<ContactsPage />} />
-                    <Route path="/contacts/groups" element={<ContactsPage />} />
-                    <Route path="/contacts/import" element={<ImportContactsPage />} />
+                      {/* Contacts Routes */}
+                      <Route path="/contacts" element={<ContactsPage />} />
+                      <Route path="/contacts/suppliers" element={<ContactsPage />} />
+                      <Route path="/contacts/groups" element={<ContactsPage />} />
+                      <Route path="/contacts/import" element={<ImportContactsPage />} />
 
-                    {/* Purchases Routes */}
-                    <Route path="/purchases" element={<PurchasesPage />} />
-                    <Route path="/purchases/add" element={<AddPurchasePage />} />
-                    <Route path="/purchases/returns" element={<ListPurchaseReturnsPage />} />
-                    <Route path="/purchases/returns/add" element={<AddPurchaseReturnPage />} />
+                      {/* Purchases Routes */}
+                      <Route path="/purchases" element={<PurchasesPage />} />
+                      <Route path="/purchases/add" element={<AddPurchasePage />} />
+                      <Route path="/purchases/returns" element={<ListPurchaseReturnsPage />} />
+                      <Route path="/purchases/returns/add" element={<AddPurchaseReturnPage />} />
 
-                    {/* Sell Routes */}
-                    <Route path="/sell/sales" element={<SalesListPage />} />
-                    <Route path="/sell/add" element={<AddSalePage />} />
-                    <Route path="/sell/pos-list" element={<UnderConstructionPage />} />
-                    <Route path="/sell/pos" element={<POSPage />} />
-                    <Route path="/sell/drafts" element={<ListDraftsPage />} />
-                    <Route path="/sell/drafts/add" element={<AddDraftPage />} />
-                    <Route path="/sell/drafts/edit/:draftId" element={<AddDraftPage />} />
-                    <Route path="/sell/quotations/add" element={<UnderConstructionPage />} />
-                    <Route path="/sell/quotations" element={<UnderConstructionPage />} />
-                    <Route path="/sell/returns" element={<ListCustomerReturnsPage />} />
-                    <Route path="/sell/returns/add" element={<AddCustomerReturnPage />} />
-                    <Route path="/sell/shipments" element={<ShipmentsPage />} />
-                    <Route path="/sell/discounts" element={<UnderConstructionPage />} />
-                    <Route path="/sell/import" element={<UnderConstructionPage />} />
-                    <Route path="/sell/receipt/:saleId" element={<SaleReceiptPage />} />
-                    
-                    {/* Stock Adjustment & Transfer Routes */}
-                    <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
-                    <Route path="/stock-adjustments/add" element={<AddStockAdjustmentPage />} />
-                    <Route path="/stock-transfers" element={<StockTransfersPage />} />
-                    <Route path="/stock-transfers/add" element={<AddStockTransferPage />} />
-                    
-                    {/* Expenses Routes */}
-                    <Route path="/expenses" element={<ExpensesPage />} />
-                    <Route path="/expenses/add" element={<ExpensesPage />} />
-                    <Route path="/expenses/categories" element={<ExpenseCategoriesPage />} />
-
-
-                    {/* Reports Routes */}
-                    <Route path="/reports/profit-loss" element={<ProfitLossReportPage />} />
-                    <Route path="/reports/purchase-sale" element={<PurchaseSaleReportPage />} />
-                    <Route path="/reports/sales-analysis" element={<SalesAnalysisReportPage />} />
-                    <Route path="/reports/tax" element={<TaxReportPage />} />
-                    <Route path="/reports/supplier-customer" element={<SupplierCustomerReportPage />} />
-                    <Route path="/reports/customer-group" element={<CustomerGroupReportPage />} />
-                    <Route path="/reports/stock" element={<StockReportPage />} />
-                    <Route path="/reports/stock-adjustment" element={<StockAdjustmentReportPage />} />
-                    <Route path="/reports/trending-products" element={<TrendingProductsReportPage />} />
-                    <Route path="/reports/items" element={<ItemsReportPage />} />
-                    <Route path="/reports/product-purchase" element={<ProductPurchaseReportPage />} />
-                    <Route path="/reports/product-sell" element={<ProductSellReportPage />} />
-                    <Route path="/reports/expense" element={<ExpenseReportPage />} />
-                    <Route path="/reports/register" element={<RegisterReportPage />} />
-                    <Route path="/reports/sales-rep" element={<SalesRepReportPage />} />
-                    <Route path="/reports/activity-log" element={<ActivityLogPage />} />
-                    <Route path="/reports/customer-demand" element={<CustomerDemandReportPage />} />
-                    <Route path="/reports/return-analysis" element={<ReturnAnalysisReportPage />} />
-
-                    {/* User Management Routes */}
-                    <Route path="/users" element={<UsersRolesPage />} />
-                    <Route path="/profile" element={<UserProfilePage />} />
-                    
-                    {/* Settings & Notifications */}
-                    <Route path="/notification-templates" element={<NotFoundPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/settings/branding" element={<BrandingSettingsPage />} />
-                    <Route path="/settings/locations" element={<BusinessLocationsPage />} />
-                    <Route path="/settings/payment-methods" element={<PaymentMethodsPage />} />
-                    <Route path="/settings/age-verification" element={<AgeVerificationSettingsPage />} />
-                    <Route path="/settings/deployment" element={<DeploymentPage />} />
+                      {/* Sell Routes */}
+                      <Route path="/sell/sales" element={<SalesListPage />} />
+                      <Route path="/sell/add" element={<AddSalePage />} />
+                      <Route path="/sell/pos-list" element={<POSPage />} />
+                      <Route path="/sell/pos" element={<POSPage />} />
+                      <Route path="/sell/drafts" element={<ListDraftsPage />} />
+                      <Route path="/sell/drafts/add" element={<AddDraftPage />} />
+                      <Route path="/sell/drafts/edit/:draftId" element={<AddDraftPage />} />
+                      <Route path="/sell/quotations/add" element={<AddQuotationPage />} />
+                      <Route path="/sell/quotations/edit/:quotationId" element={<AddQuotationPage />} />
+                      <Route path="/sell/quotations" element={<ListQuotationsPage />} />
+                      <Route path="/sell/returns" element={<ListCustomerReturnsPage />} />
+                      <Route path="/sell/returns/add" element={<AddCustomerReturnPage />} />
+                      <Route path="/sell/shipments" element={<ShipmentsPage />} />
+                      <Route path="/sell/discounts" element={<POSPage />} />
+                      <Route path="/sell/import" element={<POSPage />} />
+                      <Route path="/sell/receipt/:saleId" element={<SaleReceiptPage />} />
+                      
+                      {/* Stock Adjustment & Transfer Routes */}
+                      <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
+                      <Route path="/stock-adjustments/add" element={<AddStockAdjustmentPage />} />
+                      <Route path="/stock-transfers" element={<StockTransfersPage />} />
+                      <Route path="/stock-transfers/add" element={<AddStockTransferPage />} />
+                      
+                      {/* Expenses Routes */}
+                      <Route path="/expenses" element={<ExpensesPage />} />
+                      <Route path="/expenses/add" element={<ExpensesPage />} />
+                      <Route path="/expenses/categories" element={<ExpenseCategoriesPage />} />
 
 
-                    {/* Catch-all */}
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </React.Suspense>
-              </main>
+                      {/* Reports Routes */}
+                      <Route path="/reports/profit-loss" element={<ProfitLossReportPage />} />
+                      <Route path="/reports/purchase-sale" element={<PurchaseSaleReportPage />} />
+                      <Route path="/reports/sales-analysis" element={<SalesAnalysisReportPage />} />
+                      <Route path="/reports/tax" element={<TaxReportPage />} />
+                      <Route path="/reports/supplier-customer" element={<SupplierCustomerReportPage />} />
+                      <Route path="/reports/customer-group" element={<CustomerGroupReportPage />} />
+                      <Route path="/reports/stock" element={<StockReportPage />} />
+                      <Route path="/reports/stock-adjustment" element={<StockAdjustmentReportPage />} />
+                      <Route path="/reports/trending-products" element={<TrendingProductsReportPage />} />
+                      <Route path="/reports/items" element={<ItemsReportPage />} />
+                      <Route path="/reports/product-purchase" element={<ProductPurchaseReportPage />} />
+                      <Route path="/reports/product-sell" element={<ProductSellReportPage />} />
+                      <Route path="/reports/expense" element={<ExpenseReportPage />} />
+                      <Route path="/reports/register" element={<RegisterReportPage />} />
+                      <Route path="/reports/sales-rep" element={<SalesRepReportPage />} />
+                      <Route path="/reports/activity-log" element={<ActivityLogPage />} />
+                      <Route path="/reports/customer-demand" element={<CustomerDemandReportPage />} />
+                      <Route path="/reports/return-analysis" element={<ReturnAnalysisReportPage />} />
+
+                      {/* User Management Routes */}
+                      <Route path="/users" element={<UsersRolesPage />} />
+                      <Route path="/profile" element={<UserProfilePage />} />
+                      
+                      {/* Settings & Notifications */}
+                      <Route path="/notification-templates" element={<NotFoundPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/settings/branding" element={<BrandingSettingsPage />} />
+                      <Route path="/settings/locations" element={<BusinessLocationsPage />} />
+                      <Route path="/settings/payment-methods" element={<PaymentMethodsPage />} />
+                      <Route path="/settings/bank-accounts" element={<BankAccountsPage />} />
+                      <Route path="/settings/age-verification" element={<AgeVerificationSettingsPage />} />
+                      <Route path="/settings/deployment" element={<DeploymentPage />} />
+                      <Route path="/settings/backend-architecture" element={<BackendArchitecturePage />} />
+                      <Route path="/settings/integrations" element={<IntegrationsPage />} />
+                      <Route path="/settings/integrations/vendor-api" element={<VendorApiConnectionPage />} />
+                      <Route path="/settings/integrations/vendor-api/:connectionId" element={<VendorApiConnectionPage />} />
+                      <Route path="/settings/integrations/payment-gateway" element={<PaymentGatewayConnectionPage />} />
+                      <Route path="/settings/integrations/payment-gateway/:connectionId" element={<PaymentGatewayConnectionPage />} />
+
+
+                      {/* Catch-all */}
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                  </React.Suspense>
+                </main>
+              </div>
             </div>
-          </div>
-        </LanguageProvider>
-      </OfflineProvider>
-    </AuthProvider>
+          </LanguageProvider>
+        </OfflineProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

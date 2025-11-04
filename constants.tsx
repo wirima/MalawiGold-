@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import { Permission } from './types';
 
@@ -31,7 +33,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'users:view', 'users:manage',
     'notifications:manage',
     'settings:view',
-    'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification'
+    'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification', 'settings:integrations',
+    'settings:accounts'
 ];
 
 const NavIcon: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -174,8 +177,11 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
         { path: '/settings/branding', label: t('branding'), permission: 'settings:view' },
         { path: '/settings/locations', label: t('businessLocations'), permission: 'settings:locations' },
         { path: '/settings/payment-methods', label: t('paymentMethods'), permission: 'settings:payment' },
+        { path: '/settings/bank-accounts', label: 'Bank Accounts', permission: 'settings:accounts' },
         { path: '/settings/age-verification', label: t('ageVerification'), permission: 'settings:age_verification' },
-        { path: '/settings/deployment', label: t('deployment'), permission: 'settings:view' }
+        { path: '/settings/deployment', label: t('deployment'), permission: 'settings:view' },
+        { path: '/settings/backend-architecture', label: 'Backend Architecture', permission: 'settings:view' },
+        { path: '/settings/integrations', label: 'Integrations', permission: 'settings:integrations' }
     ]
   }
 ];

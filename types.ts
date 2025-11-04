@@ -92,9 +92,17 @@ export interface CartItem extends Product {
   originalPrice?: number;
 }
 
+export interface BankAccount {
+    id: string;
+    accountName: string;
+    bankName: string;
+    accountNumber: string;
+}
+
 export interface PaymentMethod {
     id: string;
     name: string;
+    accountId?: string;
 }
 
 export interface Sale {
@@ -213,6 +221,20 @@ export interface CustomerRequest {
   date: string;
 }
 
+export type IntegrationProvider = 'vendor-api' | 'payment-gateway';
+
+export interface IntegrationConnection {
+  id: string;
+  provider: IntegrationProvider;
+  name: string;
+  config: {
+    apiUrl?: string;
+    apiKey?: string; // Secret Key for vendors/Stripe
+    publishableKey?: string; // For Stripe
+    locationId?: string; // For Square/Stripe terminals
+  };
+}
+
 export type Permission = 
   | 'dashboard:view'
   // Products
@@ -288,7 +310,9 @@ export type Permission =
   | 'settings:modules'
   | 'settings:custom_labels'
   | 'settings:locations'
-  | 'settings:age_verification';
+  | 'settings:age_verification'
+  | 'settings:integrations'
+  | 'settings:accounts';
 
 export interface Role {
     id: string;

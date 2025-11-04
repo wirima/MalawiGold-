@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useMemo } from 'react';
-import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn } from '../types';
-import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS } from '../data/mockData';
+import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount } from '../types';
+import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS } from '../data/mockData';
 
 interface AgeVerificationSettings {
     minimumAge: number;
@@ -94,6 +94,9 @@ interface AuthContextType {
     addDraft: (draftData: Omit<Draft, 'id' | 'date'>) => void;
     updateDraft: (updatedDraft: Draft) => void;
     deleteDraft: (draftId: string) => void;
+    addQuotation: (quotationData: Omit<Quotation, 'id' | 'date'>) => void;
+    updateQuotation: (updatedQuotation: Quotation) => void;
+    deleteQuotation: (quotationId: string) => void;
     // Shipping
     shipments: Shipment[];
     addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
@@ -113,6 +116,10 @@ interface AuthContextType {
     addPaymentMethod: (data: Omit<PaymentMethod, 'id'>) => void;
     updatePaymentMethod: (method: PaymentMethod) => void;
     deletePaymentMethod: (methodId: string) => void;
+    bankAccounts: BankAccount[];
+    addBankAccount: (data: Omit<BankAccount, 'id'>) => void;
+    updateBankAccount: (account: BankAccount) => void;
+    deleteBankAccount: (accountId: string) => void;
     // Product Documents
     productDocuments: ProductDocument[];
     addProductDocument: (docData: Omit<ProductDocument, 'id' | 'uploadedDate'>) => void;
@@ -127,6 +134,11 @@ interface AuthContextType {
     // Customer Requests
     customerRequests: CustomerRequest[];
     addCustomerRequests: (requestsText: string, cashier: User) => void;
+    // Integrations
+    integrations: IntegrationConnection[];
+    addIntegration: (data: Omit<IntegrationConnection, 'id'>) => void;
+    updateIntegration: (data: IntegrationConnection) => void;
+    deleteIntegration: (id: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -157,9 +169,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
     const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(MOCK_EXPENSE_CATEGORIES);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(MOCK_PAYMENT_METHODS);
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(MOCK_BANK_ACCOUNTS);
     const [productDocuments, setProductDocuments] = useState<ProductDocument[]>(MOCK_PRODUCT_DOCUMENTS);
     const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: false });
     const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(MOCK_CUSTOMER_REQUESTS);
+    const [integrations, setIntegrations] = useState<IntegrationConnection[]>([]);
     const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(() => {
         try {
             const storedSettings = window.localStorage.getItem('gemini-pos-branding');
@@ -618,6 +632,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const deleteDraft = (draftId: string) => {
         setDrafts(prev => prev.filter(d => d.id !== draftId));
     };
+    
+    const addQuotation = (quotationData: Omit<Quotation, 'id' | 'date'>) => {
+        const newQuotation: Quotation = {
+            id: `QUOT-${Date.now().toString().slice(-4)}`,
+            date: new Date().toISOString(),
+            ...quotationData,
+        };
+        setQuotations(prev => [newQuotation, ...prev]);
+    };
+
+    const updateQuotation = (updatedQuotation: Quotation) => {
+        setQuotations(prev => prev.map(q => q.id === updatedQuotation.id ? updatedQuotation : q));
+    };
+
+    const deleteQuotation = (quotationId: string) => {
+        setQuotations(prev => prev.filter(q => q.id !== quotationId));
+    };
     // #endregion
 
     // #region Shipping Management
@@ -676,6 +707,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw new Error('Cannot delete payment method. It is in use by one or more sales records.');
         }
         setPaymentMethods(prev => prev.filter(p => p.id !== methodId));
+    };
+    // #endregion
+
+    // #region Bank Account Management
+    const addBankAccount = (data: Omit<BankAccount, 'id'>) => {
+        const newAccount: BankAccount = { id: `acc_${Date.now()}`, ...data };
+        setBankAccounts(prev => [...prev, newAccount]);
+    };
+    const updateBankAccount = (updatedAccount: BankAccount) => {
+        setBankAccounts(prev => prev.map(acc => acc.id === updatedAccount.id ? updatedAccount : acc));
+    };
+    const deleteBankAccount = (accountId: string) => {
+        if (paymentMethods.some(pm => pm.accountId === accountId)) {
+            throw new Error('Cannot delete bank account. It is currently linked to one or more payment methods.');
+        }
+        setBankAccounts(prev => prev.filter(acc => acc.id !== accountId));
     };
     // #endregion
     
@@ -743,6 +790,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     // #endregion
 
+    // #region Integration Management
+    const addIntegration = (data: Omit<IntegrationConnection, 'id'>) => {
+        const newIntegration: IntegrationConnection = { id: `int_${Date.now()}`, ...data };
+        setIntegrations(prev => [...prev, newIntegration]);
+    };
+    const updateIntegration = (updatedIntegration: IntegrationConnection) => {
+        setIntegrations(prev => prev.map(i => i.id === updatedIntegration.id ? updatedIntegration : i));
+    };
+    const deleteIntegration = (id: string) => {
+        setIntegrations(prev => prev.filter(i => i.id !== id));
+    };
+    // #endregion
+
     const value = {
         currentUser,
         setCurrentUser,
@@ -806,6 +866,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addDraft,
         updateDraft,
         deleteDraft,
+        addQuotation,
+        updateQuotation,
+        deleteQuotation,
         shipments,
         addShipment,
         updateShipment,
@@ -822,6 +885,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addPaymentMethod,
         updatePaymentMethod,
         deletePaymentMethod,
+        bankAccounts,
+        addBankAccount,
+        updateBankAccount,
+        deleteBankAccount,
         productDocuments,
         addProductDocument,
         updateProductDocument,
@@ -833,6 +900,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetBrandingSettings,
         customerRequests,
         addCustomerRequests,
+        integrations,
+        addIntegration,
+        updateIntegration,
+        deleteIntegration,
     };
 
     return (

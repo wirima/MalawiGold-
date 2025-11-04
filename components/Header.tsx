@@ -6,6 +6,7 @@ import { useOffline } from '../contexts/OfflineContext';
 import CustomerRequestModal from './CustomerRequestModal';
 import { useTranslation } from '../src/i18n';
 import LanguageSwitcher from '../src/components/LanguageSwitcher';
+import ThemeSwitcher from './ThemeSwitcher';
 
 const Header: React.FC = () => {
     const { currentUser, users, setCurrentUser, roles, hasPermission } = useAuth();
@@ -87,6 +88,7 @@ const Header: React.FC = () => {
                     <div className="w-32">
                         <LanguageSwitcher />
                     </div>
+                    <ThemeSwitcher />
                     {isCashier && (
                         <button 
                             onClick={() => setIsRequestModalOpen(true)}

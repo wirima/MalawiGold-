@@ -1,4 +1,4 @@
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
@@ -6,16 +6,21 @@ export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC03', name: 'Westside Kiosk' },
 ];
 
+export const MOCK_BANK_ACCOUNTS: BankAccount[] = [
+    { id: 'ACC01', accountName: 'Main Checking Account', bankName: 'First National Bank', accountNumber: '...XXXX1234' },
+    { id: 'ACC02', accountName: 'Digital Payments', bankName: 'Online Bank', accountNumber: '...XXXX5678' },
+];
+
 export const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
     { id: 'pay_cash', name: 'Cash' },
-    { id: 'pay_card', name: 'Card' },
-    { id: 'pay_qr', name: 'QR Code' },
-    { id: 'pay_nfc', name: 'NFC / Tap to Pay' },
-    { id: 'pay_airtel', name: 'Airtel Money' },
-    { id: 'pay_changu', name: 'PayChangu' },
-    { id: 'pay_tnm', name: 'TNM Mpamba' },
-    { id: 'pay_stripe', name: 'Stripe' },
-    { id: 'pay_mo626', name: 'Mo626' },
+    { id: 'pay_card', name: 'Card', accountId: 'ACC01' },
+    { id: 'pay_qr', name: 'QR Code', accountId: 'ACC02' },
+    { id: 'pay_nfc', name: 'NFC / Tap to Pay', accountId: 'ACC01' },
+    { id: 'pay_airtel', name: 'Airtel Money', accountId: 'ACC02' },
+    { id: 'pay_changu', name: 'PayChangu', accountId: 'ACC02' },
+    { id: 'pay_tnm', name: 'TNM Mpamba', accountId: 'ACC02' },
+    { id: 'pay_stripe', name: 'Stripe', accountId: 'ACC02' },
+    { id: 'pay_mo626', name: 'Mo626', accountId: 'ACC02' },
 ];
 
 export const MOCK_CUSTOMER_GROUPS: CustomerGroup[] = [
@@ -353,7 +358,8 @@ export const MOCK_ROLES: Role[] = [
             'users:view', 'users:manage',
             'notifications:manage',
             'settings:view',
-            'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification'
+            'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification',
+            'settings:integrations', 'settings:accounts'
         ]
     },
     {
@@ -384,7 +390,8 @@ export const MOCK_ROLES: Role[] = [
             'reports:view', 'reports:customer_demand', 'reports:return_analysis',
             'users:view',
             'settings:view',
-            'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations'
+            'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification',
+            'settings:integrations', 'settings:accounts'
         ]
     },
     {

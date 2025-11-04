@@ -50,13 +50,26 @@ const SaleReceiptPage: React.FC = () => {
     const changeDue = totalPaid - sale.total;
 
     return (
-        <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-md max-w-sm mx-auto">
+        <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-md max-w-sm mx-auto receipt-container">
+             <style>{`
+                @media print { 
+                    .no-print { display: none !important; } 
+                    body { background-color: white !important; } 
+                    aside, header { display: none !important; }
+                    main { padding: 0 !important; }
+                    .receipt-container { 
+                        box-shadow: none !important; 
+                        border: none !important; 
+                        margin: 0 !important;
+                        max-width: 100% !important;
+                    } 
+                }
+            `}</style>
              {sale.status === 'voided' && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                     <span className="text-8xl font-black text-red-500/20 dark:text-red-500/10 transform -rotate-45">VOID</span>
                 </div>
             )}
-            <style>{`@media print { .no-print { display: none; } body { background-color: white; } .receipt-container { box-shadow: none; border: none; } }`}</style>
             <div className="p-6 font-mono text-slate-800 dark:text-slate-200">
                 <div className="text-center">
                     {brandingSettings.logoUrl && (

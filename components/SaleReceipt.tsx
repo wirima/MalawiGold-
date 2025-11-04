@@ -40,7 +40,71 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
     }, [sale.id]);
     
     const handlePrint = () => {
-        window.print();
+        const printSection = document.getElementById('print-section');
+        if (!printSection) return;
+
+        const voidOverlay = document.querySelector('#receipt-modal-wrapper > div.absolute');
+        const voidHtml = voidOverlay ? voidOverlay.outerHTML : '';
+        
+        const styles = `
+            body { font-family: monospace; font-size: 12px; margin: 0; }
+            .receipt-container { max-width: 320px; margin: 0 auto; padding: 20px; position: relative; }
+            .text-center { text-align: center; }
+            h2 { font-size: 1.5rem; font-weight: 700; }
+            p { margin: 0; }
+            .text-xs { font-size: 10px; color: #64748b; }
+            .text-sm { font-size: 14px; }
+            .mt-2 { margin-top: 0.5rem; } .mt-4 { margin-top: 1rem; }
+            .font-bold { font-weight: 700; }
+            .border-t-2 { border-top: 2px dashed #000; } .border-b-2 { border-bottom: 2px dashed #000; }
+            .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; } .pt-1 { padding-top: 0.25rem; }
+            .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; }
+            .last\\:mb-0:last-child { margin-bottom: 0; }
+            .flex { display: flex; } .justify-between { justify-content: space-between; }
+            .flex-1 { flex: 1; } .break-words { word-break: break-all; } .pr-2 { padding-right: 0.5rem; }
+            .text-right { text-align: right; } .pl-2 { padding-left: 0.5rem; }
+            .text-orange-500 { color: #f97316; }
+            /* Void overlay */
+            .absolute { position: absolute; } .inset-0 { top: 0; right: 0; bottom: 0; left: 0; } .items-center { align-items: center; } .justify-center { display: flex; justify-content: center; }
+            .text-8xl { font-size: 6rem; line-height: 1; } .font-black { font-weight: 900; }
+            .text-red-500\\/20 { color: rgba(239, 68, 68, 0.2); }
+            .transform { transform: rotate(-45deg); } .\\-rotate-45 { transform: rotate(-45deg); }
+        `;
+
+        const html = `
+            <html>
+                <head>
+                    <title>Receipt - ${sale.id}</title>
+                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+                    <style>${styles}</style>
+                </head>
+                <body>
+                    <div class="receipt-container">
+                        ${voidHtml}
+                        ${printSection.innerHTML}
+                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            try {
+                                JsBarcode("#barcode", "${sale.id}", {
+                                    format: "CODE128", displayValue: true, fontSize: 18, height: 50, margin: 10
+                                });
+                            } catch(e) { console.error("JsBarcode error:", e); }
+                            setTimeout(() => {
+                                window.print();
+                                window.onafterprint = () => window.close();
+                            }, 250);
+                        });
+                    <\/script>
+                </body>
+            </html>
+        `;
+
+        const printWindow = window.open('', '_blank', 'height=800,width=400');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
     };
 
     const handleSendEmail = () => {
@@ -73,25 +137,6 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 print:p-0 print:bg-white">
-            <style>
-                {`
-                    @media print {
-                        body > *:not(#receipt-modal-wrapper) {
-                            display: none;
-                        }
-                        #receipt-modal-wrapper, #receipt-modal {
-                            display: block;
-                            position: static;
-                            width: 100%;
-                            height: auto;
-                            box-shadow: none;
-                        }
-                        .no-print {
-                            display: none;
-                        }
-                    }
-                `}
-            </style>
             <div id="receipt-modal-wrapper" className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm flex flex-col font-mono">
                 {sale.status === 'voided' && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
