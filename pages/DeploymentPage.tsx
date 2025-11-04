@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -98,7 +99,7 @@ npm -v`}</CodeBlock>
                         <p>First, you need to get a copy of the project files on your computer and install its dependencies.</p>
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200">2a. Download the Project Files</h4>
                         <p>The easiest way is to use Git. Open your terminal (like Command Prompt on Windows or Terminal on Mac) and run the following commands. This will create a folder called `gemini-pos-system` with all the app's code.</p>
-                        <CodeBlock>{`git clone `}<span className={highlightClass}>https://github.com/example-org/gemini-pos-system.git</span>{`
+                        <CodeBlock>{'git clone '}<span className={highlightClass}>https://github.com/example-org/gemini-pos-system.git</span>{`
 cd gemini-pos-system`}</CodeBlock>
                         <p className="mt-2 text-sm text-slate-500"><strong>Note:</strong> The repository URL is a placeholder. <span className={highlightClass}>Replace it with your project's actual repository URL</span>.</p>
                         <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 rounded-r-lg">
@@ -186,7 +187,7 @@ async function getProducts() {
                           <li>In the project's main folder, create a new file and name it exactly <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-sm">.env</code>.</li>
                           <li>Open the file and add the following line, replacing the highlighted placeholder with your actual key.</li>
                         </ul>
-                        <CodeBlock>{`API_KEY="`}<span className={highlightClass}>AIzaSy...your...actual...key...here</span>`"`}</CodeBlock>
+                        <CodeBlock>{'API_KEY="'}<span className={highlightClass}>AIzaSy...your...actual...key...here</span>{'"'}</CodeBlock>
 
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200 mt-4">4b. For Deployed Environments (Staging, Production)</h4>
                         <p>When you deploy your app to a hosting service (like Vercel, Netlify, AWS, etc.), the <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-sm">.env</code> file is not uploaded. Instead, you must configure the API key directly in your hosting provider's dashboard.</p>
