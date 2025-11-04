@@ -62,7 +62,10 @@ const SaleReceiptPage: React.FC = () => {
                         border: none !important; 
                         margin: 0 !important;
                         max-width: 100% !important;
-                    } 
+                    }
+                    .receipt-logo {
+                        max-height: 40px !important;
+                    }
                 }
             `}</style>
              {sale.status === 'voided' && (
@@ -73,7 +76,7 @@ const SaleReceiptPage: React.FC = () => {
             <div className="p-6 font-mono text-slate-800 dark:text-slate-200">
                 <div className="text-center">
                     {brandingSettings.logoUrl && (
-                        <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="mx-auto h-16 object-contain mb-2" />
+                        <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="mx-auto h-16 object-contain mb-2 receipt-logo" />
                     )}
                     <h2 className="text-2xl font-bold">{brandingSettings.businessName}</h2>
                     <p className="text-xs text-slate-500">{brandingSettings.address}</p>

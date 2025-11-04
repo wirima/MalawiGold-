@@ -50,6 +50,7 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
             body { font-family: monospace; font-size: 12px; margin: 0; }
             .receipt-container { max-width: 320px; margin: 0 auto; padding: 20px; position: relative; }
             .text-center { text-align: center; }
+            .receipt-logo { max-height: 40px; max-width: 100%; object-fit: contain; margin: 0 auto 0.5rem auto; }
             h2 { font-size: 1.5rem; font-weight: 700; }
             p { margin: 0; }
             .text-xs { font-size: 10px; color: #64748b; }
@@ -58,7 +59,7 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
             .font-bold { font-weight: 700; }
             .border-t-2 { border-top: 2px dashed #000; } .border-b-2 { border-bottom: 2px dashed #000; }
             .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; } .pt-1 { padding-top: 0.25rem; }
-            .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; }
+            .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.25rem; }
             .last\\:mb-0:last-child { margin-bottom: 0; }
             .flex { display: flex; } .justify-between { justify-content: space-between; }
             .flex-1 { flex: 1; } .break-words { word-break: break-all; } .pr-2 { padding-right: 0.5rem; }
@@ -151,7 +152,7 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
                 <div id="print-section" className="p-6 overflow-y-auto text-slate-800 dark:text-slate-200">
                     <div className="text-center">
                         {brandingSettings.logoUrl && (
-                            <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="mx-auto h-16 object-contain mb-2" />
+                            <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="mx-auto h-16 object-contain mb-2 receipt-logo" />
                         )}
                         <h2 className="text-2xl font-bold">{brandingSettings.businessName}</h2>
                         <p className="text-xs text-slate-500">{brandingSettings.address}</p>
