@@ -32,6 +32,7 @@ interface AuthContextType {
     // Products & Stock
     products: Product[];
     addProduct: (productData: Omit<Product, 'id' | 'imageUrl'>, imageDataUrl?: string | null) => void;
+    addVariableProduct: (parentProductData: Omit<Product, 'id' | 'imageUrl'>, variantsData: Omit<Product, 'id' | 'imageUrl'>[]) => void;
     updateProduct: (product: Product) => void;
     deleteProduct: (productId: string) => void;
     updateMultipleProducts: (updatedProducts: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => void;
@@ -254,6 +255,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ...productData
         };
         setProducts(prev => [newProduct, ...prev]);
+    };
+
+    const addVariableProduct = (parentProductData: Omit<Product, 'id' | 'imageUrl'>, variantsData: Omit<Product, 'id' | 'imageUrl'>[]) => {
+        const parentProduct: Product = {
+            id: `prod_var_${Date.now()}`,
+            imageUrl: `https://picsum.photos/seed/parent_${Date.now()}/400`,
+            ...parentProductData,
+            productType: 'variable',
+            stock: 0,
+            price: 0,
+            costPrice: 0,
+            isNotForSale: true,
+        };
+
+        const newVariants: Product[] = variantsData.map((variant, index) => ({
+            id: `prod_variant_${Date.now()}_${index}`,
+            imageUrl: `https://picsum.photos/seed/variant_${Date.now()}_${index}/400`,
+            ...variant,
+            parentProductId: parentProduct.id,
+            productType: 'single', // Variants are single, sellable products
+        }));
+
+        setProducts(prev => [parentProduct, ...newVariants, ...prev]);
     };
 
     const updateProduct = (updatedProduct: Product) => {
@@ -817,6 +841,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteUser,
         products,
         addProduct,
+        addVariableProduct,
         updateProduct,
         deleteProduct,
         updateMultipleProducts,

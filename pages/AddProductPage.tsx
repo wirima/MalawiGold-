@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Product, BarcodeType, Brand } from '../types';
+import { Product, BarcodeType, Brand, Variation, VariationValue, ProductVariationAttribute } from '../types';
 
 const baseInputClasses = "mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500";
 const errorInputClasses = "border-red-500 dark:border-red-500 focus:border-red-500 focus:ring-red-500";
@@ -16,6 +15,10 @@ const BARCODE_TYPES: { value: BarcodeType, label: string }[] = [
     { value: 'UPCE', label: 'UPC-E' },
 ];
 
+interface AddProductFormData extends Omit<Product, 'id' | 'imageUrl' | 'brandId' | 'businessLocationId'> {
+    businessLocationIds: Set<string>;
+}
+
 const Tooltip: React.FC<{ text: string }> = ({ text }) => (
     <span className="group relative ml-1">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 cursor-help" fill="none" viewBox="0 0 24" stroke="currentColor">
@@ -27,44 +30,65 @@ const Tooltip: React.FC<{ text: string }> = ({ text }) => (
     </span>
 );
 
+// Helper for Cartesian product
+// FIX: Replace flawed cartesian product implementation with a correct and strongly-typed version.
+const cartesian = <T,>(...a: T[][]): T[][] => a.reduce((acc: T[][], val: T[]) => acc.flatMap(d => val.map(e => [...d, e])), [[]] as T[][]);
+
+interface VariantMatrixItem {
+    id: string;
+    name: string;
+    attributes: { variationId: string; valueId: string }[];
+    sku: string;
+    costPrice: number;
+    price: number;
+    stock: number;
+}
+
 
 const AddProductPage: React.FC = () => {
-    const { products, brands, categories, units, businessLocations, addProduct, hasPermission, addBrand } = useAuth();
+    const { products, brands, categories, units, businessLocations, addProduct, addVariableProduct, hasPermission, addBrand, variations: variationTemplates, variationValues } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    const getInitialFormData = useCallback(() => ({
+    const getInitialFormData = useCallback((): AddProductFormData => ({
         name: '',
         sku: '',
         categoryId: categories[0]?.id || '',
         unitId: units[0]?.id || '',
-        businessLocationId: businessLocations[0]?.id || '',
+        businessLocationIds: new Set<string>(businessLocations.length > 0 ? [businessLocations[0].id] : []),
         costPrice: 0,
         price: 0,
         stock: 0,
         reorderPoint: 0,
         isNotForSale: false,
-        productType: 'single',
-        barcodeType: 'CODE128',
+        productType: 'single' as 'single' | 'variable' | 'combo',
+        barcodeType: 'CODE128' as BarcodeType,
         description: '',
         taxAmount: 0,
-        taxType: 'percentage',
+        taxType: 'percentage' as 'percentage' | 'fixed',
         isAgeRestricted: false,
     }), [categories, units, businessLocations]);
 
-    const [formData, setFormData] = useState<Omit<Product, 'id' | 'imageUrl' | 'brandId'>>(getInitialFormData());
+    const [formData, setFormData] = useState<AddProductFormData>(getInitialFormData());
     const [brandName, setBrandName] = useState('');
     const [brandSuggestions, setBrandSuggestions] = useState<Brand[]>([]);
     const [showBrandSuggestions, setShowBrandSuggestions] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [errors, setErrors] = useState({ name: '', sku: '', costPrice: '', price: '', brand: '' });
+    const [errors, setErrors] = useState({ name: '', sku: '', costPrice: '', price: '', brand: '', variants: '', locations: '' });
     
+    // State for variations
+    const [selectedVariations, setSelectedVariations] = useState<Map<string, Set<string>>>(new Map()); // Map<variationId, Set<valueId>>
+    // FIX: Type the variantsMatrix state to resolve type inference issues down the line.
+    const [variantsMatrix, setVariantsMatrix] = useState<VariantMatrixItem[]>([]);
+
     const resetForm = useCallback(() => {
         setFormData(getInitialFormData());
         setBrandName('');
         setImagePreview(null);
-        setErrors({ name: '', sku: '', costPrice: '', price: '', brand: '' });
+        setErrors({ name: '', sku: '', costPrice: '', price: '', brand: '', variants: '', locations: '' });
+        setSelectedVariations(new Map());
+        setVariantsMatrix([]);
     }, [getInitialFormData]);
 
     useEffect(() => {
@@ -74,23 +98,17 @@ const AddProductPage: React.FC = () => {
         if (duplicateId) {
             const productToDuplicate = products.find(p => p.id === duplicateId);
             if (productToDuplicate) {
-                // Destructure to remove fields we don't want to copy directly
-                const { id, imageUrl, brandId, sku, name, ...rest } = productToDuplicate;
-                
+                const { id, imageUrl, brandId, sku, name, businessLocationId, ...rest } = productToDuplicate;
                 setFormData({
                     ...rest,
                     name: `Copy of ${name}`,
-                    sku: '', // Clear SKU for auto-generation or manual input
+                    sku: '',
+                    businessLocationIds: new Set<string>([businessLocationId])
                 });
-    
                 const brand = brands.find(b => b.id === brandId);
-                if (brand) {
-                    setBrandName(brand.name);
-                }
-                // We don't copy the image by default
+                if (brand) setBrandName(brand.name);
                 setImagePreview(null);
             }
-             // Clean the URL so a refresh doesn't trigger duplication again
             navigate('/products/add', { replace: true });
         }
     }, [location.search, products, brands, navigate]);
@@ -99,30 +117,105 @@ const AddProductPage: React.FC = () => {
     if (!hasPermission('products:add')) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center">
-                <h1 className="text-5xl font-bold text-slate-700 dark:text-slate-300">Access Denied</h1>
-                <p className="mt-4 text-slate-500 dark:text-slate-400">
-                    You do not have permission to add products.
-                </p>
-                <Link to="/products" className="mt-6 inline-block rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                    Back to Products
-                </Link>
+                <h1 className="text-5xl font-bold">Access Denied</h1>
+                <p className="mt-4">You do not have permission to add products.</p>
+                <Link to="/products" className="mt-6 btn-primary">Back to Products</Link>
             </div>
         );
     }
+    
+    // Generate variants matrix whenever selected variations change
+    useEffect(() => {
+        if (selectedVariations.size === 0) {
+            setVariantsMatrix([]);
+            return;
+        }
+
+        const variationValueMap = new Map(variationValues.map(v => [v.id, v]));
+        const variationMap = new Map(variationTemplates.map(v => [v.id, v]));
+
+        const arraysToCombine = Array.from(selectedVariations.entries())
+            .map(([variationId, valueIds]) => Array.from(valueIds).map(valueId => ({ variationId, valueId })));
+
+        if (arraysToCombine.length === 0 || arraysToCombine.some(arr => arr.length === 0)) {
+            setVariantsMatrix([]);
+            return;
+        }
+        
+        const combinations = cartesian(...arraysToCombine);
+
+        const newMatrix = combinations.map((combo, index) => {
+            // FIX: The `combo` variable from the corrected `cartesian` function is always an array, so the type check is no longer needed.
+            const attributes = combo;
+            // FIX: Add a fallback value to prevent undefined values in the array.
+            const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
+            // FIX: Add optional chaining to prevent runtime errors if `name` is undefined, and provide a fallback.
+            const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+
+            return {
+                id: `variant_${index}`,
+                name: nameParts.join(' / '),
+                attributes,
+                sku: `${formData.sku || 'SKU'}-${skuParts.join('-')}`,
+                costPrice: formData.costPrice || 0,
+                price: formData.price || 0,
+                stock: 0,
+            };
+        });
+        
+        setVariantsMatrix(newMatrix);
+
+    }, [selectedVariations, formData.sku, formData.price, formData.costPrice, variationTemplates, variationValues]);
+
 
     const validate = () => {
-        const newErrors = { name: '', sku: '', costPrice: '', price: '', brand: '' };
+        const newErrors = { name: '', sku: '', costPrice: '', price: '', brand: '', variants: '', locations: '' };
         let isValid = true;
         if (!formData.name.trim()) { newErrors.name = 'Product name is required.'; isValid = false; }
         
-        const trimmedSku = formData.sku.trim();
-        if (trimmedSku && products.some(p => p.sku.toLowerCase() === trimmedSku.toLowerCase())) {
-            newErrors.sku = 'This SKU already exists. Leave blank to auto-generate.';
+        if (formData.businessLocationIds.size === 0) {
+            newErrors.locations = 'Please select at least one business location.';
             isValid = false;
         }
 
-        if (formData.costPrice <= 0) { newErrors.costPrice = 'Cost price must be a positive number.'; isValid = false; }
-        if (formData.price <= 0) { newErrors.price = 'Selling price must be a positive number.'; isValid = false; }
+        const trimmedSku = formData.sku.trim().toLowerCase();
+        if (trimmedSku) {
+            for (const locationId of formData.businessLocationIds) {
+                if (products.some(p => p.sku.toLowerCase() === trimmedSku && p.businessLocationId === locationId)) {
+                    const locationName = businessLocations.find(l => l.id === locationId)?.name || locationId;
+                    newErrors.sku = `SKU "${formData.sku.trim()}" already exists in location "${locationName}".`;
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+
+        if (formData.productType === 'single') {
+            if (formData.costPrice <= 0) { newErrors.costPrice = 'Cost price must be positive.'; isValid = false; }
+            if (formData.price <= 0) { newErrors.price = 'Selling price must be positive.'; isValid = false; }
+        }
+
+        if (formData.productType === 'variable') {
+            if (variantsMatrix.length === 0) {
+                newErrors.variants = "Please select at least one variation and one value.";
+                isValid = false;
+            } else if (isValid) { // Only check variant SKUs if base validation passes
+                for (const variant of variantsMatrix) {
+                    if (!variant.sku) continue;
+                    const trimmedVariantSku = variant.sku.trim().toLowerCase();
+                    for (const locationId of formData.businessLocationIds) {
+                         if (products.some(p => p.sku.toLowerCase() === trimmedVariantSku && p.businessLocationId === locationId)) {
+                             const locationName = businessLocations.find(l => l.id === locationId)?.name || locationId;
+                             newErrors.variants = `Generated SKU "${variant.sku}" for variant "${variant.name}" already exists in location "${locationName}". Please change the base SKU or variant values.`;
+                             isValid = false;
+                             break;
+                         }
+                    }
+                    if (!isValid) break;
+                }
+            }
+        }
+        
         if (!brandName.trim()) { newErrors.brand = 'Brand is required.'; isValid = false; }
         setErrors(newErrors);
         return isValid;
@@ -130,51 +223,112 @@ const AddProductPage: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (validate()) {
-            let finalSku = formData.sku.trim();
-            if (!finalSku) {
-                const numericSkus = products
-                    .map(p => parseInt(p.sku, 10))
-                    .filter(num => !isNaN(num));
-                
-                const maxSku = numericSkus.length > 0 ? Math.max(...numericSkus) : 0;
-                
-                finalSku = (maxSku < 100000 ? 100001 : maxSku + 1).toString();
-            }
-            
-            // Find or create brand
-            let brandId: string;
-            const existingBrand = brands.find(b => b.name.toLowerCase() === brandName.trim().toLowerCase());
-            if (existingBrand) {
-                brandId = existingBrand.id;
-            } else {
-                const newBrand = addBrand({ name: brandName.trim() });
-                brandId = newBrand.id;
-            }
-
-            const productData = { ...formData, sku: finalSku, brandId };
-            addProduct(productData, imagePreview);
-            setIsSuccessModalOpen(true);
+        if (!validate()) return;
+        
+        let brandId: string;
+        const existingBrand = brands.find(b => b.name.toLowerCase() === brandName.trim().toLowerCase());
+        if (existingBrand) {
+            brandId = existingBrand.id;
+        } else {
+            brandId = addBrand({ name: brandName.trim() }).id;
         }
+            
+        const locations = Array.from(formData.businessLocationIds);
+
+        if(formData.productType === 'variable') {
+            const variationValueMap = new Map(variationValues.map(v => [v.id, v]));
+            const variationMap = new Map(variationTemplates.map(v => [v.id, v]));
+
+            locations.forEach(locationId => {
+                const parentSku = formData.sku.trim() || `P${Date.now()}`;
+                const { businessLocationIds, ...restFormData } = formData;
+                const parentData: Omit<Product, 'id' | 'imageUrl'> = { 
+                    ...(restFormData as Omit<AddProductFormData, 'businessLocationIds'>),
+                    brandId, 
+                    sku: parentSku,
+                    businessLocationId: locationId 
+                };
+    
+                const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map(variant => {
+                    const attributes: ProductVariationAttribute[] = variant.attributes.map((attr) => ({
+                        variationName: variationMap.get(attr.variationId)?.name || 'N/A',
+                        valueName: variationValueMap.get(attr.valueId)?.name || 'N/A',
+                    }));
+    
+                    return {
+                        ...restFormData,
+                        brandId,
+                        businessLocationId: locationId,
+                        name: `${formData.name} - ${variant.name}`,
+                        sku: variant.sku,
+                        costPrice: variant.costPrice,
+                        price: variant.price,
+                        stock: variant.stock,
+                        variationAttributes: attributes
+                    };
+                });
+    
+                addVariableProduct(parentData, variantsData);
+            });
+
+        } else { // Single Product
+             let baseSku = formData.sku.trim();
+             let needsAutoSku = !baseSku;
+
+             locations.forEach((locationId, index) => {
+                let finalSku = baseSku;
+                if (needsAutoSku) {
+                    const numericSkus = products.map(p => parseInt(p.sku.replace(/\D/g, ''), 10)).filter(num => !isNaN(num));
+                    const maxSku = numericSkus.length > 0 ? Math.max(...numericSkus) : 100000;
+                    finalSku = (maxSku + 1 + index).toString();
+                }
+                
+                const { businessLocationIds, ...restFormData } = formData;
+                const productData = { 
+                    ...(restFormData as Omit<AddProductFormData, 'businessLocationIds'>),
+                    sku: finalSku, 
+                    brandId,
+                    businessLocationId: locationId,
+                };
+                addProduct(productData, imagePreview);
+             });
+        }
+
+        setIsSuccessModalOpen(true);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         if (type === 'checkbox') {
             setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-        } else {
+        } else if (name === 'productType') {
+            setFormData(prev => ({...prev, productType: value as any}));
+        }
+        else {
             const numValue = ['price', 'stock', 'reorderPoint', 'costPrice', 'taxAmount'].includes(name) ? parseFloat(value) || 0 : value;
             setFormData(prev => ({ ...prev, [name]: numValue }));
         }
+    };
+
+    const handleLocationChange = (locationId: string) => {
+        setFormData(prev => {
+            const newLocationIds = new Set(prev.businessLocationIds);
+            if (newLocationIds.has(locationId)) {
+                if (newLocationIds.size > 1) { // Prevent unselecting the last one
+                    newLocationIds.delete(locationId);
+                }
+            } else {
+                newLocationIds.add(locationId);
+            }
+            return { ...prev, businessLocationIds: newLocationIds };
+        });
     };
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
+            reader.onloadend = () => setImagePreview(reader.result as string);
             reader.readAsDataURL(file);
         }
     };
@@ -183,9 +337,7 @@ const AddProductPage: React.FC = () => {
         const value = e.target.value;
         setBrandName(value);
         if (value) {
-            setBrandSuggestions(
-                brands.filter(b => b.name.toLowerCase().includes(value.toLowerCase()))
-            );
+            setBrandSuggestions(brands.filter(b => b.name.toLowerCase().includes(value.toLowerCase())));
             setShowBrandSuggestions(true);
         } else {
             setBrandSuggestions([]);
@@ -198,18 +350,78 @@ const AddProductPage: React.FC = () => {
         setShowBrandSuggestions(false);
     };
 
+    // Variation Handlers
+    const handleVariationTypeToggle = (variationId: string) => {
+        setSelectedVariations(prev => {
+            // FIX: Explicitly type `newMap` to ensure type information from `prev` is not lost.
+            const newMap = new Map<string, Set<string>>(prev);
+            if (newMap.has(variationId)) {
+                newMap.delete(variationId);
+            } else {
+                newMap.set(variationId, new Set());
+            }
+            return newMap;
+        });
+    };
+
+    const handleVariationValueToggle = (variationId: string, valueId: string) => {
+        setSelectedVariations(prev => {
+            // FIX: Explicitly type `newMap` to ensure type information from `prev` is not lost.
+            const newMap = new Map<string, Set<string>>(prev);
+            const valueSet = newMap.get(variationId);
+            if (valueSet) {
+                const newSet = new Set(valueSet);
+                if (newSet.has(valueId)) {
+                    newSet.delete(valueId);
+                } else {
+                    newSet.add(valueId);
+                }
+                newMap.set(variationId, newSet);
+            }
+            return newMap;
+        });
+    };
+
+    const handleVariantMatrixChange = (index: number, field: string, value: string | number) => {
+        setVariantsMatrix(prev => {
+            const newMatrix = [...prev];
+            newMatrix[index] = { ...newMatrix[index], [field]: value };
+            return newMatrix;
+        });
+    };
+    
+    const handleBulkUpdate = (field: 'costPrice' | 'price' | 'stock', value: string) => {
+        const numValue = parseFloat(value);
+        if (isNaN(numValue) || numValue < 0) return;
+        setVariantsMatrix(prev => prev.map(variant => ({...variant, [field]: numValue })));
+    };
+
 
     return (
         <>
         <form onSubmit={handleSubmit} noValidate>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
-                <div className="p-6 border-b dark:border-slate-700">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                     <h1 className="text-2xl font-bold">Add New Product</h1>
                 </div>
 
-                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Column 1 */}
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                    {/* Column 1 & 2 */}
                     <div className="md:col-span-2 space-y-4">
+                         <div>
+                            <label className="block text-sm font-medium">Product Type*</label>
+                            <div className="mt-2 flex gap-6">
+                                <label className="inline-flex items-center">
+                                    <input type="radio" name="productType" value="single" checked={formData.productType === 'single'} onChange={handleChange} className="form-radio text-indigo-600" />
+                                    <span className="ml-2">Single Product</span>
+                                </label>
+                                <label className="inline-flex items-center">
+                                    <input type="radio" name="productType" value="variable" checked={formData.productType === 'variable'} onChange={handleChange} className="form-radio text-indigo-600" />
+                                    <span className="ml-2">Variable Product</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium">Product Name*</label>
                             <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={`${baseInputClasses} ${errors.name ? errorInputClasses : ''}`} />
@@ -218,52 +430,17 @@ const AddProductPage: React.FC = () => {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="sku" className="block text-sm font-medium">SKU<Tooltip text="Leave blank to auto-generate a unique numeric SKU." /></label>
+                                <label htmlFor="sku" className="block text-sm font-medium">SKU / Base SKU<Tooltip text="For variable products, this is used as a prefix for auto-generated SKUs. Leave blank to auto-generate." /></label>
                                 <input type="text" id="sku" name="sku" value={formData.sku} onChange={handleChange} className={`${baseInputClasses} ${errors.sku ? errorInputClasses : ''}`} />
                                 {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
                             </div>
-                            <div>
-                                <label htmlFor="barcodeType" className="block text-sm font-medium">Barcode Type</label>
-                                <select id="barcodeType" name="barcodeType" value={formData.barcodeType} onChange={handleChange} className={baseInputClasses}>
-                                    {BARCODE_TYPES.map(bt => <option key={bt.value} value={bt.value}>{bt.label}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="categoryId" className="block text-sm font-medium">Category</label>
-                                <select id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} className={baseInputClasses}>
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-                             <div className="relative">
+                            <div className="relative">
                                 <label htmlFor="brandName" className="block text-sm font-medium">Brand*</label>
-                                <input 
-                                    type="text" 
-                                    id="brandName" 
-                                    name="brandName"
-                                    value={brandName}
-                                    onChange={handleBrandChange}
-                                    onFocus={() => setShowBrandSuggestions(true)}
-                                    onBlur={() => setTimeout(() => setShowBrandSuggestions(false), 150)} // Delay to allow click
-                                    autoComplete="off"
-                                    className={`${baseInputClasses} ${errors.brand ? errorInputClasses : ''}`} 
-                                />
+                                <input type="text" id="brandName" name="brandName" value={brandName} onChange={handleBrandChange} onFocus={() => setShowBrandSuggestions(true)} onBlur={() => setTimeout(() => setShowBrandSuggestions(false), 150)} autoComplete="off" className={`${baseInputClasses} ${errors.brand ? errorInputClasses : ''}`} />
                                 {errors.brand && <p className="mt-1 text-sm text-red-600">{errors.brand}</p>}
                                 {showBrandSuggestions && brandSuggestions.length > 0 && (
                                     <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-900 rounded-md shadow-lg border dark:border-slate-700 max-h-60 overflow-auto">
-                                        {brandSuggestions.map(brand => (
-                                            <li key={brand.id}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleBrandSuggestionClick(brand)}
-                                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                                                >
-                                                    {brand.name}
-                                                </button>
-                                            </li>
-                                        ))}
+                                        {brandSuggestions.map(brand => <li key={brand.id}><button type="button" onClick={() => handleBrandSuggestionClick(brand)} className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">{brand.name}</button></li>)}
                                     </ul>
                                 )}
                             </div>
@@ -271,120 +448,115 @@ const AddProductPage: React.FC = () => {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
+                                <label htmlFor="categoryId" className="block text-sm font-medium">Category</label>
+                                <select id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} className={baseInputClasses}>
+                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                             <div>
                                 <label htmlFor="unitId" className="block text-sm font-medium">Unit</label>
                                 <select id="unitId" name="unitId" value={formData.unitId} onChange={handleChange} className={baseInputClasses}>
                                     {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
                             </div>
-                            <div>
-                                <label htmlFor="businessLocationId" className="block text-sm font-medium">Business Location</label>
-                                <select id="businessLocationId" name="businessLocationId" value={formData.businessLocationId} onChange={handleChange} className={baseInputClasses}>
-                                    {businessLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                         <div className="flex items-start">
-                            <div className="flex items-center h-5">
-                                <input id="isNotForSale" name="isNotForSale" type="checkbox" checked={formData.isNotForSale} onChange={handleChange} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
-                            </div>
-                            <div className="ml-3 text-sm">
-                                <label htmlFor="isNotForSale" className="font-medium text-gray-700 dark:text-gray-300">Not for selling</label>
-                                <p className="text-gray-500 dark:text-gray-400">If checked, product will not be displayed in POS screen.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start">
-                            <div className="flex items-center h-5">
-                                <input id="isAgeRestricted" name="isAgeRestricted" type="checkbox" checked={formData.isAgeRestricted} onChange={handleChange} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
-                            </div>
-                            <div className="ml-3 text-sm">
-                                <label htmlFor="isAgeRestricted" className="font-medium text-gray-700 dark:text-gray-300">Requires Age Verification</label>
-                                <p className="text-gray-500 dark:text-gray-400">If checked, this product will prompt for age verification at the POS.</p>
-                            </div>
                         </div>
                     </div>
                     
-                    {/* Column 2 */}
+                    {/* Column 3 */}
                     <div className="space-y-4">
                          <div>
                             <label className="block text-sm font-medium">Product Image</label>
                              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-md">
                                 <div className="space-y-1 text-center">
-                                    {imagePreview ? (
-                                        <img src={imagePreview} alt="Product Preview" className="mx-auto h-24 w-24 object-cover rounded-md" />
-                                    ) : (
-                                        <svg className="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                    )}
-                                    <div className="flex text-sm text-slate-600 dark:text-slate-400">
-                                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                            <span>Upload a file</span>
-                                            <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
-                                        </label>
-                                        <p className="pl-1">or drag and drop</p>
-                                    </div>
+                                    {imagePreview ? <img src={imagePreview} alt="Preview" className="mx-auto h-24 w-24 object-cover rounded-md" /> : <svg className="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                                    <div className="flex text-sm text-slate-600 dark:text-slate-400"><label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"><span>Upload a file</span><input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" /></label><p className="pl-1">or drag and drop</p></div>
                                     <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                                 </div>
                             </div>
                         </div>
-                         <div>
-                            <label htmlFor="description" className="block text-sm font-medium">Product Description</label>
-                            <textarea id="description" name="description" rows={4} value={formData.description} onChange={handleChange} className={baseInputClasses}></textarea>
-                        </div>
                     </div>
 
-                    {/* Pricing and Stock */}
+                     <div className="md:col-span-3">
+                        <label className="block text-sm font-medium">Business Locations*</label>
+                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 p-3 rounded-md border dark:border-slate-600">
+                            {businessLocations.map(location => (
+                                <div key={location.id} className="relative flex items-start">
+                                    <div className="flex h-5 items-center">
+                                        <input
+                                            id={`location-${location.id}`}
+                                            name="businessLocationIds"
+                                            type="checkbox"
+                                            checked={formData.businessLocationIds.has(location.id)}
+                                            onChange={() => handleLocationChange(location.id)}
+                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <div className="ml-3 text-sm">
+                                        <label htmlFor={`location-${location.id}`} className="font-medium text-gray-700 dark:text-gray-300">{location.name}</label>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {errors.locations && <p className="mt-1 text-sm text-red-600">{errors.locations}</p>}
+                    </div>
+                    
                     <div className="md:col-span-3 pt-4 border-t dark:border-slate-700">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Pricing & Stock</h3>
-                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                             <div>
-                                <label htmlFor="costPrice" className="block text-sm font-medium">Cost Price*</label>
-                                <input type="number" id="costPrice" name="costPrice" value={formData.costPrice} onChange={handleChange} step="0.01" min="0" className={`${baseInputClasses} ${errors.costPrice ? errorInputClasses : ''}`} />
-                                {errors.costPrice && <p className="mt-1 text-sm text-red-600">{errors.costPrice}</p>}
-                            </div>
+                        {formData.productType === 'single' ? (
+                            <>
+                                <h3 className="text-lg font-medium">Pricing & Stock</h3>
+                                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                     <div><label htmlFor="costPrice" className="block text-sm font-medium">Cost Price*</label><input type="number" id="costPrice" name="costPrice" value={formData.costPrice} onChange={handleChange} step="0.01" min="0" className={`${baseInputClasses} ${errors.costPrice ? errorInputClasses : ''}`} />{errors.costPrice && <p className="mt-1 text-sm text-red-600">{errors.costPrice}</p>}</div>
+                                    <div><label htmlFor="price" className="block text-sm font-medium">Selling Price*</label><input type="number" id="price" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" className={`${baseInputClasses} ${errors.price ? errorInputClasses : ''}`} />{errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}</div>
+                                    <div><label htmlFor="stock" className="block text-sm font-medium">Initial Stock</label><input type="number" id="stock" name="stock" value={formData.stock} onChange={handleChange} min="0" className={baseInputClasses} /></div>
+                                     <div><label htmlFor="reorderPoint" className="block text-sm font-medium">Reorder Point</label><input type="number" id="reorderPoint" name="reorderPoint" value={formData.reorderPoint} onChange={handleChange} min="0" className={baseInputClasses} /></div>
+                                </div>
+                            </>
+                        ) : (
                             <div>
-                                <label htmlFor="price" className="block text-sm font-medium">Selling Price*</label>
-                                <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" className={`${baseInputClasses} ${errors.price ? errorInputClasses : ''}`} />
-                                {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
-                            </div>
-                            <div className="sm:col-span-2 lg:col-span-2">
-                                <label htmlFor="taxAmount" className="block text-sm font-medium">
-                                    Tax
-                                    <Tooltip text="Set the tax rate for this product. This can be a percentage or a fixed cash amount." />
-                                </label>
-                                <div className="mt-1 flex rounded-md shadow-sm">
-                                    <input 
-                                        type="number" 
-                                        name="taxAmount" 
-                                        id="taxAmount" 
-                                        value={formData.taxAmount || ''} 
-                                        onChange={handleChange} 
-                                        step="0.01" 
-                                        min="0" 
-                                        className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
-                                        placeholder="0.00" 
-                                    />
-                                    <select 
-                                        name="taxType" 
-                                        value={formData.taxType} 
-                                        onChange={handleChange} 
-                                        className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                    >
-                                        <option value="percentage">Percentage (%)</option>
-                                        <option value="fixed">Fixed Amount</option>
-                                    </select>
+                                <h3 className="text-lg font-medium">Variations</h3>
+                                {errors.variants && <p className="mt-1 text-sm text-red-600">{errors.variants}</p>}
+                                <div className="mt-4 p-4 border dark:border-slate-700 rounded-lg space-y-4">
+                                    {variationTemplates.map(v => (
+                                        <div key={v.id}>
+                                            <div className="flex items-center"><input type="checkbox" id={`var-${v.id}`} checked={selectedVariations.has(v.id)} onChange={() => handleVariationTypeToggle(v.id)} className="h-4 w-4 rounded text-indigo-600" /><label htmlFor={`var-${v.id}`} className="ml-2 font-semibold">{v.name}</label></div>
+                                            {selectedVariations.has(v.id) && <div className="pl-6 mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                                                {variationValues.filter(val => val.variationId === v.id).map(val => (
+                                                    <div key={val.id} className="flex items-center"><input type="checkbox" id={`val-${val.id}`} checked={selectedVariations.get(v.id)?.has(val.id)} onChange={() => handleVariationValueToggle(v.id, val.id)} className="h-4 w-4 rounded text-indigo-600" /><label htmlFor={`val-${val.id}`} className="ml-2 text-sm">{val.name}</label></div>
+                                                ))}
+                                            </div>}
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                             <div>
-                                <label htmlFor="stock" className="block text-sm font-medium">Initial Stock</label>
-                                <input type="number" id="stock" name="stock" value={formData.stock} onChange={handleChange} min="0" className={baseInputClasses} />
-                            </div>
-                             <div>
-                                <label htmlFor="reorderPoint" className="block text-sm font-medium">Reorder Point</label>
-                                <input type="number" id="reorderPoint" name="reorderPoint" value={formData.reorderPoint} onChange={handleChange} min="0" className={baseInputClasses} />
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
+
+                {formData.productType === 'variable' && variantsMatrix.length > 0 && (
+                    <div className="p-6 border-t dark:border-slate-700">
+                        <h3 className="text-lg font-medium">Generated Variants ({variantsMatrix.length})</h3>
+                        <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                            <p className="col-span-full text-sm font-medium">Apply to all variants:</p>
+                            <div><label className="text-xs">Cost Price</label><input type="number" onBlur={e => handleBulkUpdate('costPrice', e.target.value)} placeholder="0.00" className={baseInputClasses} /></div>
+                            <div><label className="text-xs">Selling Price</label><input type="number" onBlur={e => handleBulkUpdate('price', e.target.value)} placeholder="0.00" className={baseInputClasses} /></div>
+                            <div><label className="text-xs">Stock</label><input type="number" onBlur={e => handleBulkUpdate('stock', e.target.value)} placeholder="0" className={baseInputClasses} /></div>
+                        </div>
+                        <div className="mt-4 overflow-x-auto"><table className="w-full text-sm">
+                            <thead className="text-left bg-slate-50 dark:bg-slate-700"><tr>
+                                <th className="p-2 font-semibold">Variant</th><th className="p-2 font-semibold">SKU</th><th className="p-2 font-semibold">Cost Price</th><th className="p-2 font-semibold">Selling Price</th><th className="p-2 font-semibold">Stock</th>
+                            </tr></thead>
+                            <tbody>{variantsMatrix.map((variant, index) => (
+                                <tr key={variant.id} className="border-b dark:border-slate-700"><td className="p-2">{variant.name}</td>
+                                    <td className="p-2"><input type="text" value={variant.sku} onChange={e => handleVariantMatrixChange(index, 'sku', e.target.value)} className={baseInputClasses} /></td>
+                                    <td className="p-2"><input type="number" value={variant.costPrice} onChange={e => handleVariantMatrixChange(index, 'costPrice', e.target.value)} className={baseInputClasses} /></td>
+                                    <td className="p-2"><input type="number" value={variant.price} onChange={e => handleVariantMatrixChange(index, 'price', e.target.value)} className={baseInputClasses} /></td>
+                                    <td className="p-2"><input type="number" value={variant.stock} onChange={e => handleVariantMatrixChange(index, 'stock', e.target.value)} className={baseInputClasses} /></td>
+                                </tr>
+                            ))}</tbody>
+                        </table></div>
+                    </div>
+                )}
+
 
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t flex justify-end gap-3">
                     <Link to="/products" className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</Link>
@@ -399,27 +571,12 @@ const AddProductPage: React.FC = () => {
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50">
                              <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
-                        <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Product Added Successfully!</h3>
-                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">What would you like to do next?</p>
+                        <h3 className="mt-4 text-lg font-medium">Product Added Successfully!</h3>
+                        <p className="mt-2 text-sm text-slate-500">What would you like to do next?</p>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsSuccessModalOpen(false);
-                                resetForm();
-                            }}
-                            className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600"
-                        >
-                            Add Another Product
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => navigate('/products')}
-                            className="w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 font-medium text-white hover:bg-indigo-700"
-                        >
-                            View All Products
-                        </button>
+                        <button type="button" onClick={() => { setIsSuccessModalOpen(false); resetForm(); }} className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-600">Add Another Product</button>
+                        <button type="button" onClick={() => navigate('/products')} className="w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 font-medium text-white hover:bg-indigo-700">View All Products</button>
                     </div>
                 </div>
             </div>

@@ -22,6 +22,7 @@ const CustomerFormModal: React.FC<{
     const isEditing = !!customer;
     const [formData, setFormData] = useState({
         name: '',
+        businessName: '',
         email: '',
         phone: '',
         address: '',
@@ -33,6 +34,7 @@ const CustomerFormModal: React.FC<{
         if (customer) {
             setFormData({
                 name: customer.name,
+                businessName: customer.businessName || '',
                 email: customer.email,
                 phone: customer.phone,
                 address: customer.address,
@@ -41,6 +43,7 @@ const CustomerFormModal: React.FC<{
         } else {
             setFormData({
                 name: '',
+                businessName: '',
                 email: '',
                 phone: '',
                 address: '',
@@ -109,6 +112,10 @@ const CustomerFormModal: React.FC<{
                             {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>}
                         </div>
                         <div>
+                            <label htmlFor="businessName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Business Name</label>
+                            <input type="text" id="businessName" name="businessName" value={formData.businessName} onChange={handleChange} className={baseInputClasses} />
+                        </div>
+                        <div>
                             <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
                             <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} className={`${baseInputClasses} ${errors.email ? errorInputClasses : ''}`} />
                             {errors.email && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>}
@@ -149,7 +156,7 @@ const SupplierFormModal: React.FC<{
     const isEditing = !!supplier;
     const [formData, setFormData] = useState({
         name: '',
-        companyName: '',
+        businessName: '',
         email: '',
         phone: '',
         address: ''
@@ -162,7 +169,7 @@ const SupplierFormModal: React.FC<{
         if (supplier) { // Editing existing supplier
             setFormData({
                 name: supplier.name,
-                companyName: supplier.companyName,
+                businessName: supplier.businessName,
                 email: supplier.email,
                 phone: supplier.phone,
                 address: supplier.address
@@ -170,7 +177,7 @@ const SupplierFormModal: React.FC<{
         } else { // Adding a new supplier
              setFormData({
                 name: '',
-                companyName: '',
+                businessName: '',
                 email: '',
                 phone: '',
                 address: ''
@@ -234,8 +241,8 @@ const SupplierFormModal: React.FC<{
                             {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                         </div>
                         <div>
-                            <label htmlFor="companyName" className="block text-sm font-medium">Company Name</label>
-                            <input type="text" name="companyName" value={formData.companyName} onChange={handleChange} className={baseInputClasses} />
+                            <label htmlFor="businessName" className="block text-sm font-medium">Business Name</label>
+                            <input type="text" name="businessName" value={formData.businessName} onChange={handleChange} className={baseInputClasses} />
                         </div>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium">Email</label>
@@ -368,7 +375,7 @@ const ContactsPage: React.FC = () => {
     const filteredSuppliers = useMemo(() => {
         return suppliers.filter(s => 
             s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             s.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [suppliers, searchTerm]);
@@ -473,11 +480,12 @@ const ContactsPage: React.FC = () => {
 
     const renderCustomersTable = () => (
         <Table<Customer>
-            headers={['Name', 'Email', 'Phone', 'Customer Group', 'Actions']}
+            headers={['Name', 'Business Name', 'Email', 'Phone', 'Customer Group', 'Actions']}
             data={filteredCustomers}
             renderRow={(customer) => (
                 <>
                     <td scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">{customer.name}</td>
+                    <td className="px-6 py-4">{customer.businessName}</td>
                     <td className="px-6 py-4">{customer.email}</td>
                     <td className="px-6 py-4">{customer.phone}</td>
                     <td className="px-6 py-4">{customerGroupsMap.get(customer.customerGroupId) || 'N/A'}</td>
@@ -489,12 +497,12 @@ const ContactsPage: React.FC = () => {
 
     const renderSuppliersTable = () => (
         <Table<Supplier>
-            headers={['Contact Name', 'Company Name', 'Email', 'Phone', 'Actions']}
+            headers={['Contact Name', 'Business Name', 'Email', 'Phone', 'Actions']}
             data={filteredSuppliers}
             renderRow={(supplier) => (
                 <>
                     <td scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">{supplier.name}</td>
-                    <td className="px-6 py-4">{supplier.companyName}</td>
+                    <td className="px-6 py-4">{supplier.businessName}</td>
                     <td className="px-6 py-4">{supplier.email}</td>
                     <td className="px-6 py-4">{supplier.phone}</td>
                     {actionButtons(() => { setEditingSupplier(supplier); setModal('supplier'); }, () => handleDeleteSupplier(supplier))}

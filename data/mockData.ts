@@ -33,13 +33,13 @@ export const MOCK_CUSTOMERS: Customer[] = [
   { id: 'CUST001', name: 'John Doe', email: 'john.doe@example.com', phone: '555-1234', address: '123 Main St, Anytown', customerGroupId: 'CG003' },
   { id: 'CUST002', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '555-5678', address: '456 Oak Ave, Anytown', customerGroupId: 'CG001' },
   { id: 'CUST003', name: 'Walk-in Customer', email: '', phone: '', address: '', customerGroupId: 'CG001' },
-  { id: 'CUST004', name: 'Bob Johnson', email: 'bob.j@example.com', phone: '555-8765', address: '789 Pine Ln, Anytown', customerGroupId: 'CG002' },
+  { id: 'CUST004', name: 'Bob Johnson', businessName: 'Johnson Wholesale', email: 'bob.j@example.com', phone: '555-8765', address: '789 Pine Ln, Anytown', customerGroupId: 'CG002' },
 ];
 
 export const MOCK_SUPPLIERS: Supplier[] = [
-    { id: 'SUP001', name: 'Global Coffee Beans', companyName: 'Global Coffee Inc.', email: 'sales@globalcoffee.com', phone: '800-555-BEAN', address: '1 Coffee Plaza, Beanville' },
-    { id: 'SUP002', name: 'Premium Pastries Co.', companyName: 'Premium Pastries Co.', email: 'orders@premiumpastries.com', phone: '800-555-CAKE', address: '25 Pastry Path, Sweetville' },
-    { id: 'SUP003', name: 'Beverage World', companyName: 'Beverage World LLC', email: 'contact@bevworld.com', phone: '800-555-DRNK', address: '500 Drink Dr, Thirston' },
+    { id: 'SUP001', name: 'Global Coffee Beans', businessName: 'Global Coffee Inc.', email: 'sales@globalcoffee.com', phone: '800-555-BEAN', address: '1 Coffee Plaza, Beanville' },
+    { id: 'SUP002', name: 'Premium Pastries Co.', businessName: 'Premium Pastries Co.', email: 'orders@premiumpastries.com', phone: '800-555-CAKE', address: '25 Pastry Path, Sweetville' },
+    { id: 'SUP003', name: 'Beverage World', businessName: 'Beverage World LLC', email: 'contact@bevworld.com', phone: '800-555-DRNK', address: '500 Drink Dr, Thirston' },
 ];
 
 export const MOCK_BRANDS: Brand[] = [

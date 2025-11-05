@@ -30,6 +30,11 @@ export interface VariationValue {
 
 export type BarcodeType = 'CODE128' | 'CODE39' | 'EAN13' | 'EAN8' | 'UPC' | 'UPCE';
 
+export interface ProductVariationAttribute {
+  variationName: string;
+  valueName: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -50,6 +55,8 @@ export interface Product {
   taxAmount?: number;
   taxType?: 'percentage' | 'fixed';
   isAgeRestricted?: boolean;
+  parentProductId?: string;
+  variationAttributes?: ProductVariationAttribute[];
 }
 
 export interface ProductDocument {
@@ -66,6 +73,7 @@ export interface ProductDocument {
 export interface Customer {
   id: string;
   name: string;
+  businessName?: string;
   email: string;
   phone: string;
   address: string;
@@ -75,7 +83,7 @@ export interface Customer {
 export interface Supplier {
   id: string;
   name: string;
-  companyName: string;
+  businessName: string;
   email: string;
   phone: string;
   address: string;
