@@ -359,7 +359,7 @@ export const MOCK_ROLES: Role[] = [
             'notifications:manage',
             'settings:view',
             'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification',
-            'settings:integrations', 'settings:accounts'
+            'settings:integrations', 'settings:accounts', 'settings:subscription'
         ]
     },
     {

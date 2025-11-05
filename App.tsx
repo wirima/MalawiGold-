@@ -86,6 +86,7 @@ const IntegrationsPage = React.lazy(() => import('./pages/IntegrationsPage'));
 const VendorApiConnectionPage = React.lazy(() => import('./pages/VendorApiConnectionPage'));
 const PaymentGatewayConnectionPage = React.lazy(() => import('./pages/PaymentGatewayConnectionPage'));
 const BankAccountsPage = React.lazy(() => import('./pages/BankAccountsPage'));
+const SubscriptionPage = React.lazy(() => import('./pages/SubscriptionPage'));
 
 const App: React.FC = () => {
   return (
@@ -198,6 +199,7 @@ const App: React.FC = () => {
                       <Route path="/settings/integrations/vendor-api/:connectionId" element={<VendorApiConnectionPage />} />
                       <Route path="/settings/integrations/payment-gateway" element={<PaymentGatewayConnectionPage />} />
                       <Route path="/settings/integrations/payment-gateway/:connectionId" element={<PaymentGatewayConnectionPage />} />
+                      <Route path="/settings/subscription" element={<SubscriptionPage />} />
 
 
                       {/* Catch-all */}

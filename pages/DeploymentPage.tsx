@@ -1,5 +1,6 @@
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const CodeBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -28,15 +29,446 @@ const Step: React.FC<{ number: number; title: string; children: React.ReactNode 
     </div>
 );
 
+const prismaSchemaContent = `// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model Unit {
+  id        String    @id @default(cuid())
+  name      String
+  shortName String
+  products  Product[]
+}
+
+model Variation {
+  id     String           @id @default(cuid())
+  name   String
+  values VariationValue[]
+}
+
+model VariationValue {
+  id          String    @id @default(cuid())
+  name        String
+  variation   Variation @relation(fields: [variationId], references: [id])
+  variationId String
+}
+
+enum BarcodeType {
+  CODE128
+  CODE39
+  EAN13
+  EAN8
+  UPC
+  UPCE
+}
+
+enum ProductType {
+  single
+  variable
+  combo
+}
+
+enum TaxType {
+  percentage
+  fixed
+}
+
+model Product {
+  id                 String             @id @default(cuid())
+  name               String
+  sku                String             @unique
+  costPrice          Float
+  price              Float
+  stock              Int
+  reorderPoint       Int
+  imageUrl           String
+  isNotForSale       Boolean
+  description        String?
+  productType        ProductType
+  barcodeType        BarcodeType
+  taxAmount          Float?
+  taxType            TaxType?
+  isAgeRestricted    Boolean?
+  brand              Brand              @relation(fields: [brandId], references: [id])
+  brandId            String
+  category           Category           @relation(fields: [categoryId], references: [id])
+  categoryId         String
+  unit               Unit               @relation(fields: [unitId], references: [id])
+  unitId             String
+  businessLocation   BusinessLocation   @relation(fields: [businessLocationId], references: [id])
+  businessLocationId String
+  stockAdjustments   StockAdjustment[]
+  documents          ProductDocument[]  @relation("ProductToDocuments")
+  SaleItem           SaleItem[]
+  PurchaseItem       PurchaseItem[]
+  DraftItem          DraftItem[]
+  QuotationItem      QuotationItem[]
+  StockTransferItem  StockTransferItem[]
+  CustomerReturnItem CustomerReturnItem[]
+  PurchaseReturnItem PurchaseReturnItem[]
+}
+
+model ProductDocument {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  fileUrl     String
+  fileName    String
+  fileType    String // 'coa' or 'warranty'
+  uploadedDate DateTime  @default(now())
+  products    Product[] @relation("ProductToDocuments")
+}
+
+model CustomerGroup {
+  id                 String     @id @default(cuid())
+  name               String
+  discountPercentage Float
+  customers          Customer[]
+}
+
+model Customer {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  phone           String
+  address         String
+  customerGroup   CustomerGroup    @relation(fields: [customerGroupId], references: [id])
+  customerGroupId String
+  sales           Sale[]
+  drafts          Draft[]
+  quotations      Quotation[]
+  customerReturns CustomerReturn[]
+}
+
+model Supplier {
+  id              String           @id @default(cuid())
+  name            String
+  companyName     String
+  email           String
+  phone           String
+  address         String
+  purchases       Purchase[]
+  purchaseReturns PurchaseReturn[]
+}
+
+model BankAccount {
+  id            String          @id @default(cuid())
+  accountName   String
+  bankName      String
+  accountNumber String
+  paymentMethods PaymentMethod[]
+}
+
+model PaymentMethod {
+  id        String       @id @default(cuid())
+  name      String
+  account   BankAccount? @relation(fields: [accountId], references: [id])
+  accountId String?
+  SalePayment SalePayment[]
+}
+
+enum SaleStatus {
+  completed
+  voided
+  return
+}
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+model Sale {
+  id                   String        @id @default(cuid())
+  date                 DateTime      @default(now())
+  total                Float
+  passportNumber       String?
+  nationality          String?
+  status               SaleStatus?
+  discountType         DiscountType?
+  discountValue        Float?
+  isQueued             Boolean?
+  customerEmailForDocs String?
+  customer             Customer      @relation(fields: [customerId], references: [id])
+  customerId           String
+  items                SaleItem[]
+  payments             SalePayment[]
+  shipment             Shipment?
+  customerReturn       CustomerReturn?
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  price     Float // price at time of sale
+  costPrice Float // cost at time of sale
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  saleId    String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+}
+
+model SalePayment {
+  id            String        @id @default(cuid())
+  amount        Float
+  sale          Sale          @relation(fields: [saleId], references: [id])
+  saleId        String
+  paymentMethod PaymentMethod @relation(fields: [methodId], references: [id])
+  methodId      String
+}
+
+model CustomerReturn {
+  id             String               @id @default(cuid())
+  date           DateTime             @default(now())
+  reason         String
+  total          Float
+  originalSale   Sale                 @relation(fields: [originalSaleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  originalSaleId String               @unique
+  customer       Customer             @relation(fields: [customerId], references: [id])
+  customerId     String
+  items          CustomerReturnItem[]
+}
+
+model CustomerReturnItem {
+  id               String         @id @default(cuid())
+  quantity         Int
+  price            Float
+  customerReturn   CustomerReturn @relation(fields: [customerReturnId], references: [id])
+  customerReturnId String
+  product          Product        @relation(fields: [productId], references: [id])
+  productId        String
+}
+
+model Shipment {
+  id              String @id @default(cuid())
+  shippingAddress String
+  trackingNumber  String
+  status          String // 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'
+  sale            Sale   @relation(fields: [saleId], references: [id])
+  saleId          String @unique
+}
+
+model Purchase {
+  id         String         @id @default(cuid())
+  date       DateTime       @default(now())
+  total      Float
+  supplier   Supplier       @relation(fields: [supplierId], references: [id])
+  supplierId String
+  items      PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  quantity   Int
+  price      Float // purchase price
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  purchaseId String
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+}
+
+model PurchaseReturn {
+  id              String               @id @default(cuid())
+  date            DateTime             @default(now())
+  total           Float
+  supplier        Supplier             @relation(fields: [supplierId], references: [id])
+  supplierId      String
+  items           PurchaseReturnItem[]
+}
+
+model PurchaseReturnItem {
+  id               String         @id @default(cuid())
+  quantity         Int
+  price            Float
+  purchaseReturn   PurchaseReturn @relation(fields: [purchaseReturnId], references: [id])
+  purchaseReturnId String
+  product          Product        @relation(fields: [productId], references: [id])
+  productId        String
+}
+
+model Draft {
+  id         String      @id @default(cuid())
+  date       DateTime    @default(now())
+  total      Float
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  customerId String
+  items      DraftItem[]
+}
+
+model DraftItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  price     Float
+  draft     Draft   @relation(fields: [draftId], references: [id])
+  draftId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+}
+
+model Quotation {
+  id         String          @id @default(cuid())
+  date       DateTime        @default(now())
+  total      Float
+  expiryDate DateTime
+  customer   Customer        @relation(fields: [customerId], references: [id])
+  customerId String
+  items      QuotationItem[]
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quantity    Int
+  price       Float
+  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  quotationId String
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   String
+}
+
+enum StockAdjustmentType {
+  addition
+  subtraction
+}
+
+model StockAdjustment {
+  id        String              @id @default(cuid())
+  date      DateTime            @default(now())
+  type      StockAdjustmentType
+  quantity  Int
+  reason    String
+  product   Product             @relation(fields: [productId], references: [id])
+  productId String
+}
+
+model BusinessLocation {
+  id              String          @id @default(cuid())
+  name            String
+  products        Product[]
+  stockTransferFrom StockTransfer[] @relation("FromLocation")
+  stockTransferTo   StockTransfer[] @relation("ToLocation")
+}
+
+enum StockTransferStatus {
+  in_transit
+  completed
+}
+
+model StockTransfer {
+  id           String              @id @default(cuid())
+  date         DateTime            @default(now())
+  status       StockTransferStatus
+  fromLocation BusinessLocation    @relation("FromLocation", fields: [fromLocationId], references: [id])
+  fromLocationId String
+  toLocation   BusinessLocation    @relation("ToLocation", fields: [toLocationId], references: [id])
+  toLocationId   String
+  items        StockTransferItem[]
+}
+
+model StockTransferItem {
+  id              String        @id @default(cuid())
+  quantity        Int
+  stockTransfer   StockTransfer @relation(fields: [stockTransferId], references: [id])
+  stockTransferId String
+  product         Product       @relation(fields: [productId], references: [id])
+  productId       String
+}
+
+model ExpenseCategory {
+  id       String    @id @default(cuid())
+  name     String
+  expenses Expense[]
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  date        DateTime        @default(now())
+  amount      Float
+  description String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String
+}
+
+model CustomerRequest {
+  id          String   @id @default(cuid())
+  text        String
+  cashierId   String
+  cashierName String
+  date        DateTime @default(now())
+}
+
+enum IntegrationProvider {
+  vendor_api
+  payment_gateway
+}
+
+model IntegrationConnection {
+  id       String              @id @default(cuid())
+  provider IntegrationProvider
+  name     String
+  config   Json
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String
+  permissions Json // Array of Permission strings
+  users       User[]
+}
+
+model User {
+  id     String @id @default(cuid())
+  name   String
+  email  String @unique
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId String
+}
+
+model BrandingSettings {
+  id           Int      @id @default(1)
+  businessName String
+  logoUrl      String?
+  address      String?
+  phone        String?
+  website      String?
+}
+`;
 
 const DeploymentPage: React.FC = () => {
     const { hasPermission } = useAuth();
+    const [copyText, setCopyText] = useState('Copy');
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(prismaSchemaContent);
+        setCopyText('Copied!');
+        setTimeout(() => setCopyText('Copy'), 2000);
+    };
 
     if (!hasPermission('settings:view')) {
          return (
             <div className="flex flex-col items-center justify-center h-full text-center">
                 <h1 className="text-5xl font-bold text-slate-700 dark:text-slate-300">Access Denied</h1>
-                <p className="mt-4 text-slate-500 dark:text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400">
                     You do not have permission to view this page.
                 </p>
             </div>
@@ -119,36 +551,32 @@ cd gemini-pos-system`}</CodeBlock>
                     </Step>
 
                     <Step number={3} title="(Optional) Setting Up a Local Database">
-                        <p>By default, this application runs with mock data for demonstration purposes (you can see it in `src/data/mockData.ts`). For a real-world application, you'll want to connect to a database to persist your data. This guide shows how to set up a simple local <strong>SQLite</strong> database using <strong>Prisma</strong>.</p>
-                        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 rounded-r-lg">
-                            <p className="text-sm text-blue-800 dark:text-blue-300">
-                                <strong className="font-semibold">Note:</strong> This step is entirely optional for running the demo. The application comes with pre-loaded mock data that works offline, so you can explore all features without setting up a database.
-                            </p>
-                        </div>
+                        <p>By default, this application runs with mock data for demonstration purposes. For a real-world application, you'll want to connect to a database to persist your data. This guide shows how to set up a simple local <strong>SQLite</strong> database using <strong>Prisma</strong>.</p>
                         
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200">3a. Install Prisma CLI</h4>
                         <p>Prisma is a modern database toolkit. Install its command-line tool as a development dependency:</p>
                         <CodeBlock>{`npm install prisma --save-dev`}</CodeBlock>
                         
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200">3b. Initialize Prisma with SQLite</h4>
-                        <p>This command creates a new `prisma` directory and configures your project for a SQLite database:</p>
+                        <p>This command creates a new `prisma` directory and a `prisma/schema.prisma` file, and configures your project for a SQLite database:</p>
                         <CodeBlock>{`npx prisma init --datasource-provider sqlite`}</CodeBlock>
-                        <p>This will also update your `.env` file with a `DATABASE_URL` pointing to a local database file.</p>
                         
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200">3c. Define Your Database Schema</h4>
-                        <p>Open <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-sm">prisma/schema.prisma</code> and define your data models. This is where you will design your database structure. For example, to create a `Product` table, you could add this model:</p>
-                        <div className="p-4 bg-yellow-200 dark:bg-yellow-700/60 rounded-lg mt-4 text-black dark:text-slate-900">
-                            <p className="text-sm font-semibold mb-2">This is where you define your schema:</p>
-                            <CodeBlock>{`model Product {
-  id          String   @id @default(cuid())
-  name        String
-  sku         String   @unique
-  price       Float
-  costPrice   Float
-  stock       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}`}</CodeBlock>
+                        <p>Open the new file at <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-sm">prisma/schema.prisma</code>. Delete its contents and replace it with the complete schema provided below. This schema mirrors all the data structures used in the application.</p>
+                         <div className="relative my-4">
+                            <textarea
+                                readOnly
+                                className="w-full h-80 font-mono text-sm bg-slate-800 dark:bg-black/50 text-slate-100 rounded-lg p-4 resize-y border-0 ring-1 ring-slate-700"
+                                defaultValue={prismaSchemaContent}
+                                aria-label="Prisma Schema Content"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleCopy}
+                                className="absolute top-3 right-3 px-3 py-1 text-xs bg-slate-600 hover:bg-slate-500 rounded text-white"
+                            >
+                                {copyText}
+                            </button>
                         </div>
 
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200">3d. Run the Database Migration</h4>
@@ -164,11 +592,6 @@ const prisma = new PrismaClient()
 async function getProducts() {
   return await prisma.product.findMany();
 }`}</CodeBlock>
-                         <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 rounded-r-lg">
-                            <p className="text-sm text-blue-800 dark:text-blue-300">
-                                <strong className="font-semibold">Note:</strong> Prisma supports various databases like PostgreSQL, MySQL, and more. You can change the <code>provider</code> in the <code>schema.prisma</code> file if you prefer a different database.
-                            </p>
-                        </div>
                     </Step>
                     
                     <Step number={4} title="Configuration: Connecting to the AI">

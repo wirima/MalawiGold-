@@ -312,7 +312,8 @@ export type Permission =
   | 'settings:locations'
   | 'settings:age_verification'
   | 'settings:integrations'
-  | 'settings:accounts';
+  | 'settings:accounts'
+  | 'settings:subscription';
 
 export interface Role {
     id: string;
