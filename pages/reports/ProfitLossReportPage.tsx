@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardCard from '../../components/DashboardCard';
@@ -77,12 +73,12 @@ const ProfitLossReportPage: React.FC = () => {
         const grossProfit = netSales - netCogs;
 
         const expenseCategoriesMap = new Map(expenseCategories.map(c => [c.id, c.name]));
-        // FIX: Explicitly type the initial value of the reduce() accumulator to ensure correct type inference for 'expensesByCat', preventing index signature and assignment errors.
-        const expensesByCat = filteredExpenses.reduce((acc, exp) => {
+        // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `expensesByCat`, preventing index signature and assignment errors.
+        const expensesByCat = filteredExpenses.reduce((acc: Record<string, number>, exp) => {
             const catName = expenseCategoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
         
         const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
         

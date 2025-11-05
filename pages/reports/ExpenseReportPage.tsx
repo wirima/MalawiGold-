@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -30,12 +28,12 @@ const ExpenseReportPage: React.FC = () => {
 
     const summaryData = useMemo(() => {
         const total = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-        // FIX: Explicitly type the initial value of the reduce() accumulator to ensure correct type inference for 'byCategory', preventing arithmetic operation errors.
-        const byCategory = filteredExpenses.reduce((acc, exp) => {
+        // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `byCategory`, preventing arithmetic operation errors.
+        const byCategory = filteredExpenses.reduce((acc: Record<string, number>, exp) => {
             const catName = categoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
 
         return { total, byCategory: Object.entries(byCategory).sort(([,a], [,b]) => b - a) };
     }, [filteredExpenses, categoriesMap]);

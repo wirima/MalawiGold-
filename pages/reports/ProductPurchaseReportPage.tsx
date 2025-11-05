@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -27,8 +25,8 @@ const ProductPurchaseReportPage: React.FC = () => {
             (!endDate || new Date(p.date) <= endDate)
         );
 
-        // FIX: Explicitly typing the initial value of the reduce() accumulator to ensure correct type inference for 'productPurchases'. This resolves the subsequent spread operator error.
-        const productPurchases = filteredPurchases.reduce((acc, purchase) => {
+        // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `productPurchases`, which resolves the spread operator error.
+        const productPurchases = filteredPurchases.reduce((acc: Record<string, { quantity: number; totalCost: number }>, purchase) => {
             purchase.items.forEach(item => {
                 if (!acc[item.id]) {
                     acc[item.id] = { quantity: 0, totalCost: 0 };
@@ -37,7 +35,7 @@ const ProductPurchaseReportPage: React.FC = () => {
                 acc[item.id].totalCost += item.price * item.quantity;
             });
             return acc;
-        }, {} as Record<string, { quantity: number; totalCost: number }>);
+        }, {});
         
         return Object.entries(productPurchases).map(([productId, data]) => ({
             product: productsMap.get(productId),

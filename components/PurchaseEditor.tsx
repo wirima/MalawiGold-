@@ -160,7 +160,7 @@ const PurchaseEditor: React.FC<PurchaseEditorProps> = ({
                         <label htmlFor="supplier" className="block text-sm font-medium">Supplier</label>
                         <div className="mt-1 flex gap-2">
                             <select id="supplier" value={selectedSupplierId} onChange={e => { setSelectedSupplierId(e.target.value); setFormError(null); }} className="block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500">
-                                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.companyName})</option>)}
+                                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.businessName})</option>)}
                             </select>
                             {vendorIntegrations.length > 0 && mode === 'purchase' && (
                                 <button
