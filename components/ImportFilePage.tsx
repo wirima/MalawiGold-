@@ -6,12 +6,12 @@ interface ImportFilePageProps {
     title: string;
     description: string;
     instructions: string[];
-    onDownloadTemplate: () => void;
-    templateFilename: string;
+    onDownloadCsv: () => void;
+    onDownloadExcel?: () => void; // Optional Excel download handler
     permission: Permission;
 }
 
-const ImportFilePage: React.FC<ImportFilePageProps> = ({ title, description, instructions, onDownloadTemplate, templateFilename, permission }) => {
+const ImportFilePage: React.FC<ImportFilePageProps> = ({ title, description, instructions, onDownloadCsv, onDownloadExcel, permission }) => {
     const { hasPermission } = useAuth();
     const [file, setFile] = React.useState<File | null>(null);
     const [isDragOver, setIsDragOver] = React.useState(false);
@@ -62,10 +62,18 @@ const ImportFilePage: React.FC<ImportFilePageProps> = ({ title, description, ins
                     <ol className="list-decimal list-inside mt-2 text-sm text-slate-600 dark:text-slate-400 space-y-1">
                         {instructions.map((inst, i) => <li key={i}>{inst}</li>)}
                     </ol>
-                    <button onClick={onDownloadTemplate} className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-medium mt-3 inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        Download Template File ({templateFilename})
-                    </button>
+                    <div className="mt-3 flex items-center gap-4">
+                        <button onClick={onDownloadCsv} className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-medium inline-flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download Sample .csv
+                        </button>
+                        {onDownloadExcel && (
+                             <button onClick={onDownloadExcel} className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-medium inline-flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                Download Sample .xlsx
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div>

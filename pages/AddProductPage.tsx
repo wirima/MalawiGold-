@@ -251,6 +251,7 @@ const AddProductPage: React.FC = () => {
     
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map(variant => {
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr) => ({
+                        // FIX: Add fallback values to prevent undefined values in the object properties, which was causing a type error.
                         variationName: variationMap.get(attr.variationId)?.name || 'N/A',
                         valueName: variationValueMap.get(attr.valueId)?.name || 'N/A',
                     }));

@@ -4,11 +4,18 @@ import ImportFilePage from '../components/ImportFilePage';
 
 const ImportUnitsPage: React.FC = () => {
     
-    const handleDownloadTemplate = () => {
+    const handleDownloadCsv = () => {
         const headers = [
             'unit_name', 'short_name'
         ];
         downloadCSV('units_template.csv', headers);
+    };
+
+    const handleDownloadExcel = () => {
+        const headers = [
+            'unit_name', 'short_name'
+        ];
+        downloadCSV('units_template.xlsx', headers);
     };
 
     return (
@@ -16,12 +23,12 @@ const ImportUnitsPage: React.FC = () => {
             title="Import Units"
             description="Bulk upload new units from a CSV or Excel file."
             instructions={[
-                "Download the template file to see the required format.",
+                "Download a template file to see the required format.",
                 "Required columns: unit_name, short_name.",
                 "Both unit name and short name should be unique.",
             ]}
-            onDownloadTemplate={handleDownloadTemplate}
-            templateFilename="units_template.csv"
+            onDownloadCsv={handleDownloadCsv}
+            onDownloadExcel={handleDownloadExcel}
             permission="products:import_units"
         />
     );

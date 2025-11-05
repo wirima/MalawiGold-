@@ -1,18 +1,22 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { downloadCSV } from '../utils';
 import ImportFilePage from '../components/ImportFilePage';
 
 
 const ImportProductsPage: React.FC = () => {
     
-    const handleDownloadTemplate = () => {
-        const headers = [
-            'product_name', 'sku', 'category_name', 'brand_name', 'unit_name', 
-            'location_name', 'cost_price', 'selling_price', 'initial_stock', 
-            'reorder_point', 'is_not_for_sale'
-        ];
+    const headers = [
+        'product_name', 'sku', 'category_name', 'brand_name', 'unit_name', 
+        'location_name', 'cost_price', 'selling_price', 'initial_stock', 
+        'reorder_point', 'is_not_for_sale'
+    ];
+
+    const handleDownloadCsv = () => {
         downloadCSV('products_template.csv', headers);
+    };
+    
+    const handleDownloadExcel = () => {
+        downloadCSV('products_template.xlsx', headers);
     };
 
     return (
@@ -20,14 +24,14 @@ const ImportProductsPage: React.FC = () => {
             title="Import Products"
             description="Bulk upload new products from a CSV file."
             instructions={[
-                "Download the template file to see the required format.",
+                "Download a template file to see the required format.",
                 "Required columns: product_name, sku, category_name, unit_name, location_name, cost_price, selling_price.",
-                "SKUs must be unique.",
+                "SKUs must be unique per business location.",
                 "Category, Brand, Unit, and Location names must exactly match existing values in the system.",
                 "Optional columns will use default values if left blank."
             ]}
-            onDownloadTemplate={handleDownloadTemplate}
-            templateFilename="products_template.csv"
+            onDownloadCsv={handleDownloadCsv}
+            onDownloadExcel={handleDownloadExcel}
             permission="products:import"
         />
     );
