@@ -252,8 +252,7 @@ const AddProductPage: React.FC = () => {
         return isValid;
     };
 
-    // FIX: Make handleSubmit async to await the result of addBrand.
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
         
@@ -262,9 +261,7 @@ const AddProductPage: React.FC = () => {
         if (existingBrand) {
             brandId = existingBrand.id;
         } else {
-            // FIX: `addBrand` returns a Promise<Brand>, so it must be awaited before accessing its `id` property.
-            const newBrand = await addBrand({ name: brandName.trim() });
-            brandId = newBrand.id;
+            brandId = addBrand({ name: brandName.trim() }).id;
         }
             
         const locationsToProcess = Array.from(formData.businessLocationIds);
@@ -304,7 +301,7 @@ const AddProductPage: React.FC = () => {
                 // FIX: Explicitly typing `variant` to prevent type errors cascading from the `variantsMatrix` state.
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
                     // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
-                    const attributes: ProductVariationAttribute[] = variant.attributes.map((attr) => ({
+                    const attributes: ProductVariationAttribute[] = variant.attributes.map((attr: { variationId: string; valueId: string; }) => ({
                         // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
                         variationName: variationMap.get(attr.variationId)?.name || 'N/A',
                         valueName: variationValueMap.get(attr.valueId)?.name || 'N/A',
