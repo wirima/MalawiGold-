@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Product, BarcodeType, Brand, Variation, VariationValue, ProductVariationAttribute } from '../types';
@@ -52,6 +52,7 @@ const AddProductPage: React.FC = () => {
     const { products, brands, categories, units, businessLocations, addProduct, addVariableProduct, hasPermission, addBrand, variations: variationTemplates, variationValues } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const nameInputRef = useRef<HTMLInputElement>(null);
 
     const locationsMap = useMemo(() => new Map(businessLocations.map(l => [l.id, l.name])), [businessLocations]);
 
@@ -154,9 +155,9 @@ const AddProductPage: React.FC = () => {
         const combinations = cartesian(...arraysToCombine);
 
         // FIX: Explicitly typing `combo` resolves type inference issues where its elements were treated as 'unknown'.
+        // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
         // FIX: Explicitly type `combo` to resolve TS inference issues from the `cartesian` utility function.
         // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
-        // FIX: Explicitly typing `combo` resolves type inference issues where its elements were treated as 'unknown'.
         const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
             // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `combo` to fix this.
@@ -251,7 +252,8 @@ const AddProductPage: React.FC = () => {
         return isValid;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // FIX: Make handleSubmit async to await the result of addBrand.
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
         
@@ -260,7 +262,9 @@ const AddProductPage: React.FC = () => {
         if (existingBrand) {
             brandId = existingBrand.id;
         } else {
-            brandId = addBrand({ name: brandName.trim() }).id;
+            // FIX: `addBrand` returns a Promise<Brand>, so it must be awaited before accessing its `id` property.
+            const newBrand = await addBrand({ name: brandName.trim() });
+            brandId = newBrand.id;
         }
             
         const locationsToProcess = Array.from(formData.businessLocationIds);
@@ -297,7 +301,7 @@ const AddProductPage: React.FC = () => {
                     businessLocationId: locationId 
                 };
     
-                // FIX: Explicitly type `variant` to prevent type errors cascading from the `variantsMatrix` state.
+                // FIX: Explicitly typing `variant` to prevent type errors cascading from the `variantsMatrix` state.
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
                     // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr) => ({
@@ -496,7 +500,7 @@ const AddProductPage: React.FC = () => {
 
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium">Product Name*</label>
-                            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={`${baseInputClasses} ${errors.name ? errorInputClasses : ''}`} tabIndex={1}/>
+                            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={`${baseInputClasses} ${errors.name ? errorInputClasses : ''}`} tabIndex={1} ref={nameInputRef}/>
                             {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                         </div>
 
@@ -720,7 +724,7 @@ const AddProductPage: React.FC = () => {
                         <p className="mt-2 text-sm text-slate-500">What would you like to do next?</p>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg">
-                        <button type="button" onClick={() => { setIsSuccessModalOpen(false); resetForm(); }} className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-600">Add Another Product</button>
+                        <button type="button" onClick={() => { setIsSuccessModalOpen(false); resetForm(); setTimeout(() => nameInputRef.current?.focus(), 100); }} className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-600">Add Another Product</button>
                         <button type="button" onClick={() => navigate('/products')} className="w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 font-medium text-white hover:bg-indigo-700">View All Products</button>
                     </div>
                 </div>

@@ -220,7 +220,7 @@ const ProductFormModal: React.FC<{
 
 
 const ProductsPage: React.FC = () => {
-    const { products, brands, categories, units, businessLocations, hasPermission, updateProduct, deleteProduct } = useAuth();
+    const { products, brands, categories, units, businessLocations, hasPermission, updateProduct, deleteProduct, isLoading, error: apiError } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [stockFilter, setStockFilter] = useState('all');
@@ -228,8 +228,7 @@ const ProductsPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
-    const [apiError, setApiError] = useState<string | null>(null);
-
+    
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(200);
 
@@ -354,19 +353,14 @@ const ProductsPage: React.FC = () => {
     };
 
     const handleDeleteProduct = (product: Product) => {
-        setApiError(null);
         setConfirmDelete(product);
     };
 
     const confirmDeletion = () => {
         if (confirmDelete) {
-            try {
-                deleteProduct(confirmDelete.id);
-            } catch (error: any) {
-                setApiError(error.message);
-            } finally {
+            deleteProduct(confirmDelete.id).finally(() => {
                 setConfirmDelete(null);
-            }
+            });
         }
     };
 
@@ -408,9 +402,6 @@ const ProductsPage: React.FC = () => {
                         <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                             <strong className="font-bold">Error: </strong>
                             <span className="block sm:inline">{apiError}</span>
-                            <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => setApiError(null)}>
-                                <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
-                            </span>
                         </div>
                     )}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -517,6 +508,11 @@ const ProductsPage: React.FC = () => {
                 </div>
 
                 <div className="overflow-x-auto">
+                     {isLoading ? (
+                        <div className="flex justify-center items-center h-96">
+                            <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500"></div>
+                        </div>
+                    ) : (
                     <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
                         <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
                             <tr>
@@ -598,6 +594,7 @@ const ProductsPage: React.FC = () => {
                             )}
                         </tbody>
                     </table>
+                    )}
                 </div>
             </div>
             {isModalOpen && (
