@@ -87,6 +87,7 @@ const VendorApiConnectionPage = React.lazy(() => import('./pages/VendorApiConnec
 const PaymentGatewayConnectionPage = React.lazy(() => import('./pages/PaymentGatewayConnectionPage'));
 const BankAccountsPage = React.lazy(() => import('./pages/BankAccountsPage'));
 const SubscriptionPage = React.lazy(() => import('./pages/SubscriptionPage'));
+const StockTransferRequestsPage = React.lazy(() => import('./pages/StockTransferRequestsPage'));
 
 const App: React.FC = () => {
   return (
@@ -153,6 +154,7 @@ const App: React.FC = () => {
                       <Route path="/stock-adjustments/add" element={<AddStockAdjustmentPage />} />
                       <Route path="/stock-transfers" element={<StockTransfersPage />} />
                       <Route path="/stock-transfers/add" element={<AddStockTransferPage />} />
+                      <Route path="/stock-transfers/requests" element={<StockTransferRequestsPage />} />
                       
                       {/* Expenses Routes */}
                       <Route path="/expenses" element={<ExpensesPage />} />

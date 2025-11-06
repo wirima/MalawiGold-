@@ -59,12 +59,12 @@ const DiscountModal: React.FC<{
 
 
 const POSPage: React.FC = () => {
-    const { products, customers, addSale, hasPermission, ageVerificationSettings } = useAuth();
+    const { products: allProducts, customers, addSale, hasPermission, ageVerificationSettings, currentUser, businessLocations, roles, addStockTransferRequest } = useAuth();
     const { isOnline, addSaleToQueue } = useOffline();
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [showSuccessMessage, setShowSuccessMessage] = useState('');
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>(customers.find(c => c.name === 'Walk-in Customer')?.id || customers[0]?.id || '');
     const [cartErrors, setCartErrors] = useState<Record<string, string>>({});
     const [passportNumber, setPassportNumber] = useState('');
@@ -86,6 +86,11 @@ const POSPage: React.FC = () => {
     // State for Age Verification
     const [isAgeVerificationModalOpen, setIsAgeVerificationModalOpen] = useState(false);
     const [productForVerification, setProductForVerification] = useState<Product | null>(null);
+    
+    const currentRole = useMemo(() => roles.find(r => r.id === currentUser!.roleId), [currentUser, roles]);
+    const isCashier = currentRole?.name === 'Cashier';
+
+    const [selectedLocationId, setSelectedLocationId] = useState<string>(currentUser!.businessLocationId);
 
 
     // Refs for Training Guide & Shortcuts
@@ -103,7 +108,7 @@ const POSPage: React.FC = () => {
     const canProcessReturn = hasPermission('pos:process_return');
 
 
-    if (!hasPermission('sell:pos')) {
+    if (!hasPermission('sell:pos') || !currentUser) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center">
                 <h1 className="text-5xl font-bold text-slate-700 dark:text-slate-300">Access Denied</h1>
@@ -114,7 +119,7 @@ const POSPage: React.FC = () => {
         );
     }
 
-    const productsMap = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
+    const productsMap = useMemo(() => new Map(allProducts.map(p => [p.id, p])), [allProducts]);
     
     const resetCart = useCallback(() => {
         setCart([]);
@@ -126,6 +131,30 @@ const POSPage: React.FC = () => {
         setDiscount(null);
         setIsReturnMode(false);
     }, [customers]);
+
+    const handleLocationChange = (newLocationId: string) => {
+        if (isCashier) return; // Prevent cashiers from changing location
+        if (cart.length > 0) {
+            if (window.confirm('Changing location will clear the current cart. Are you sure?')) {
+                resetCart();
+                setSelectedLocationId(newLocationId);
+            }
+        } else {
+            setSelectedLocationId(newLocationId);
+        }
+    };
+
+    const handleRequestTransfer = (product: Product, fromLocationId: string) => {
+        addStockTransferRequest({
+            productId: product.id,
+            fromLocationId: fromLocationId,
+            toLocationId: selectedLocationId,
+            quantity: 1, // Default to 1 for now
+            requestingUserId: currentUser.id
+        });
+        setShowSuccessMessage(`Transfer request for ${product.name} has been sent.`);
+        setTimeout(() => setShowSuccessMessage(''), 3000);
+    };
 
     const _addToCartInternal = useCallback((product: Product) => {
         const liveProduct = productsMap.get(product.id);
@@ -239,11 +268,12 @@ const POSPage: React.FC = () => {
         }
     };
 
-    const filteredProducts = useMemo(() => products.filter(product =>
+    const filteredProducts = useMemo(() => allProducts.filter(product =>
+        product.businessLocationId === selectedLocationId &&
         (isReturnMode || !product.isNotForSale) &&
         (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-    ), [products, searchTerm, isReturnMode]);
+    ), [allProducts, searchTerm, isReturnMode, selectedLocationId]);
     
     const subtotal = useMemo(() => cart.reduce((acc, item) => acc + (item.originalPrice ?? item.price) * item.quantity, 0), [cart]);
 
@@ -285,8 +315,8 @@ const POSPage: React.FC = () => {
     const handleCloseReceipt = () => {
         setCompletedSale(null);
         resetCart();
-        setShowSuccessMessage(true);
-        setTimeout(() => setShowSuccessMessage(false), 3000);
+        setShowSuccessMessage('Sale Completed Successfully!');
+        setTimeout(() => setShowSuccessMessage(''), 3000);
     };
     
     const resetTrainingState = useCallback(() => {
@@ -390,7 +420,7 @@ const POSPage: React.FC = () => {
         <div className={`relative flex flex-col lg:flex-row h-[calc(100vh-10rem)] gap-6 ${isReturnMode ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
              {showSuccessMessage && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full text-lg font-semibold z-20">
-                    Sale Completed Successfully!
+                    {showSuccessMessage}
                 </div>
             )}
              {isTrainingMode && (
@@ -400,7 +430,7 @@ const POSPage: React.FC = () => {
                     setCart={setCart}
                     setIsPaymentModalOpen={setIsPaymentModalOpen}
                     resetTrainingState={resetTrainingState}
-                    products={products}
+                    products={allProducts}
                     cart={cart}
                     heldOrders={heldOrders}
                     setHeldOrders={setHeldOrders}
@@ -432,15 +462,29 @@ const POSPage: React.FC = () => {
             {/* Products Grid */}
             <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl shadow-md flex flex-col">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-                     <div className="flex gap-4 items-center justify-between">
-                        <input 
-                            ref={searchRef}
-                            type="text" 
-                            placeholder="Scan or Search products... (F1)"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-4 pr-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                     <div className="flex gap-4 items-center">
+                        <div className="flex-1">
+                            <input
+                                ref={searchRef}
+                                type="text"
+                                placeholder="Scan or Search products... (F1)"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-4 pr-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div className="w-48">
+                             <label htmlFor="pos-location" className="sr-only">Location</label>
+                             <select
+                                id="pos-location"
+                                value={selectedLocationId}
+                                onChange={e => handleLocationChange(e.target.value)}
+                                disabled={isCashier}
+                                className="block w-full text-sm rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {businessLocations.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+                            </select>
+                        </div>
                          {canManageUsers && (
                             <button
                                 onClick={handleStartTraining}
@@ -457,16 +501,36 @@ const POSPage: React.FC = () => {
                 </div>
                 <div ref={productGridRef} className="p-4 overflow-y-auto">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {filteredProducts.map(product => (
-                            <div key={product.id} onClick={() => addToCart(product)} className={`relative cursor-pointer border dark:border-slate-700 rounded-lg p-2 text-center group transition-all hover:shadow-lg hover:border-indigo-500 hover:scale-105 ${(product.stock <= 0 && !isReturnMode) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                {(product.stock <= 0 && !isReturnMode) && <span className="absolute top-1 right-1 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full z-10">Out of Stock</span>}
+                        {filteredProducts.map(product => {
+                            const availableElsewhere = allProducts.find(p => p.sku === product.sku && p.businessLocationId !== selectedLocationId && p.stock > 0);
+                            const canRequestTransfer = product.stock === 0 && availableElsewhere && isCashier;
+                            const isOutOfStock = product.stock <= 0 && !isReturnMode;
+                            
+                            return (
+                                <div 
+                                    key={product.id} 
+                                    onClick={() => !isOutOfStock && addToCart(product)} 
+                                    className={`relative border dark:border-slate-700 rounded-lg p-2 text-center group transition-all  
+                                        ${(isOutOfStock && !canRequestTransfer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-indigo-500 hover:scale-105'}`}
+                                >
+                                {isOutOfStock && !canRequestTransfer && <span className="absolute top-1 right-1 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full z-10">Out of Stock</span>}
+                                {canRequestTransfer && (
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleRequestTransfer(product, availableElsewhere.businessLocationId); }}
+                                        className="absolute top-1 right-1 text-xs bg-blue-600 text-white px-2 py-1 rounded-full z-10 hover:bg-blue-700"
+                                        title={`Available at ${businessLocations.find(l => l.id === availableElsewhere.businessLocationId)?.name}`}
+                                    >
+                                        Request Transfer
+                                    </button>
+                                )}
                                 {product.isAgeRestricted && <span className="absolute top-1 left-1 text-xs bg-orange-400 text-white px-1.5 py-0.5 rounded-full z-10">ID Req.</span>}
                                  <img src={product.imageUrl} alt={product.name} className="w-full h-24 object-cover rounded-md mb-2"/>
                                 <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">{product.name}</h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Stock: {product.stock}</p>
                                 <p className="text-xs font-semibold text-indigo-500">{product.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </div>
             </div>

@@ -208,6 +208,17 @@ export interface StockTransfer {
     status: 'in_transit' | 'completed';
 }
 
+export interface StockTransferRequest {
+  id: string;
+  date: string;
+  fromLocationId: string;
+  toLocationId: string;
+  productId: string;
+  quantity: number;
+  requestingUserId: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 export interface ExpenseCategory {
   id: string;
   name: string;
@@ -335,6 +346,7 @@ export interface User {
     name: string;
     email: string;
     roleId: Role['id'];
+    businessLocationId: string;
 }
 
 export interface BrandingSettings {

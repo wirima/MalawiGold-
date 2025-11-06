@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useMemo } from 'react';
-import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount } from '../types';
-import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS } from '../data/mockData';
+import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount, StockTransferRequest } from '../types';
+import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS, MOCK_STOCK_TRANSFER_REQUESTS } from '../data/mockData';
 
 interface AgeVerificationSettings {
     minimumAge: number;
@@ -56,6 +56,9 @@ interface AuthContextType {
     deleteBusinessLocation: (locationId: string) => void;
     stockTransfers: StockTransfer[];
     addStockTransfer: (transferData: Omit<StockTransfer, 'id' | 'date'>) => void;
+    stockTransferRequests: StockTransferRequest[];
+    addStockTransferRequest: (requestData: Omit<StockTransferRequest, 'id' | 'date' | 'status'>) => void;
+    updateStockTransferRequest: (requestId: string, status: 'approved' | 'rejected') => void;
     // Variations
     variations: Variation[];
     variationValues: VariationValue[];
@@ -155,6 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [stockAdjustments, setStockAdjustments] = useState<StockAdjustment[]>(MOCK_STOCK_ADJUSTMENTS);
     const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>(MOCK_BUSINESS_LOCATIONS);
     const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>(MOCK_STOCK_TRANSFERS);
+    const [stockTransferRequests, setStockTransferRequests] = useState<StockTransferRequest[]>(MOCK_STOCK_TRANSFER_REQUESTS);
     const [customers, setCustomers] = useState<Customer[]>(MOCK_CUSTOMERS);
     const [customerGroups, setCustomerGroups] = useState<CustomerGroup[]>(MOCK_CUSTOMER_GROUPS);
     const [suppliers, setSuppliers] = useState<Supplier[]>(MOCK_SUPPLIERS);
@@ -424,6 +428,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return newProducts;
         });
+    };
+
+    const addStockTransferRequest = (requestData: Omit<StockTransferRequest, 'id' | 'date' | 'status'>) => {
+        const newRequest: StockTransferRequest = {
+            id: `strq_${Date.now()}`,
+            date: new Date().toISOString(),
+            status: 'pending',
+            ...requestData,
+        };
+        setStockTransferRequests(prev => [newRequest, ...prev]);
+    };
+    
+    const updateStockTransferRequest = (requestId: string, status: 'approved' | 'rejected') => {
+        setStockTransferRequests(prev => 
+            prev.map(req => req.id === requestId ? { ...req, status } : req)
+        );
     };
     // #endregion
     
@@ -856,6 +876,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteBusinessLocation,
         stockTransfers,
         addStockTransfer,
+        stockTransferRequests,
+        addStockTransferRequest,
+        updateStockTransferRequest,
         variations,
         variationValues,
         addVariation,

@@ -153,9 +153,15 @@ const AddProductPage: React.FC = () => {
         
         const combinations = cartesian(...arraysToCombine);
 
-        const newMatrix = combinations.map((combo, index) => {
+        // FIX: Explicitly typing `combo` resolves type inference issues where its elements were treated as 'unknown'.
+        // FIX: Explicitly type `combo` to resolve TS inference issues from the `cartesian` utility function.
+        // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
+        // FIX: Explicitly typing `combo` resolves type inference issues where its elements were treated as 'unknown'.
+        const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
+            // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `combo` to fix this.
             const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
+            // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `combo` to fix this.
             const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
@@ -291,8 +297,11 @@ const AddProductPage: React.FC = () => {
                     businessLocationId: locationId 
                 };
     
-                const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map(variant => {
+                // FIX: Explicitly type `variant` to prevent type errors cascading from the `variantsMatrix` state.
+                const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
+                    // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr) => ({
+                        // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
                         variationName: variationMap.get(attr.variationId)?.name || 'N/A',
                         valueName: variationValueMap.get(attr.valueId)?.name || 'N/A',
                     }));

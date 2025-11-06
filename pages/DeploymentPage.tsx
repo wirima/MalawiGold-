@@ -94,21 +94,24 @@ enum TaxType {
 }
 
 model Product {
-  id                 String             @id @default(cuid())
-  name               String
-  sku                String             @unique
-  costPrice          Float
-  price              Float
-  stock              Int
-  reorderPoint       Int
-  imageUrl           String
-  isNotForSale       Boolean
-  description        String?
-  productType        ProductType
-  barcodeType        BarcodeType
-  taxAmount          Float?
-  taxType            TaxType?
-  isAgeRestricted    Boolean?
+  id                  String               @id @default(cuid())
+  name                String
+  sku                 String
+  costPrice           Float
+  price               Float
+  stock               Int
+  reorderPoint        Int
+  imageUrl            String
+  isNotForSale        Boolean
+  description         String?
+  productType         ProductType
+  barcodeType         BarcodeType
+  taxAmount           Float?
+  taxType             TaxType?
+  isAgeRestricted     Boolean?
+  parentProductId     String?
+  variationAttributes Json?
+
   brand              Brand              @relation(fields: [brandId], references: [id])
   brandId            String
   category           Category           @relation(fields: [categoryId], references: [id])
@@ -117,26 +120,33 @@ model Product {
   unitId             String
   businessLocation   BusinessLocation   @relation(fields: [businessLocationId], references: [id])
   businessLocationId String
-  stockAdjustments   StockAdjustment[]
-  documents          ProductDocument[]  @relation("ProductToDocuments")
-  SaleItem           SaleItem[]
-  PurchaseItem       PurchaseItem[]
-  DraftItem          DraftItem[]
-  QuotationItem      QuotationItem[]
-  StockTransferItem  StockTransferItem[]
-  CustomerReturnItem CustomerReturnItem[]
-  PurchaseReturnItem PurchaseReturnItem[]
+
+  parent   Product?  @relation("ProductVariants", fields: [parentProductId], references: [id])
+  variants Product[] @relation("ProductVariants")
+
+  stockAdjustments      StockAdjustment[]
+  documents             ProductDocument[]      @relation("ProductToDocuments")
+  SaleItem              SaleItem[]
+  PurchaseItem          PurchaseItem[]
+  DraftItem             DraftItem[]
+  QuotationItem         QuotationItem[]
+  StockTransferItem     StockTransferItem[]
+  CustomerReturnItem    CustomerReturnItem[]
+  PurchaseReturnItem    PurchaseReturnItem[]
+  stockTransferRequests StockTransferRequest[]
+
+  @@unique([sku, businessLocationId])
 }
 
 model ProductDocument {
-  id          String    @id @default(cuid())
-  name        String
-  description String
-  fileUrl     String
-  fileName    String
-  fileType    String // 'coa' or 'warranty'
+  id           String    @id @default(cuid())
+  name         String
+  description  String
+  fileUrl      String
+  fileName     String
+  fileType     String // 'coa' or 'warranty'
   uploadedDate DateTime  @default(now())
-  products    Product[] @relation("ProductToDocuments")
+  products     Product[] @relation("ProductToDocuments")
 }
 
 model CustomerGroup {
@@ -149,6 +159,7 @@ model CustomerGroup {
 model Customer {
   id              String           @id @default(cuid())
   name            String
+  businessName    String?
   email           String           @unique
   phone           String
   address         String
@@ -163,7 +174,7 @@ model Customer {
 model Supplier {
   id              String           @id @default(cuid())
   name            String
-  companyName     String
+  businessName    String
   email           String
   phone           String
   address         String
@@ -172,18 +183,18 @@ model Supplier {
 }
 
 model BankAccount {
-  id            String          @id @default(cuid())
-  accountName   String
-  bankName      String
-  accountNumber String
+  id             String          @id @default(cuid())
+  accountName    String
+  bankName       String
+  accountNumber  String
   paymentMethods PaymentMethod[]
 }
 
 model PaymentMethod {
-  id        String       @id @default(cuid())
-  name      String
-  account   BankAccount? @relation(fields: [accountId], references: [id])
-  accountId String?
+  id          String       @id @default(cuid())
+  name        String
+  account     BankAccount? @relation(fields: [accountId], references: [id])
+  accountId   String?
   SalePayment SalePayment[]
 }
 
@@ -218,14 +229,15 @@ model Sale {
 }
 
 model SaleItem {
-  id        String  @id @default(cuid())
-  quantity  Int
-  price     Float // price at time of sale
-  costPrice Float // cost at time of sale
-  sale      Sale    @relation(fields: [saleId], references: [id])
-  saleId    String
-  product   Product @relation(fields: [productId], references: [id])
-  productId String
+  id            String  @id @default(cuid())
+  quantity      Int
+  price         Float // price at time of sale
+  costPrice     Float // cost at time of sale
+  originalPrice Float?
+  sale          Sale    @relation(fields: [saleId], references: [id])
+  saleId        String
+  product       Product @relation(fields: [productId], references: [id])
+  productId     String
 }
 
 model SalePayment {
@@ -361,11 +373,14 @@ model StockAdjustment {
 }
 
 model BusinessLocation {
-  id              String          @id @default(cuid())
-  name            String
-  products        Product[]
-  stockTransferFrom StockTransfer[] @relation("FromLocation")
-  stockTransferTo   StockTransfer[] @relation("ToLocation")
+  id                         String                 @id @default(cuid())
+  name                       String
+  users                      User[]
+  products                   Product[]
+  stockTransferFrom          StockTransfer[]        @relation("FromLocation")
+  stockTransferTo            StockTransfer[]        @relation("ToLocation")
+  stockTransferRequestFrom   StockTransferRequest[] @relation("RequestFromLocation")
+  stockTransferRequestTo     StockTransferRequest[] @relation("RequestToLocation")
 }
 
 enum StockTransferStatus {
@@ -374,14 +389,14 @@ enum StockTransferStatus {
 }
 
 model StockTransfer {
-  id           String              @id @default(cuid())
-  date         DateTime            @default(now())
-  status       StockTransferStatus
-  fromLocation BusinessLocation    @relation("FromLocation", fields: [fromLocationId], references: [id])
+  id             String              @id @default(cuid())
+  date           DateTime            @default(now())
+  status         StockTransferStatus
+  fromLocation   BusinessLocation    @relation("FromLocation", fields: [fromLocationId], references: [id])
   fromLocationId String
-  toLocation   BusinessLocation    @relation("ToLocation", fields: [toLocationId], references: [id])
+  toLocation     BusinessLocation    @relation("ToLocation", fields: [toLocationId], references: [id])
   toLocationId   String
-  items        StockTransferItem[]
+  items          StockTransferItem[]
 }
 
 model StockTransferItem {
@@ -391,6 +406,28 @@ model StockTransferItem {
   stockTransferId String
   product         Product       @relation(fields: [productId], references: [id])
   productId       String
+}
+
+enum StockTransferRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+model StockTransferRequest {
+  id               String                     @id @default(cuid())
+  date             DateTime                   @default(now())
+  quantity         Int
+  status           StockTransferRequestStatus @default(pending)
+  fromLocationId   String
+  toLocationId     String
+  productId        String
+  requestingUserId String
+
+  fromLocation   BusinessLocation @relation("RequestFromLocation", fields: [fromLocationId], references: [id])
+  toLocation     BusinessLocation @relation("RequestToLocation", fields: [toLocationId], references: [id])
+  product        Product          @relation(fields: [productId], references: [id])
+  requestingUser User             @relation(fields: [requestingUserId], references: [id])
 }
 
 model ExpenseCategory {
@@ -437,15 +474,18 @@ model Role {
 }
 
 model User {
-  id     String @id @default(cuid())
-  name   String
-  email  String @unique
-  role   Role   @relation(fields: [roleId], references: [id])
-  roleId String
+  id                    String                 @id @default(cuid())
+  name                  String
+  email                 String                 @unique
+  role                  Role                   @relation(fields: [roleId], references: [id])
+  roleId                String
+  businessLocation      BusinessLocation       @relation(fields: [businessLocationId], references: [id])
+  businessLocationId    String
+  stockTransferRequests StockTransferRequest[]
 }
 
 model BrandingSettings {
-  id           Int      @id @default(1)
+  id           Int     @id @default(1)
   businessName String
   logoUrl      String?
   address      String?

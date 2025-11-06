@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Role, Permission } from '../types';
+import { User, Role, Permission, BusinessLocation } from '../types';
 import { ALL_PERMISSIONS } from '../constants';
 import ConfirmationModal from '../components/ConfirmationModal';
 
@@ -210,13 +210,15 @@ const UserFormModal: React.FC<{
     user: User | null;
     users: User[];
     roles: Role[];
+    businessLocations: BusinessLocation[];
     onClose: () => void;
     onSave: (userData: User | Omit<User, 'id'>) => void;
-}> = ({ user, users, roles, onClose, onSave }) => {
+}> = ({ user, users, roles, businessLocations, onClose, onSave }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [roleId, setRoleId] = useState('');
-    const [errors, setErrors] = useState({ name: '', email: '', roleId: '' });
+    const [businessLocationId, setBusinessLocationId] = useState('');
+    const [errors, setErrors] = useState({ name: '', email: '', roleId: '', businessLocationId: '' });
     const isEditing = !!user;
 
     useEffect(() => {
@@ -224,15 +226,17 @@ const UserFormModal: React.FC<{
             setName(user.name);
             setEmail(user.email);
             setRoleId(user.roleId);
+            setBusinessLocationId(user.businessLocationId || '');
         } else {
             setName('');
             setEmail('');
-            setRoleId(''); // Force a selection for new users
+            setRoleId(''); 
+            setBusinessLocationId(businessLocations[0]?.id || '');
         }
-    }, [user, roles]);
+    }, [user, roles, businessLocations]);
 
     const validate = () => {
-        const newErrors = { name: '', email: '', roleId: '' };
+        const newErrors = { name: '', email: '', roleId: '', businessLocationId: '' };
         let isValid = true;
         const trimmedEmail = email.trim().toLowerCase();
 
@@ -256,6 +260,11 @@ const UserFormModal: React.FC<{
             newErrors.roleId = 'A role must be selected.';
             isValid = false;
         }
+        
+        if (!businessLocationId) {
+            newErrors.businessLocationId = 'A default location must be selected.';
+            isValid = false;
+        }
 
         setErrors(newErrors);
         return isValid;
@@ -264,7 +273,7 @@ const UserFormModal: React.FC<{
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
-            const userData = { name, email, roleId };
+            const userData = { name, email, roleId, businessLocationId };
             if (isEditing && user) {
                 onSave({ ...user, ...userData });
             } else {
@@ -328,6 +337,23 @@ const UserFormModal: React.FC<{
                             </select>
                              {errors.roleId && <p id="userRole-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.roleId}</p>}
                         </div>
+                        <div>
+                            <label htmlFor="userLocation" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Default Location</label>
+                             <select
+                                id="userLocation"
+                                value={businessLocationId}
+                                onChange={(e) => setBusinessLocationId(e.target.value)}
+                                className={`${baseInputClasses} ${errors.businessLocationId ? errorInputClasses : ''}`}
+                                aria-invalid={!!errors.businessLocationId}
+                                aria-describedby="userLocation-error"
+                            >
+                                <option value="" disabled>Select a location</option>
+                                {businessLocations.map(loc => (
+                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                ))}
+                            </select>
+                             {errors.businessLocationId && <p id="userLocation-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.businessLocationId}</p>}
+                        </div>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</button>
@@ -342,7 +368,7 @@ const UserFormModal: React.FC<{
 
 const UsersRolesPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<Tab>('users');
-    const { users, roles, hasPermission, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser, currentUser } = useAuth();
+    const { users, roles, hasPermission, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser, currentUser, businessLocations } = useAuth();
     const canManageUsers = hasPermission('users:manage');
 
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -600,6 +626,7 @@ const UsersRolesPage: React.FC = () => {
                     user={selectedUser}
                     users={users}
                     roles={roles}
+                    businessLocations={businessLocations}
                     onClose={() => setIsUserFormModalOpen(false)}
                     onSave={handleSaveUser}
                 />

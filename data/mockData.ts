@@ -1,4 +1,4 @@
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount, StockTransferRequest } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
@@ -118,10 +118,12 @@ export const MOCK_PRODUCTS: Product[] = [
   { id: 'PROD003', name: 'Cappuccino', sku: 'SKU003', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.50, price: 3.50, stock: 75, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/cappuccino/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Espresso, steamed milk, and a deep layer of foam.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
   { id: 'PROD004', name: 'Croissant', sku: 'SKU004', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.10, price: 2.75, stock: 50, reorderPoint: 15, imageUrl: 'https://picsum.photos/seed/croissant/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Buttery, flaky, and delicious.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
   { id: 'PROD005', name: 'Muffin', sku: 'SKU005', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.90, price: 2.25, stock: 28, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/muffin/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'A delightful baked treat.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD005-LOC02', name: 'Muffin', sku: 'SKU005', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 0.90, price: 2.25, stock: 0, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/muffin/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'A delightful baked treat.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
   { id: 'PROD006', name: 'Iced Tea', sku: 'SKU006', categoryId: 'C03', brandId: 'B03', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.75, price: 2.00, stock: 90, reorderPoint: 25, imageUrl: 'https://picsum.photos/seed/icedtea/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Refreshing and cool.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
   { id: 'PROD007', name: 'Mineral Water', sku: 'SKU007', categoryId: 'C03', brandId: 'B03', unitId: 'U01', businessLocationId: 'LOC03', costPrice: 0.50, price: 1.50, stock: 120, reorderPoint: 30, imageUrl: 'https://picsum.photos/seed/water/400', isNotForSale: false, productType: 'single', barcodeType: 'EAN13', description: 'Pure and simple hydration.', taxAmount: 0.25, taxType: 'fixed', isAgeRestricted: false },
   { id: 'PROD008', name: 'Sandwich', sku: 'SKU008', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 2.50, price: 5.50, stock: 30, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/sandwich/400', isNotForSale: false, productType: 'single', barcodeType: 'UPC', description: 'Freshly made sandwich.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
-  { id: 'PROD009', name: 'Salad', sku: 'SKU009', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 3.00, price: 6.50, stock: 0, reorderPoint: 5, imageUrl: 'https://picsum.photos/seed/salad/400', isNotForSale: true, productType: 'single', barcodeType: 'CODE128', description: 'Healthy and crisp salad.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD009', name: 'Salad', sku: 'SKU009', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 3.00, price: 6.50, stock: 0, reorderPoint: 5, imageUrl: 'https://picsum.photos/seed/salad/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Healthy and crisp salad.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD009-LOC02', name: 'Salad', sku: 'SKU009', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 3.00, price: 6.50, stock: 20, reorderPoint: 5, imageUrl: 'https://picsum.photos/seed/salad/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Healthy and crisp salad.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
   { id: 'PROD010', name: 'Americano', sku: 'SKU010', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.30, price: 3.00, stock: 85, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/americano/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Espresso shots topped with hot water.', taxAmount: 5, taxType: 'percentage', isAgeRestricted: false },
   { id: 'PROD011', name: 'Craft Beer', sku: 'SKU011', categoryId: 'C05', brandId: 'B06', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 2.80, price: 6.50, stock: 48, reorderPoint: 12, imageUrl: 'https://picsum.photos/seed/beer/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Locally brewed IPA.', taxAmount: 10, taxType: 'percentage', isAgeRestricted: true },
   { id: 'PROD012', name: 'Cigarettes', sku: 'SKU012', categoryId: 'C06', brandId: 'B05', unitId: 'U01', businessLocationId: 'LOC03', costPrice: 5.00, price: 9.00, stock: 30, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/cigarettes/400', isNotForSale: false, productType: 'single', barcodeType: 'UPC', description: 'Pack of 20.', taxAmount: 1.50, taxType: 'fixed', isAgeRestricted: true },
@@ -153,6 +155,8 @@ export const MOCK_STOCK_TRANSFERS: StockTransfer[] = [
         status: 'completed',
     },
 ];
+
+export const MOCK_STOCK_TRANSFER_REQUESTS: StockTransferRequest[] = [];
 
 export const MOCK_EXPENSE_CATEGORIES: ExpenseCategory[] = [
     { id: 'EC01', name: 'Rent' },
@@ -404,12 +408,30 @@ export const MOCK_ROLES: Role[] = [
             'sell:pos',
             'shipping:view'
         ]
+    },
+    {
+        id: 'sales_rep',
+        name: 'Sales Representative',
+        description: 'Responsible for making sales and managing customer relationships.',
+        permissions: [
+            'dashboard:view',
+            'products:view',
+            'contacts:view',
+            'contacts:manage',
+            'sell:view',
+            'sell:pos',
+            'sell:sales',
+            'sell:manage',
+            'pos:apply_discount',
+            'reports:view'
+        ]
     }
 ];
 
 export const MOCK_USERS: User[] = [
-    { id: 'USER001', name: 'Alice Admin', email: 'alice.admin@example.com', roleId: 'admin' },
-    { id: 'USER002', name: 'Mike Supervisor', email: 'mike.manager@example.com', roleId: 'manager' },
-    { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier' },
-    { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager' },
+    { id: 'USER001', name: 'Alice Admin', email: 'alice.admin@example.com', roleId: 'admin', businessLocationId: 'LOC01' },
+    { id: 'USER002', name: 'Mike Supervisor', email: 'mike.manager@example.com', roleId: 'manager', businessLocationId: 'LOC01' },
+    { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier', businessLocationId: 'LOC02' },
+    { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager', businessLocationId: 'LOC03' },
+    { id: 'USER005', name: 'Sarah Sales', email: 'sarah.sales@example.com', roleId: 'sales_rep', businessLocationId: 'LOC01' },
 ];

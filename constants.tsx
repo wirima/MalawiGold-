@@ -120,6 +120,7 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     subItems: [
         { path: '/stock-transfers', label: 'List Stock transfers' },
         { path: '/stock-transfers/add', label: 'Add Stock transfers', permission: 'stock_transfer:manage' },
+        { path: '/stock-transfers/requests', label: 'Transfer Requests', permission: 'stock_transfer:manage' },
     ]
   },
   {
