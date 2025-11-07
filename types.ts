@@ -256,6 +256,8 @@ export interface IntegrationConnection {
 
 export type Permission = 
   | 'dashboard:view'
+  // Growth
+  | 'growth:view'
   // Products
   | 'products:view'
   | 'products:manage'

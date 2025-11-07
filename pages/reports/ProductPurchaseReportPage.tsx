@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ProductPurchaseReportPage: React.FC = () => {
     const { purchases, products, suppliers, hasPermission } = useAuth();
+    const { formatCurrency } = useCurrency();
     const today = new Date().toISOString().split('T')[0];
     const [dateRange, setDateRange] = useState({ start: '', end: today });
     const [supplierFilter, setSupplierFilter] = useState('all');
@@ -25,14 +27,14 @@ const ProductPurchaseReportPage: React.FC = () => {
             (!endDate || new Date(p.date) <= endDate)
         );
 
-        // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `productPurchases`, which resolves the spread operator error.
-        const productPurchases = filteredPurchases.reduce((acc: Record<string, { quantity: number; totalCost: number }>, purchase) => {
+        // FIX: Explicitly typed the `reduce` accumulator for `productPurchases`.
+        const productPurchases = filteredPurchases.reduce((acc: Record<string, { quantity: number; total: number }>, purchase) => {
             purchase.items.forEach(item => {
                 if (!acc[item.id]) {
-                    acc[item.id] = { quantity: 0, totalCost: 0 };
+                    acc[item.id] = { quantity: 0, total: 0 };
                 }
                 acc[item.id].quantity += item.quantity;
-                acc[item.id].totalCost += item.price * item.quantity;
+                acc[item.id].total += item.price * item.quantity;
             });
             return acc;
         }, {});
@@ -43,8 +45,6 @@ const ProductPurchaseReportPage: React.FC = () => {
         })).filter(item => item.product).sort((a,b) => b.quantity - a.quantity);
 
     }, [purchases, dateRange, supplierFilter, productsMap]);
-
-    const formatCurrency = (val: number) => val.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
     return (
         <div className="space-y-6">
@@ -73,12 +73,12 @@ const ProductPurchaseReportPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {aggregatedData.map(({ product, quantity, totalCost }) => (
+                            {aggregatedData.map(({ product, quantity, total }) => (
                                 <tr key={product!.id} className="border-b dark:border-slate-700">
                                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{product!.name}</td>
                                     <td className="px-6 py-4">{product!.sku}</td>
                                     <td className="px-6 py-4 text-center font-semibold">{quantity}</td>
-                                    <td className="px-6 py-4 text-right">{formatCurrency(totalCost)}</td>
+                                    <td className="px-6 py-4 text-right">{formatCurrency(total)}</td>
                                 </tr>
                             ))}
                         </tbody>

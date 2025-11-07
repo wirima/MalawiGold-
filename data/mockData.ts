@@ -350,6 +350,7 @@ export const MOCK_ROLES: Role[] = [
         description: 'Has full access to all system features.',
         permissions: [
             'dashboard:view',
+            'growth:view',
             'products:view', 'products:manage', 'products:add', 'products:delete', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:documents',
             'contacts:view', 'contacts:manage', 'contacts:import',
             'purchases:view', 'purchases:manage',

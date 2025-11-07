@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Sale } from '../types';
 import { Link } from 'react-router-dom';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 type SortableKeys = 'date' | 'id' | 'customerName' | 'total' | 'status';
 type SortDirection = 'ascending' | 'descending';
@@ -16,6 +17,7 @@ type SortConfig = {
 
 const SalesListPage: React.FC = () => {
     const { sales, customers, hasPermission, paymentMethods, voidSale } = useAuth();
+    const { formatCurrency } = useCurrency();
     
     const canManageSales = hasPermission('sell:manage');
     const canViewSales = hasPermission('sell:sales');
@@ -213,7 +215,7 @@ const SalesListPage: React.FC = () => {
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 text-right font-semibold">{sale.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                <td className="px-6 py-4 text-right font-semibold">{formatCurrency(sale.total)}</td>
                                 <td className="px-6 py-4">
                                     {sale.payments.length > 1
                                         ? 'Split Payment'

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ProductSellReportPage: React.FC = () => {
     const { sales, products, customers, hasPermission } = useAuth();
+    const { formatCurrency } = useCurrency();
     const today = new Date().toISOString().split('T')[0];
     const [dateRange, setDateRange] = useState({ start: '', end: today });
     const [customerFilter, setCustomerFilter] = useState('all');
@@ -50,8 +52,6 @@ const ProductSellReportPage: React.FC = () => {
         })).filter(item => item.product).sort((a,b) => b.quantity - a.quantity);
 
     }, [sales, dateRange, customerFilter, productsMap]);
-
-    const formatCurrency = (val: number) => val.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
     return (
         <div className="space-y-6">

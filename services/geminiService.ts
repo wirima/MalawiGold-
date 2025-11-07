@@ -1,5 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
-import { Sale, CustomerRequest, CustomerReturn } from '../types';
+import { GoogleGenAI, FunctionDeclaration, Type, Part, Content } from "@google/genai";
+import { Sale, CustomerRequest, CustomerReturn, Product } from '../types';
 import { MOCK_CATEGORIES } from '../data/mockData';
 
 export const getBusinessInsights = async (salesData: Sale[]): Promise<string> => {
@@ -38,7 +38,7 @@ export const getBusinessInsights = async (salesData: Sale[]): Promise<string> =>
   try {
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt
+        contents: `[{"role": "user", "parts": [{"text": "${prompt}"}]}]`
     });
     return response.text;
   } catch (error) {
@@ -87,7 +87,7 @@ export const getSalesAnalysisInsights = async (salesData: Sale[], dateRange: { s
   try {
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt
+        contents: `[{"role": "user", "parts": [{"text": "${prompt}"}]}]`
     });
     return response.text;
   } catch (error) {
@@ -127,7 +127,7 @@ export const getCustomerDemandAnalysis = async (requests: CustomerRequest[]): Pr
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt
+            contents: `[{"role": "user", "parts": [{"text": "${prompt}"}]}]`
         });
         return response.text;
     } catch (error) {
@@ -173,11 +173,157 @@ export const getReturnAnalysisInsights = async (returns: CustomerReturn[]): Prom
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt
+            contents: `[{"role": "user", "parts": [{"text": "${prompt}"}]}]`
         });
         return response.text;
     } catch (error) {
         console.error("Error generating return analysis with Gemini API:", error);
         throw new Error("Failed to generate return analysis. Please check the API configuration.");
     }
+};
+
+// --- CHATBOT FUNCTIONALITY ---
+
+const getProductInfo = (
+  { productName }: { productName: string },
+  products: Product[]
+) => {
+  const product = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+  if (!product) {
+    return { error: `Product '${productName}' not found.` };
+  }
+  return {
+    name: product.name,
+    price: product.price,
+    stock: product.stock,
+    category: MOCK_CATEGORIES.find(c => c.id === product.categoryId)?.name || 'N/A'
+  };
+};
+
+const getTodaysSalesSummary = (sales: Sale[]) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todaysSales = sales.filter(s => new Date(s.date) >= today && s.status === 'completed');
+  const totalRevenue = todaysSales.reduce((acc, s) => acc + s.total, 0);
+  return {
+    numberOfSales: todaysSales.length,
+    totalRevenue: totalRevenue.toFixed(2)
+  };
+};
+
+const getLowStockProducts = (
+  { limit = 5 }: { limit: number },
+  products: Product[]
+) => {
+  const lowStock = products
+    .filter(p => p.stock > 0 && p.stock <= p.reorderPoint)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, limit);
+  
+  if (lowStock.length === 0) {
+    return { message: "All products are well-stocked." };
+  }
+  return lowStock.map(p => ({ name: p.name, stock: p.stock, reorderPoint: p.reorderPoint }));
+};
+
+const tools: FunctionDeclaration[] = [
+  {
+    name: 'getProductInfo',
+    description: 'Get information about a specific product, including its price and stock level.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        productName: {
+          type: Type.STRING,
+          description: 'The name of the product to look up.',
+        },
+      },
+      required: ['productName'],
+    },
+  },
+  {
+    name: 'getTodaysSalesSummary',
+    description: 'Get a summary of today\'s sales, including the total number of sales and total revenue.',
+    parameters: { type: Type.OBJECT, properties: {} },
+  },
+  {
+    name: 'getLowStockProducts',
+    description: 'Get a list of products that are low in stock (at or below their reorder point).',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        limit: {
+          type: Type.NUMBER,
+          description: 'The maximum number of low-stock products to return.',
+        },
+      },
+    },
+  },
+];
+
+export const processChat = async (
+  history: Content[],
+  message: string,
+  products: Product[],
+  sales: Sale[]
+): Promise<string> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable not set");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const contents: Content[] = [...history, { role: 'user', parts: [{ text: message }] }];
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents,
+      config: {
+        tools: [{ functionDeclarations: tools }],
+      },
+    });
+
+    if (response.functionCalls) {
+      const functionCalls = response.functionCalls;
+      const functionResponses: Part[] = [];
+
+      for (const call of functionCalls) {
+        let result;
+        switch (call.name) {
+          case 'getProductInfo':
+            result = getProductInfo(call.args as { productName: string }, products);
+            break;
+          case 'getTodaysSalesSummary':
+            result = getTodaysSalesSummary(sales);
+            break;
+          case 'getLowStockProducts':
+            result = getLowStockProducts(call.args as { limit: number }, products);
+            break;
+          default:
+            result = { error: `Unknown function: ${call.name}` };
+        }
+        
+        functionResponses.push({
+          functionResponse: {
+            name: call.name,
+            response: { result },
+          },
+        });
+      }
+
+      // Send the function response back to the model
+      const secondResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        // FIX: The history needs to include the model's first turn (the function call) and the tool's response.
+        contents: [...contents, response.candidates[0].content, { role: 'tool', parts: functionResponses }],
+      });
+      return secondResponse.text;
+    }
+
+    return response.text;
+
+  } catch (error) {
+    console.error("Error processing chat with Gemini API:", error);
+    return "Sorry, I encountered an error while processing your request. Please try again.";
+  }
 };

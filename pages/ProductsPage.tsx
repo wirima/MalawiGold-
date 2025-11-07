@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Product, Brand, Category, Unit, BusinessLocation } from '../types';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 type SortableKeys = 'name' | 'sku' | 'categoryName' | 'brandName' | 'locationName' | 'price' | 'stock';
 type SortDirection = 'ascending' | 'descending';
@@ -221,6 +222,7 @@ const ProductFormModal: React.FC<{
 
 const ProductsPage: React.FC = () => {
     const { products, brands, categories, units, businessLocations, hasPermission, updateProduct, deleteProduct } = useAuth();
+    const { formatCurrency } = useCurrency();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [stockFilter, setStockFilter] = useState('all');
@@ -555,7 +557,7 @@ const ProductsPage: React.FC = () => {
                                     <td className="px-6 py-4">{categoriesMap.get(product.categoryId)}</td>
                                     <td className="px-6 py-4">{brandsMap.get(product.brandId)}</td>
                                     <td className="px-6 py-4">{locationsMap.get(product.businessLocationId)}</td>
-                                    <td className="px-6 py-4">{product.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                    <td className="px-6 py-4">{formatCurrency(product.price)}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.className}`}>

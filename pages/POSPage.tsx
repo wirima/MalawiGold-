@@ -7,6 +7,7 @@ import SplitPaymentModal from '../components/SplitPaymentModal';
 import TrainingGuide from '../components/TrainingGuide';
 import ResumeOrderModal from '../components/ResumeOrderModal';
 import AgeVerificationModal from '../components/AgeVerificationModal';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface HeldOrder {
     id: number;
@@ -61,6 +62,7 @@ const DiscountModal: React.FC<{
 const POSPage: React.FC = () => {
     const { products: allProducts, customers, addSale, hasPermission, ageVerificationSettings, currentUser, businessLocations, roles, addStockTransferRequest } = useAuth();
     const { isOnline, addSaleToQueue } = useOffline();
+    const { formatCurrency } = useCurrency();
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -527,7 +529,7 @@ const POSPage: React.FC = () => {
                                  <img src={product.imageUrl} alt={product.name} className="w-full h-24 object-cover rounded-md mb-2"/>
                                 <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">{product.name}</h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Stock: {product.stock}</p>
-                                <p className="text-xs font-semibold text-indigo-500">{product.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                <p className="text-xs font-semibold text-indigo-500">{formatCurrency(product.price)}</p>
                             </div>
                             )
                         })}
@@ -593,8 +595,8 @@ const POSPage: React.FC = () => {
                                             />
                                         ) : (
                                             <p onClick={() => canChangePrice && setEditingPriceFor(item.id)} className={`text-xs ${item.originalPrice ? 'text-orange-500' : 'text-slate-500'} ${canChangePrice ? 'cursor-pointer' : ''}`}>
-                                                {item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                                                {item.originalPrice && <span className="line-through ml-1">{item.originalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>}
+                                                {formatCurrency(item.price)}
+                                                {item.originalPrice && <span className="line-through ml-1">{formatCurrency(item.originalPrice)}</span>}
                                             </p>
                                         )}
                                     </div>
@@ -616,7 +618,7 @@ const POSPage: React.FC = () => {
                                         </div>
                                          {cartErrors[item.id] && <p className="text-xs text-red-500 text-center mt-1">{cartErrors[item.id]}</p>}
                                     </div>
-                                    <p className="font-semibold w-16 text-right flex-shrink-0">{(item.price * item.quantity).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    <p className="font-semibold w-16 text-right flex-shrink-0">{formatCurrency(item.price * item.quantity)}</p>
                                     <button onClick={() => removeItem(item.id)} title="Remove item" className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
@@ -628,23 +630,23 @@ const POSPage: React.FC = () => {
                 <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-3">
                     <div className="flex justify-between text-sm">
                         <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
-                        <span className="font-medium">{subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                        <span className="font-medium">{formatCurrency(subtotal)}</span>
                     </div>
                      {canApplyDiscount && (
                         <div className="flex justify-between text-sm">
                            <button onClick={() => setIsDiscountModalOpen(true)} className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
                                {discount ? 'Edit Discount' : 'Add Discount'}
                            </button>
-                            {discount && <span className="font-medium text-red-500">(-{discountAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })})</span>}
+                            {discount && <span className="font-medium text-red-500">(-{formatCurrency(discountAmount)})</span>}
                         </div>
                     )}
                     <div className="flex justify-between text-sm">
                         <span className="text-slate-600 dark:text-slate-400">Tax (8%)</span>
-                        <span className="font-medium">{tax.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                        <span className="font-medium">{formatCurrency(tax)}</span>
                     </div>
                     <div className={`flex justify-between font-bold text-xl ${isReturnMode ? 'text-red-500' : ''}`}>
                         <span>Total</span>
-                        <span>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                        <span>{formatCurrency(total)}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <button ref={holdButtonRef} onClick={handleHoldOrder} className="w-full bg-yellow-500 text-yellow-900 p-2 rounded-lg font-bold text-base hover:bg-yellow-600 disabled:bg-yellow-300" disabled={cart.length === 0}>

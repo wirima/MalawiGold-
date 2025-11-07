@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Sale } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface SaleReceiptProps {
     sale: Sale;
@@ -9,6 +10,7 @@ interface SaleReceiptProps {
 
 const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
     const { paymentMethods, brandingSettings, productDocuments, updateSaleWithEmail } = useAuth();
+    const { formatCurrency } = useCurrency();
     const [email, setEmail] = useState('');
     const [emailSent, setEmailSent] = useState(false);
 
@@ -169,13 +171,13 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
                             <div key={item.id} className="mb-2 last:mb-0">
                                 <div className="flex justify-between">
                                     <span className="font-bold flex-1 break-words pr-2">{item.name}</span>
-                                    <span className="font-bold text-right">{(item.price * item.quantity).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span className="font-bold text-right">{formatCurrency(item.price * item.quantity)}</span>
                                 </div>
                                 <div className="flex justify-between text-slate-500 dark:text-slate-400 pl-2">
-                                    <span>{item.quantity} x {item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span>{item.quantity} x {formatCurrency(item.price)}</span>
                                     {item.originalPrice && (
                                         <span className="text-orange-500">
-                                            (Orig. {item.originalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })})
+                                            (Orig. {formatCurrency(item.originalPrice)})
                                         </span>
                                     )}
                                 </div>
@@ -185,21 +187,21 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
                     <div className="mt-4 text-xs">
                          <div className="flex justify-between">
                             <span>Subtotal:</span>
-                            <span>{subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                            <span>{formatCurrency(subtotal)}</span>
                         </div>
                         {sale.discount && (
                              <div className="flex justify-between">
                                 <span>Discount ({sale.discount.type === 'percentage' ? `${sale.discount.value}%` : 'fixed'}):</span>
-                                <span>- {discountAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                <span>- {formatCurrency(discountAmount)}</span>
                             </div>
                         )}
                         <div className="flex justify-between">
                             <span>Tax (8%):</span>
-                            <span>{tax.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                            <span>{formatCurrency(tax)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-sm mt-1 border-t-2 border-dashed pt-1">
                             <span>Total Due:</span>
-                            <span>{sale.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                            <span>{formatCurrency(sale.total)}</span>
                         </div>
                     </div>
                      <div className="mt-4 text-xs border-t-2 border-dashed pt-2">
@@ -207,13 +209,13 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({ sale, onClose }) => {
                         {sale.payments.map((p, i) => (
                             <div key={i} className="flex justify-between">
                                 <span>{paymentMethodsMap.get(p.methodId) || 'Unknown'}:</span>
-                                <span>{p.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                <span>{formatCurrency(p.amount)}</span>
                             </div>
                         ))}
                          {changeDue > 0.005 && (
                             <div className="flex justify-between font-bold mt-1">
                                 <span>Change Due:</span>
-                                <span>{changeDue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                <span>{formatCurrency(changeDue)}</span>
                             </div>
                         )}
                     </div>

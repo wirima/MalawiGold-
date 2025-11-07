@@ -3,10 +3,12 @@ import DashboardCard from '../components/DashboardCard';
 import { getBusinessInsights } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../src/i18n';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const Dashboard: React.FC = () => {
     const { sales } = useAuth();
     const { t } = useTranslation();
+    const { formatCurrency } = useCurrency();
     const [insights, setInsights] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
@@ -25,7 +27,7 @@ const Dashboard: React.FC = () => {
         }
     }, [sales]);
     
-    const totalRevenue = sales.reduce((acc, sale) => acc + sale.total, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    const totalRevenue = formatCurrency(sales.reduce((acc, sale) => acc + sale.total, 0));
     const totalSalesCount = sales.length.toString();
 
     const Icon: React.FC<{ path: string }> = ({ path }) => (
@@ -69,7 +71,7 @@ const Dashboard: React.FC = () => {
                                    <p className="font-semibold text-slate-800 dark:text-slate-200">{sale.customer.name}</p>
                                    <p className="text-sm text-slate-500 dark:text-slate-400">{sale.items.length} items</p>
                                </div>
-                               <p className="font-bold text-lg text-indigo-500">{sale.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                               <p className="font-bold text-lg text-indigo-500">{formatCurrency(sale.total)}</p>
                            </li>
                         ))}
                      </ul>

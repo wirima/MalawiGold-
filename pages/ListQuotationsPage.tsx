@@ -2,9 +2,11 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Quotation } from '../types';
 import { Link } from 'react-router-dom';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const ListQuotationsPage: React.FC = () => {
     const { quotations, hasPermission, deleteQuotation } = useAuth();
+    const { formatCurrency } = useCurrency();
     
     const canManage = hasPermission('sell:manage');
     const canView = hasPermission('sell:view');
@@ -65,7 +67,7 @@ const ListQuotationsPage: React.FC = () => {
                                 <th scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">{quotation.id}</th>
                                 <td className="px-6 py-4">{quotation.customer.name}</td>
                                 <td className="px-6 py-4">{new Date(quotation.expiryDate).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 text-right font-semibold">{quotation.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                <td className="px-6 py-4 text-right font-semibold">{formatCurrency(quotation.total)}</td>
                                 <td className="px-6 py-4 space-x-2 whitespace-nowrap">
                                     <Link to={`/sell/quotations/edit/${quotation.id}`} className={`font-medium text-indigo-600 dark:text-indigo-500 hover:underline ${!canManage ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={(e) => !canManage && e.preventDefault()}>Edit</Link>
                                     <button onClick={() => handleDelete(quotation)} disabled={!canManage} className="font-medium text-red-600 dark:text-red-500 hover:underline disabled:text-slate-400 disabled:cursor-not-allowed">Delete</button>

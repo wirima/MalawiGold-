@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ExpenseReportPage: React.FC = () => {
     const { expenses, expenseCategories, hasPermission } = useAuth();
+    const { formatCurrency } = useCurrency();
     const today = new Date().toISOString().split('T')[0];
     const [dateRange, setDateRange] = useState({ start: '', end: today });
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -38,8 +40,6 @@ const ExpenseReportPage: React.FC = () => {
         return { total, byCategory: Object.entries(byCategory).sort(([,a], [,b]) => b - a) };
     }, [filteredExpenses, categoriesMap]);
     
-    const formatCurrency = (val: number) => val.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">

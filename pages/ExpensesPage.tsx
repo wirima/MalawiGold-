@@ -1,7 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Expense, ExpenseCategory } from '../types';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 // #region Modals
 const ExpenseFormModal: React.FC<{
@@ -87,6 +87,7 @@ const ExpenseFormModal: React.FC<{
 
 const ExpensesPage: React.FC = () => {
     const { expenses, expenseCategories, hasPermission, addExpense, updateExpense, deleteExpense } = useAuth();
+    const { formatCurrency } = useCurrency();
     const canManage = hasPermission('expense:manage');
     const canView = hasPermission('expense:view');
 
@@ -173,7 +174,7 @@ const ExpensesPage: React.FC = () => {
                                     <td className="px-6 py-4">{new Date(exp.date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4">{categoriesMap.get(exp.categoryId)}</td>
                                     <td className="px-6 py-4">{exp.description}</td>
-                                    <td className="px-6 py-4 text-right font-semibold">{exp.amount.toLocaleString('en-US', {style: 'currency', currency: 'USD'})}</td>
+                                    <td className="px-6 py-4 text-right font-semibold">{formatCurrency(exp.amount)}</td>
                                     <td className="px-6 py-4 space-x-2">
                                         <button onClick={() => handleOpenModal(exp)} disabled={!canManage} className="font-medium text-indigo-600 hover:underline disabled:text-slate-400">Edit</button>
                                         <button onClick={() => handleDeleteExpense(exp)} disabled={!canManage} className="font-medium text-red-600 hover:underline disabled:text-slate-400">Delete</button>

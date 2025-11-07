@@ -17,10 +17,12 @@ const ICONS = {
     USERS: <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493m-4.098 2.493a4.125 4.125 0 00-7.533-2.493m15.066-2.493c0 1.233-.242 2.408-.666 3.5m-13.734-3.5c-.424-1.092-.666-2.267-.666-3.5m15.066 0a9.337 9.337 0 00-4.121-.952M4.625 15.128a9.337 9.337 0 00-4.121-.952M9 12.75a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0z" />,
     NOTIFICATIONS: <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.31 5.632l-1.42 2.13a1.125 1.125 0 001.125 1.621h12.158c.621 0 1.125-.504 1.125-1.125a23.848 23.848 0 015.454-1.31zM9 18a3 3 0 006 0H9z" />,
     SETTINGS: <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-1.025 1.11-1.11a1.125 1.125 0 011.085.056l.053.042a.562.562 0 00.56.096c.38.118.74.298 1.07.538a.562.562 0 00.672.032l.094-.055a1.125 1.125 0 011.185.19l.044.053a1.125 1.125 0 01-.202 1.554l-.089.07a.562.562 0 00-.28.592c.03.407.054.819.054 1.234a.562.562 0 00.28.592l.089.07a1.125 1.125 0 01.202 1.554l-.044.053a1.125 1.125 0 01-1.185.19l-.094-.055a.562.562 0 00-.672.032c-.33.24-.69.42-1.07.538a.562.562 0 00-.56.096l-.053.042a1.125 1.125 0 01-1.085-.056c-.55-.085-1.02-.568-1.11-1.11a.562.562 0 00-.948 0c-.09.542-.56 1.025-1.11 1.11a1.125 1.125 0 01-1.085-.056l-.053-.042a.562.562 0 00-.56-.096c-.38-.118-.74-.298-1.07-.538a.562.562 0 00-.672-.032l-.094.055a1.125 1.125 0 01-1.185-.19l-.044-.053a1.125 1.125 0 01.202-1.554l.089-.07a.562.562 0 00.28-.592c-.03-.407-.054-.819-.054-1.234a.562.562 0 00.28.592l-.089-.07a1.125 1.125 0 01-.202-1.554l.044-.053a1.125 1.125 0 011.185-.19l.094.055a.562.562 0 00.672-.032c.33-.24.69-.42-1.07-.538a.562.562 0 00.56-.096l.053-.042a1.125 1.125 0 011.085-.056c.55.085 1.02.568 1.11 1.11a.562.562 0 00.948 0zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />,
+    GROWTH: <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
 };
 
 export const ALL_PERMISSIONS: Permission[] = [
     'dashboard:view',
+    'growth:view',
     'products:view', 'products:manage', 'products:add', 'products:delete', 'products:update_price', 'products:print_labels', 'products:variations', 'products:import', 'products:import_stock', 'products:import_units', 'products:price_groups', 'products:units', 'products:categories', 'products:brands', 'products:documents',
     'contacts:view', 'contacts:manage', 'contacts:import',
     'purchases:view', 'purchases:manage',
@@ -168,6 +170,7 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     ]
   },
   { path: '/users', label: t('userManagement'), icon: <NavIcon>{ICONS.USERS}</NavIcon>, permission: 'users:view' },
+  { path: '/growth', label: 'Growth Suggestions', icon: <NavIcon>{ICONS.GROWTH}</NavIcon>, permission: 'growth:view' },
   { path: '/notification-templates', label: t('notificationTemplates'), icon: <NavIcon>{ICONS.NOTIFICATIONS}</NavIcon>, permission: 'notifications:manage' },
   { 
     label: t('settings'),

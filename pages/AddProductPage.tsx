@@ -154,16 +154,14 @@ const AddProductPage: React.FC = () => {
         
         const combinations = cartesian(...arraysToCombine);
 
-        // FIX: Explicitly typing `combo` resolves type inference issues where its elements were treated as 'unknown'.
-        // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
         // FIX: Explicitly type `combo` to resolve TS inference issues from the `cartesian` utility function.
         // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
         const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
-            // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `combo` to fix this.
-            const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
-            // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `combo` to fix this.
-            const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.valueId`. Explicitly typing `attr` resolves this.
+            const nameParts = attributes.map((attr: { variationId: string; valueId: string; }) => variationValueMap.get(attr.valueId)?.name || '');
+            // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.valueId`. Explicitly typing `attr` resolves this.
+            const skuParts = attributes.map((attr: { variationId: string; valueId: string; }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
             formData.businessLocationIds.forEach(locId => {
@@ -298,12 +296,13 @@ const AddProductPage: React.FC = () => {
                     businessLocationId: locationId 
                 };
     
-                // FIX: Explicitly typing `variant` to prevent type errors cascading from the `variantsMatrix` state.
+                // FIX: The `variant` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `variant` resolves this.
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
-                    // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
+                    // FIX: Explicitly type `attr` to resolve type inference issue.
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr: { variationId: string; valueId: string; }) => ({
-                        // FIX: Property 'name' does not exist on type 'unknown'. Added explicit type to `variant` to fix this.
+                        // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.variationId`. Explicitly typing `attr` resolves this.
                         variationName: variationMap.get(attr.variationId)?.name || 'N/A',
+                        // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.valueId`. Explicitly typing `attr` resolves this.
                         valueName: variationValueMap.get(attr.valueId)?.name || 'N/A',
                     }));
     
@@ -687,7 +686,8 @@ const AddProductPage: React.FC = () => {
                                 <th className="p-2 font-semibold">Variant</th><th className="p-2 font-semibold">SKU</th><th className="p-2 font-semibold">Cost Price</th><th className="p-2 font-semibold">Selling Price</th>
                                 {Array.from(formData.businessLocationIds).map(locationId => <th key={locationId} className="p-2 font-semibold">Stock @ {locationsMap.get(locationId)}</th>)}
                             </tr></thead>
-                            <tbody>{variantsMatrix.map((variant, index) => (
+                            {/* FIX: The `variant` parameter was being inferred as 'unknown'. Explicitly typing it as `VariantMatrixItem` resolves property access errors. */}
+                            <tbody>{variantsMatrix.map((variant: VariantMatrixItem, index) => (
                                 <tr key={variant.id} className="border-b dark:border-slate-700"><td className="p-2">{variant.name}</td>
                                     <td className="p-2"><input type="text" value={variant.sku} onChange={e => handleVariantMatrixChange(index, 'sku', e.target.value)} className={baseInputClasses} /></td>
                                     <td className="p-2"><input type="number" value={variant.costPrice} onChange={e => handleVariantMatrixChange(index, 'costPrice', parseFloat(e.target.value))} className={baseInputClasses} /></td>

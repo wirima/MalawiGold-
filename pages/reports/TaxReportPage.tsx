@@ -3,9 +3,11 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { CartItem } from '../../types';
 import DashboardCard from '../../components/DashboardCard';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const TaxReportPage: React.FC = () => {
     const { sales, purchases, purchaseReturns, customerReturns, hasPermission } = useAuth();
+    const { formatCurrency } = useCurrency();
     const today = new Date().toISOString().split('T')[0];
     const [dateRange, setDateRange] = useState({ start: '', end: today });
 
@@ -95,8 +97,6 @@ const TaxReportPage: React.FC = () => {
     const Icon: React.FC<{ path: string }> = ({ path }) => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d={path} /></svg>
     );
-
-    const formatCurrency = (value: number) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
     return (
         <div className="space-y-6">

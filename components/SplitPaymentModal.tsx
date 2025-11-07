@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import NfcPaymentModal from './NfcPaymentModal';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface SplitPaymentModalProps {
     total: number;
@@ -10,6 +11,7 @@ interface SplitPaymentModalProps {
 
 const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, onConfirm }) => {
     const { paymentMethods } = useAuth();
+    const { formatCurrency } = useCurrency();
     const [payments, setPayments] = useState<{ methodId: string; amount: number; id: number }[]>([]);
     const [currentAmount, setCurrentAmount] = useState('');
     const [isNfcModalOpen, setIsNfcModalOpen] = useState(false);
@@ -115,11 +117,11 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                             <div className="grid grid-cols-2 gap-4 text-center">
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Total Due</p>
-                                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(total)}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Remaining</p>
-                                    <p className={`text-2xl font-bold ${isFullyPaid ? 'text-green-500' : 'text-red-500'}`}>{Math.max(0, remaining).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    <p className={`text-2xl font-bold ${isFullyPaid ? 'text-green-500' : 'text-red-500'}`}>{formatCurrency(Math.max(0, remaining))}</p>
                                 </div>
                             </div>
                             <div className="flex-1 border-t dark:border-slate-700 pt-4">
@@ -132,7 +134,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                                             <div key={p.id} className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded-md text-sm">
                                                 <span>{paymentMethodsMap.get(p.methodId)}</span>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-semibold">{p.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                                    <span className="font-semibold">{formatCurrency(p.amount)}</span>
                                                     <button onClick={() => removePayment(p.id)} className="text-red-500 hover:text-red-700">
                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                                     </button>
@@ -145,7 +147,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                             {changeDue > 0.005 && (
                                 <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-lg text-center">
                                     <p className="text-sm text-blue-800 dark:text-blue-300">Change Due</p>
-                                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{changeDue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(changeDue)}</p>
                                 </div>
                             )}
                         </div>
@@ -153,7 +155,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                         <div className="space-y-4">
                             <div className="relative">
                                 <label htmlFor="payment-amount-input" className="sr-only">Payment Amount</label>
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-2xl font-mono">$</span>
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-2xl font-mono">{useCurrency().currency.symbol}</span>
                                 <input
                                     id="payment-amount-input"
                                     data-testid="payment-amount-input"

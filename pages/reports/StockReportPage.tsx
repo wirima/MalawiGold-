@@ -3,12 +3,14 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Product } from '../../types';
 import DashboardCard from '../../components/DashboardCard';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 type SortableKeys = 'name' | 'sku' | 'categoryName' | 'brandName' | 'stock' | 'costValue' | 'priceValue';
 type SortDirection = 'ascending' | 'descending';
 
 const StockReportPage: React.FC = () => {
     const { products, brands, categories, businessLocations, hasPermission } = useAuth();
+    const { formatCurrency } = useCurrency();
     const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: SortDirection }>({ key: 'name', direction: 'ascending' });
     const [filters, setFilters] = useState({ category: 'all', brand: 'all', location: 'all', status: 'all' });
 
@@ -84,7 +86,6 @@ const StockReportPage: React.FC = () => {
     };
 
     const Icon: React.FC<{ path: string }> = ({ path }) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={path} /></svg>;
-    const formatCurrency = (val: number) => val.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
     return (
         <div className="space-y-6">

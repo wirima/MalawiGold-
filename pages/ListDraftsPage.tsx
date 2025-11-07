@@ -3,9 +3,11 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Draft } from '../types';
 import { Link } from 'react-router-dom';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const ListDraftsPage: React.FC = () => {
     const { drafts, hasPermission, deleteDraft } = useAuth();
+    const { formatCurrency } = useCurrency();
     
     const canManage = hasPermission('sell:manage');
     const canView = hasPermission('sell:view');
@@ -64,7 +66,7 @@ const ListDraftsPage: React.FC = () => {
                                 <td className="px-6 py-4">{new Date(draft.date).toLocaleString()}</td>
                                 <th scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">{draft.id}</th>
                                 <td className="px-6 py-4">{draft.customer.name}</td>
-                                <td className="px-6 py-4 text-right font-semibold">{draft.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                <td className="px-6 py-4 text-right font-semibold">{formatCurrency(draft.total)}</td>
                                 <td className="px-6 py-4 space-x-2 whitespace-nowrap">
                                     <Link to={`/sell/drafts/edit/${draft.id}`} className={`font-medium text-indigo-600 dark:text-indigo-500 hover:underline ${!canManage ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={(e) => !canManage && e.preventDefault()}>Edit</Link>
                                     <button onClick={() => handleDelete(draft)} disabled={!canManage} className="font-medium text-red-600 dark:text-red-500 hover:underline disabled:text-slate-400 disabled:cursor-not-allowed">Delete</button>
