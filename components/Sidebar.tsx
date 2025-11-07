@@ -18,10 +18,11 @@ const Sidebar: React.FC = () => {
     };
 
     const NavLink: React.FC<{path: string, label: string}> = ({path, label}) => {
-        const isActive = location.pathname === path;
+        const fullPath = `/app${path.startsWith('/') ? path : `/${path}`}`;
+        const isActive = location.pathname === fullPath || (path === '/' && location.pathname === '/app');
         return (
             <Link
-                to={path}
+                to={fullPath}
                 className={`flex items-center p-2 text-base font-normal rounded-lg transition-colors
                     ${isActive 
                         ? 'bg-indigo-600 text-white' 
@@ -35,13 +36,13 @@ const Sidebar: React.FC = () => {
 
     return (
         <aside className="w-64 bg-white dark:bg-slate-800 border-e border-slate-200 dark:border-slate-700 flex-shrink-0 flex flex-col">
-            <div className="flex items-center justify-center h-20 border-b border-slate-200 dark:border-slate-700 px-4">
+            <Link to="/app" className="flex items-center justify-center h-20 border-b border-slate-200 dark:border-slate-700 px-4">
                 {brandingSettings.logoUrl ? (
                     <img src={brandingSettings.logoUrl} alt={brandingSettings.businessName} className="h-12 max-w-full object-contain" />
                 ) : (
                     <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 truncate">{brandingSettings.businessName}</h1>
                 )}
-            </div>
+            </Link>
             <nav className="flex-1 px-4 py-4 overflow-y-auto">
                 <ul className="space-y-2">
                     {navItems.map((item) => {
@@ -83,7 +84,7 @@ const Sidebar: React.FC = () => {
                                         )}
                                     </>
                                 ) : (
-                               <Link to={item.path || '#'} className={`flex items-center p-2 text-base font-normal rounded-lg transition-colors ${location.pathname === item.path ? 'bg-indigo-600 text-white' : 'text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                               <Link to={`/app${item.path === '/' ? '' : item.path}`} className={`flex items-center p-2 text-base font-normal rounded-lg transition-colors ${(location.pathname === `/app${item.path}` || (item.path ==='/' && location.pathname === '/app')) ? 'bg-indigo-600 text-white' : 'text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
                                     {item.icon}
                                     <span className="ms-3">{item.label}</span>
                                 </Link>

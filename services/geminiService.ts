@@ -110,7 +110,7 @@ export const getCustomerDemandAnalysis = async (requests: CustomerRequest[]): Pr
         Format your response as clean, professional HTML. Use headings (e.g., <h4>), bold text (<strong> tags), and lists (<ul>, <li> tags) to make the analysis easy to read and act upon. Do not include html, head, or body tags.
     `;
 
-    return generateSecureInsights(prompt);
+  return generateSecureInsights(prompt);
 };
 
 export const getReturnAnalysisInsights = async (returns: CustomerReturn[]): Promise<string> => {
@@ -231,7 +231,6 @@ const tools: FunctionDeclaration[] = [
 export const processChat = async (
   history: Content[],
   message: string,
-  // products and sales are no longer needed as arguments as functions get them from mockData directly
 ): Promise<string> => {
     
     // This entire function should be moved to a backend endpoint for security.
@@ -252,37 +251,36 @@ export const processChat = async (
         model: 'gemini-2.5-flash',
         history: history,
         config: {
-          tools: [{ functionDeclarations: tools }],
+          tools: [{functionDeclarations: tools}],
         }
       });
       
       const response = await chat.sendMessage({ message: message });
       
       if (response.functionCalls && response.functionCalls.length > 0) {
-        const functionCall = response.functionCalls[0];
-        let functionResponse;
+        // FIX: Handle multiple function calls in parallel
+        const functionCallResponses = await Promise.all(response.functionCalls.map(async (functionCall) => {
+          let functionResponse;
+          if (functionCall.name === 'getProductInfo') {
+              functionResponse = getProductInfo(functionCall.args as {productName: string});
+          } else if (functionCall.name === 'getTodaysSalesSummary') {
+              functionResponse = getTodaysSalesSummary();
+          } else if (functionCall.name === 'getLowStockProducts') {
+              functionResponse = getLowStockProducts(functionCall.args as {limit: number});
+          }
 
-        if (functionCall.name === 'getProductInfo') {
-            functionResponse = getProductInfo(functionCall.args as {productName: string});
-        } else if (functionCall.name === 'getTodaysSalesSummary') {
-            functionResponse = getTodaysSalesSummary();
-        } else if (functionCall.name === 'getLowStockProducts') {
-            functionResponse = getLowStockProducts(functionCall.args as {limit: number});
-        }
+          // Return the response in the format expected by the API
+          return {
+            functionResponse: {
+              name: functionCall.name,
+              response: functionResponse,
+            }
+          };
+        }));
 
-        if (functionResponse) {
-          // Send the function response back to the model
-          const finalResponse = await chat.sendMessage({
-            tool_responses: [{
-              functionResponse: {
-                id: functionCall.id,
-                name: functionCall.name,
-                response: functionResponse,
-              }
-            }]
-          });
-          return finalResponse.text;
-        }
+        // Send all function responses back to the model
+        const finalResponse = await chat.sendMessage(functionCallResponses);
+        return finalResponse.text;
       }
 
       return response.text;

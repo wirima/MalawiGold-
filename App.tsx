@@ -1,7 +1,5 @@
-
-
 import * as React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { OfflineProvider } from './contexts/OfflineContext';
@@ -11,6 +9,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Chatbot from './components/Chatbot';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicHeader from './components/PublicHeader';
+import Footer from './components/Footer';
 
 // Loading indicator for lazy-loaded pages
 const PageLoader: React.FC = () => (
@@ -19,9 +19,11 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
-// Auth Pages (not lazy-loaded for faster initial access)
+// Public Pages
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
+
 
 // Lazy-load all main application page components
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -99,6 +101,7 @@ const StockTransferRequestsPage = React.lazy(() => import('./pages/StockTransfer
 const GrowthSuggestionsPage = React.lazy(() => import('./pages/GrowthSuggestionsPage'));
 const ApiProxyGuidePage = React.lazy(() => import('./pages/ApiProxyGuidePage'));
 
+// Layout for the main protected application
 const MainLayout: React.FC = () => (
   <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
     <Sidebar />
@@ -221,6 +224,20 @@ const MainLayout: React.FC = () => (
   </div>
 );
 
+// Layout for the public-facing pages (Landing, Login, Signup)
+const PublicLayout: React.FC = () => (
+    <div className="min-h-screen flex flex-col">
+        <PublicHeader />
+        <main className="flex-1">
+            <React.Suspense fallback={<PageLoader />}>
+                <Outlet />
+            </React.Suspense>
+        </main>
+        <Footer />
+    </div>
+);
+
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
@@ -230,12 +247,15 @@ const App: React.FC = () => {
             <CurrencyProvider>
               <Routes>
                 {/* Public routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignUpPage />} />
+                <Route element={<PublicLayout />}>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignUpPage />} />
+                </Route>
                 
-                {/* Protected routes */}
+                {/* Protected app routes */}
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/*" element={<MainLayout />} />
+                  <Route path="/app/*" element={<MainLayout />} />
                 </Route>
               </Routes>
             </CurrencyProvider>

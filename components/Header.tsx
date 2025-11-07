@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useOffline } from '../contexts/OfflineContext';
 import CustomerRequestModal from './CustomerRequestModal';
 import { useTranslation } from '../src/i18n';
@@ -10,6 +10,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 
 const Header: React.FC = () => {
     const { user, signOut, roles, hasPermission } = useAuth();
+    const navigate = useNavigate();
     const { isOnline, syncQueue } = useOffline();
     const { t } = useTranslation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -30,6 +31,11 @@ const Header: React.FC = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    const handleSignOut = async () => {
+        await signOut();
+        navigate('/login');
+    };
 
     if (!user || !currentRole) {
         // This should not happen if inside a protected route, but it's a good safeguard.
@@ -94,11 +100,11 @@ const Header: React.FC = () => {
                         {isDropdownOpen && (
                             <div className="absolute end-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-700 py-1 z-10">
                                 {hasPermission('users:view') && (
-                                    <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">My Profile</Link>
+                                    <Link to="/app/profile" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">My Profile</Link>
                                 )}
                                 <div className="my-1 h-px bg-slate-200 dark:bg-slate-700"></div>
                                 <button 
-                                    onClick={signOut}
+                                    onClick={handleSignOut}
                                     className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                                 >
                                     Sign Out

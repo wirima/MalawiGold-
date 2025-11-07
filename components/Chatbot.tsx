@@ -4,7 +4,8 @@ import { processChat } from '../services/geminiService';
 import { Content } from '@google/genai';
 
 const Chatbot: React.FC = () => {
-    const { products, sales } = useAuth();
+    // FIX: Removed unused products and sales from useAuth call
+    const {} = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Content[]>([
         { role: 'model', parts: [{ text: 'Hello! How can I help you with your sales, products, or stock today?' }] }

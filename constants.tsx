@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Permission } from './types';
 
