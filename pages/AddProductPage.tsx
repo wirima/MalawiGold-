@@ -15,7 +15,8 @@ const BARCODE_TYPES: { value: BarcodeType, label: string }[] = [
     { value: 'UPCE', label: 'UPC-E' },
 ];
 
-interface AddProductFormData extends Omit<Product, 'id' | 'imageUrl' | 'brandId' | 'businessLocationId' | 'stock'> {
+// FIX: Omitted 'businessLocationId' as it's replaced by 'businessLocationIds'
+interface AddProductFormData extends Omit<Product, 'id' | 'imageUrl' | 'brandId' | 'stock' | 'businessLocationId'> {
     businessLocationIds: Set<string>;
     locationStocks: Map<string, number>;
 }
@@ -154,10 +155,9 @@ const AddProductPage: React.FC = () => {
         
         const combinations = cartesian(...arraysToCombine);
 
-        // FIX: Explicitly type `combo` to resolve TS inference issues from the `cartesian` utility function.
-        // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
         // FIX: The `combo` parameter was being inferred as 'unknown'. Explicitly typing it resolves property access errors.
-        const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
+        // FIX: The `combo` parameter was being inferred as 'unknown'. Explicitly typing it resolves property access errors.
+        const newMatrix = combinations.map((combo: { variationId: string; valueId: string; }[], index) => {
             const attributes = combo;
             const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
             const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
@@ -184,11 +184,14 @@ const AddProductPage: React.FC = () => {
 
     // Effect to update matrix values (sku, price, etc.) when base form data changes
     useEffect(() => {
-        setVariantsMatrix(prevMatrix => prevMatrix.map(variant => {
-            const skuParts = variant.attributes.map(attr => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+        // FIX: Explicitly typing the 'variant' parameter to VariantMatrixItem to fix type inference issues.
+        setVariantsMatrix(prevMatrix => prevMatrix.map((variant: VariantMatrixItem) => {
+            // FIX: Explicitly typing the 'attr' parameter to fix type inference issues.
+            const skuParts = variant.attributes.map((attr: { valueId: string }) => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             return {
                 ...variant,
-                sku: `${formData.sku || 'SKU'}-${skuParts.join('-')}`,
+                // FIX: Added check for skuParts being an array before calling join.
+                sku: `${formData.sku || 'SKU'}-${Array.isArray(skuParts) ? skuParts.join('-') : ''}`,
                 costPrice: formData.costPrice || 0,
                 price: formData.price || 0,
             };
@@ -296,10 +299,8 @@ const AddProductPage: React.FC = () => {
                 };
     
                 // FIX: The `variant` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `variant` resolves this.
-                // FIX: The `variant` parameter was being inferred as 'unknown'. Explicitly typing it as `VariantMatrixItem` resolves property access errors.
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
                     // FIX: The `attr` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `attr` resolves this.
-                    // FIX: Explicitly type `attr` to resolve type inference issue.
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr: { variationId: string; valueId: string; }) => ({
                         // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.variationId`. Explicitly typing `attr` resolves this.
                         variationName: variationMap.get(attr.variationId)?.name || 'N/A',

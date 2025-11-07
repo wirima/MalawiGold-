@@ -32,19 +32,19 @@ const SignUpPage: React.FC = () => {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-lg">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Create Your Account</h1>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Start your 14-day free trial</p>
+                    <h1 className="text-3xl font-bold text-black">Create Your Account</h1>
+                    <p className="mt-2 text-sm text-black">Start your 14-day free trial</p>
                 </div>
                 {message ? (
-                     <div className="text-center p-4 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-md">
+                     <div className="text-center p-4 bg-green-100 text-green-700 rounded-md">
                         <p>{message}</p>
                     </div>
                 ) : (
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
-                            <label htmlFor="businessName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Business Name</label>
+                            <label htmlFor="businessName" className="block text-sm font-medium text-black">Business Name</label>
                             <input
                                 id="businessName"
                                 name="businessName"
@@ -52,11 +52,11 @@ const SignUpPage: React.FC = () => {
                                 required
                                 value={businessName}
                                 onChange={(e) => setBusinessName(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:border-indigo-500 focus:ring-indigo-500 text-black"
                             />
                         </div>
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
+                            <label htmlFor="email" className="block text-sm font-medium text-black">Email Address</label>
                             <input
                                 id="email"
                                 name="email"
@@ -65,11 +65,11 @@ const SignUpPage: React.FC = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:border-indigo-500 focus:ring-indigo-500 text-black"
                             />
                         </div>
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+                            <label htmlFor="password" className="block text-sm font-medium text-black">Password</label>
                             <input
                                 id="password"
                                 name="password"
@@ -78,7 +78,7 @@ const SignUpPage: React.FC = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:border-indigo-500 focus:ring-indigo-500 text-black"
                             />
                         </div>
                         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
@@ -93,9 +93,9 @@ const SignUpPage: React.FC = () => {
                         </div>
                     </form>
                 )}
-                <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-center text-sm text-black">
                     Already have an account?{' '}
-                    <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                    <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
                         Sign in
                     </Link>
                 </p>

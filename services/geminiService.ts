@@ -1,6 +1,6 @@
-import { FunctionDeclaration, Type, Part, Content } from "@google/genai";
+import { GoogleGenAI, FunctionDeclaration, Type, Part, Content } from "@google/genai";
 import { Sale, CustomerRequest, CustomerReturn, Product } from '../types';
-import { MOCK_CATEGORIES } from '../data/mockData';
+import { MOCK_CATEGORIES, MOCK_SALES, MOCK_PRODUCTS } from '../data/mockData';
 
 // This is a new, secure function that calls our own backend proxy.
 const generateSecureInsights = async (prompt: string): Promise<string> => {
@@ -152,10 +152,9 @@ export const getReturnAnalysisInsights = async (returns: CustomerReturn[]): Prom
 
 const getProductInfo = (
   { productName }: { productName: string },
-  products: Product[]
 ) => {
   // In a real app: This would be an API call `GET /api/products?name=${productName}`
-  const product = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+  const product = MOCK_PRODUCTS.find(p => p.name.toLowerCase() === productName.toLowerCase());
   if (!product) {
     return { error: `Product '${productName}' not found.` };
   }
@@ -167,11 +166,11 @@ const getProductInfo = (
   };
 };
 
-const getTodaysSalesSummary = (sales: Sale[]) => {
+const getTodaysSalesSummary = () => {
    // In a real app: This would be an API call `GET /api/reports/sales-summary?period=today`
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todaysSales = sales.filter(s => new Date(s.date) >= today && s.status === 'completed');
+  const todaysSales = MOCK_SALES.filter(s => new Date(s.date) >= today && s.status === 'completed');
   const totalRevenue = todaysSales.reduce((acc, s) => acc + s.total, 0);
   return {
     numberOfSales: todaysSales.length,
@@ -181,10 +180,9 @@ const getTodaysSalesSummary = (sales: Sale[]) => {
 
 const getLowStockProducts = (
   { limit = 5 }: { limit: number },
-  products: Product[]
 ) => {
   // In a real app: This would be an API call `GET /api/products?stockStatus=low&limit=${limit}`
-  const lowStock = products
+  const lowStock = MOCK_PRODUCTS
     .filter(p => p.stock > 0 && p.stock <= p.reorderPoint)
     .sort((a, b) => a.stock - b.stock)
     .slice(0, limit);
@@ -233,31 +231,64 @@ const tools: FunctionDeclaration[] = [
 export const processChat = async (
   history: Content[],
   message: string,
-  products: Product[], // In real app, these would not be passed directly
-  sales: Sale[]       // Instead, the tool functions would make API calls
+  // products and sales are no longer needed as arguments as functions get them from mockData directly
 ): Promise<string> => {
     
     // This entire function should be moved to a backend endpoint for security.
     // The frontend should just call `POST /api/chat` with the message and history.
-    // The placeholder `generateSecureInsights` shows this proxy pattern.
-    // Due to the complexity of function calling, the direct Gemini call is left here
-    // as a clear example for the user to reimplement on their backend.
-
-    const prompt = `
-        You are a helpful POS assistant. Your context is limited to the functions provided.
-        User message: "${message}"
-        Chat History: ${JSON.stringify(history)}
-    `;
+    
+    // For demonstration, we will call the Gemini API directly here,
+    // but this exposes the API key and is not secure for production.
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      return "Sorry, the chatbot is not configured correctly. API key is missing.";
+    }
+    
+    const ai = new GoogleGenAI({ apiKey });
 
     try {
-        const resultText = await generateSecureInsights(prompt);
-        // This is a simplified version without function calling.
-        // For a full implementation, the user needs to build a backend endpoint
-        // that replicates the function calling logic below.
-        return resultText;
+      // Create a chat session with the full history
+      const chat = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        history: history,
+        config: {
+          tools: [{ functionDeclarations: tools }],
+        }
+      });
+      
+      const response = await chat.sendMessage({ message: message });
+      
+      if (response.functionCalls && response.functionCalls.length > 0) {
+        const functionCall = response.functionCalls[0];
+        let functionResponse;
+
+        if (functionCall.name === 'getProductInfo') {
+            functionResponse = getProductInfo(functionCall.args as {productName: string});
+        } else if (functionCall.name === 'getTodaysSalesSummary') {
+            functionResponse = getTodaysSalesSummary();
+        } else if (functionCall.name === 'getLowStockProducts') {
+            functionResponse = getLowStockProducts(functionCall.args as {limit: number});
+        }
+
+        if (functionResponse) {
+          // Send the function response back to the model
+          const finalResponse = await chat.sendMessage({
+            tool_responses: [{
+              functionResponse: {
+                id: functionCall.id,
+                name: functionCall.name,
+                response: functionResponse,
+              }
+            }]
+          });
+          return finalResponse.text;
+        }
+      }
+
+      return response.text;
 
     } catch (error) {
-        console.error("Error processing chat with secure insights:", error);
+        console.error("Error processing chat:", error);
         return "Sorry, I encountered an error. The chatbot functionality requires a backend implementation for full security and function calling.";
     }
 };

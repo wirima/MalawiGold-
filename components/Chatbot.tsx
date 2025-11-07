@@ -30,7 +30,8 @@ const Chatbot: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const modelResponseText = await processChat(newMessages, userMessage, products, sales);
+            // FIX: Removed products and sales from processChat call as they are no longer needed
+            const modelResponseText = await processChat(newMessages, userMessage);
             setMessages(prev => [...prev, { role: 'model', parts: [{ text: modelResponseText }] }]);
         } catch (error) {
             console.error("Chatbot error:", error);
