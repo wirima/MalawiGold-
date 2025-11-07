@@ -1,4 +1,4 @@
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount, StockTransferRequest } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount, StockTransferRequest, NotificationTemplate } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
@@ -340,6 +340,109 @@ export const MOCK_PRODUCT_DOCUMENTS: ProductDocument[] = [
         fileName: 'Standard_Warranty.pdf',
         fileType: 'warranty',
         uploadedDate: '2023-09-15T14:30:00Z',
+    }
+];
+
+export const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
+    {
+        id: 'tpl_new_sale',
+        name: 'New Sale',
+        description: 'Sent to a customer automatically after a sale is completed, containing the receipt.',
+        type: 'email',
+        subject: 'Your receipt from {business_name}',
+        body: `Hi {customer_name},\n\nThank you for your purchase from {business_name}.\n\nHere are your sale details:\nSale ID: {sale_id}\nTotal: {sale_total}\n\nYou can view your full receipt here: {receipt_url}\n\nWe look forward to seeing you again soon!\n\nRegards,\nThe {business_name} Team`,
+        tags: ['{business_name}', '{customer_name}', '{sale_id}', '{sale_total}', '{receipt_url}'],
+        group: 'customer'
+    },
+    {
+        id: 'tpl_payment_received',
+        name: 'Payment Received',
+        description: 'Confirmation sent when a payment is successfully received for an invoice or order.',
+        type: 'email',
+        subject: 'Payment Confirmation for Order #{order_id}',
+        body: `Dear {customer_name},\n\nWe have successfully received your payment of {payment_amount} for order #{order_id}.\n\nYour order is now being processed.\n\nThank you for your business!\n\nSincerely,\n{business_name}`,
+        tags: ['{customer_name}', '{payment_amount}', '{order_id}', '{business_name}'],
+        group: 'customer'
+    },
+    {
+        id: 'tpl_payment_reminder',
+        name: 'Payment Reminder',
+        description: 'Sent to customers as a reminder for an outstanding payment on an invoice.',
+        type: 'sms',
+        subject: '', // SMS has no subject
+        body: `Hi {customer_name}, this is a friendly reminder from {business_name} that your payment of {due_amount} for invoice #{invoice_id} is due on {due_date}.`,
+        tags: ['{customer_name}', '{business_name}', '{due_amount}', '{invoice_id}', '{due_date}'],
+        group: 'customer'
+    },
+    {
+        id: 'tpl_new_booking',
+        name: 'New Booking',
+        description: 'Confirmation email for a new booking or appointment.',
+        type: 'email',
+        subject: 'Your Booking is Confirmed!',
+        body: `Hello {customer_name},\n\nYour booking for {service_name} on {booking_date} at {booking_time} has been confirmed.\n\nWe look forward to seeing you at {business_location}.\n\nBest,\n{business_name}`,
+        tags: ['{customer_name}', '{service_name}', '{booking_date}', '{booking_time}', '{business_location}', '{business_name}'],
+        group: 'customer'
+    },
+    {
+        id: 'tpl_new_quotation',
+        name: 'New Quotation',
+        description: 'Sent to a customer with details of a new quotation.',
+        type: 'email',
+        subject: 'Quotation #{quotation_id} from {business_name}',
+        body: `Hi {customer_name},\n\nPlease find attached your quotation #{quotation_id} for a total of {quotation_total}.\n\nThis quotation is valid until {expiry_date}.\n\nIf you have any questions, please feel free to contact us.\n\nThanks,\n{business_name}`,
+        tags: ['{customer_name}', '{quotation_id}', '{quotation_total}', '{expiry_date}', '{business_name}'],
+        group: 'customer'
+    },
+    {
+        id: 'tpl_customer_new_order',
+        name: 'New Order',
+        description: 'Sent to a customer when a new order is created, before it is fully paid or shipped.',
+        type: 'email',
+        subject: 'Your order #{order_id} from {business_name} has been placed!',
+        body: `Hi {customer_name},\n\nThank you for your order with {business_name}!\n\nWe have received your order #{order_id} and are getting it ready.\nTotal: {order_total}\n\nWe will notify you again once it has been shipped.\n\nThanks,\n{business_name}`,
+        tags: ['{customer_name}', '{business_name}', '{order_id}', '{order_total}'],
+        group: 'customer'
+    },
+    {
+        id: 'tpl_supplier_po',
+        name: 'Purchase Order',
+        description: 'Sent to a supplier with details of a new purchase order.',
+        type: 'email',
+        subject: 'New Purchase Order #{purchase_order_id} from {business_name}',
+        body: `Dear {supplier_name},\n\nPlease find our new purchase order attached.\n\nOrder ID: {purchase_order_id}\nOrder Date: {order_date}\nExpected Delivery: {expected_delivery_date}\n\nThank you,\n{business_name}`,
+        tags: ['{supplier_name}', '{business_name}', '{purchase_order_id}', '{order_date}', '{expected_delivery_date}'],
+        group: 'supplier'
+    },
+    {
+        id: 'tpl_supplier_payment_paid',
+        name: 'Payment Paid',
+        description: 'Confirmation sent to a supplier when a payment for a purchase order is made.',
+        type: 'email',
+        subject: 'Payment Sent for Purchase Order #{purchase_order_id}',
+        body: `Hi {supplier_name},\n\nWe have sent a payment of {payment_amount} for purchase order #{purchase_order_id}.\n\nPayment Method: {payment_method}\nTransaction ID: {transaction_id}\n\nPlease confirm receipt.\n\nRegards,\n{business_name}`,
+        tags: ['{supplier_name}', '{business_name}', '{purchase_order_id}', '{payment_amount}', '{payment_method}', '{transaction_id}'],
+        group: 'supplier'
+    },
+    {
+        id: 'tpl_supplier_items_received',
+        name: 'Items Received',
+        description: 'Sent to a supplier to confirm that items from a purchase order have been received.',
+        type: 'email',
+        subject: 'Confirmation of Items Received for PO #{purchase_order_id}',
+        body: `Hello {supplier_name},\n\nThis is to confirm that we have received the items for purchase order #{purchase_order_id} today, {received_date}.\n\nWe will inspect the items and notify you of any discrepancies.\n\nThank you,\n{business_name}`,
+        tags: ['{supplier_name}', '{business_name}', '{purchase_order_id}', '{received_date}'],
+        group: 'supplier'
+    },
+    {
+        id: 'tpl_supplier_items_pending',
+        name: 'Items Pending',
+        description: 'Sent to a supplier as a reminder for items that are pending from a purchase order.',
+        type: 'sms',
+        subject: '',
+        body: `Reminder from {business_name}: We are still awaiting delivery for items from PO #{purchase_order_id}. Please provide a status update.`,
+        tags: ['{business_name}', '{purchase_order_id}', '{supplier_name}'],
+        group: 'supplier'
     }
 ];
 

@@ -9,20 +9,15 @@ import LanguageSwitcher from '../src/components/LanguageSwitcher';
 import ThemeSwitcher from './ThemeSwitcher';
 
 const Header: React.FC = () => {
-    const { currentUser, users, setCurrentUser, roles, hasPermission } = useAuth();
-    const { isOnline, setIsOnline, syncQueue } = useOffline();
+    const { user, signOut, roles, hasPermission } = useAuth();
+    const { isOnline, syncQueue } = useOffline();
     const { t } = useTranslation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const handleUserChange = (user: User) => {
-        setCurrentUser(user);
-        setIsDropdownOpen(false);
-    };
     
-    const currentRoleName = roles.find(r => r.id === currentUser?.roleId)?.name;
-    const isCashier = currentRoleName === 'Cashier';
+    const currentRole = roles.find(r => r.id === user?.roleId);
+    const isCashier = currentRole?.name === 'Cashier';
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -36,21 +31,10 @@ const Header: React.FC = () => {
         };
     }, []);
 
-    const ToggleSwitch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; }> = ({ checked, onChange }) => (
-        <button
-            type="button"
-            className={`${checked ? 'bg-green-500' : 'bg-red-500'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
-            role="switch"
-            aria-checked={checked}
-            onClick={() => onChange(!checked)}
-            title="Simulate network status"
-        >
-            <span
-                aria-hidden="true"
-                className={`${checked ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-            />
-        </button>
-    );
+    if (!user || !currentRole) {
+        // This should not happen if inside a protected route, but it's a good safeguard.
+        return null;
+    }
 
     return (
         <>
@@ -65,10 +49,9 @@ const Header: React.FC = () => {
                             <span className={`text-sm font-semibold ${isOnline ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                                 {isOnline ? 'Online' : 'Offline'}
                             </span>
-                            <ToggleSwitch checked={isOnline} onChange={setIsOnline} />
-                            {syncQueue.length > 0 && (
-                                <div className="relative" title={`${syncQueue.length} sales pending sync`}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                             {syncQueue.length > 0 && (
+                                <div className="relative" title={`${syncQueue.length} items pending sync`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 animate-pulse" fill="none" viewBox="0 0 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 13V9m0 8h.01" />
                                     </svg>
@@ -80,7 +63,7 @@ const Header: React.FC = () => {
                         </div>
                         <div className="relative">
                             <input type="text" placeholder={t('searchPlaceholder')} className="w-64 ps-10 pe-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
-                            <svg className="w-5 h-5 text-slate-400 absolute start-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <svg className="w-5 h-5 text-slate-400 absolute start-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                         </div>
@@ -100,52 +83,34 @@ const Header: React.FC = () => {
                     <div className="relative" ref={dropdownRef}>
                         <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center space-x-3">
                             <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700">
-                                <img src={`https://i.pravatar.cc/100?u=${currentUser?.id}`} alt="User Avatar" className="w-full h-full rounded-full object-cover"/>
+                                <img src={`https://i.pravatar.cc/100?u=${user.id}`} alt="User Avatar" className="w-full h-full rounded-full object-cover"/>
                             </div>
                             <div className="text-left hidden md:block">
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{currentUser?.name}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{currentRoleName}</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.user_metadata?.business_name || user.email}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{currentRole.name}</p>
                             </div>
                             <svg className={`w-4 h-4 text-slate-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                         </button>
                         {isDropdownOpen && (
-                            <div className="absolute end-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-700 py-1 z-10">
+                            <div className="absolute end-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-700 py-1 z-10">
                                 {hasPermission('users:view') && (
                                     <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">My Profile</Link>
                                 )}
-                                <div className="px-4 py-2 border-t dark:border-slate-700">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Switch User</p>
-                                </div>
-                                {users.map(user => {
-                                    const roleName = roles.find(r => r.id === user.roleId)?.name;
-                                    return (
-                                        <button 
-                                            key={user.id} 
-                                            onClick={() => handleUserChange(user)}
-                                            className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-3 transition-colors ${
-                                                currentUser?.id === user.id 
-                                                ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' 
-                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`
-                                            }
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-600">
-                                                <img src={`https://i.pravatar.cc/100?u=${user.id}`} alt={user.name} className="w-full h-full rounded-full object-cover"/>
-                                            </div>
-                                            <div>
-                                                <p className="font-medium">{user.name}</p>
-                                                <p className="text-xs text-slate-500">{roleName}</p>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                <div className="my-1 h-px bg-slate-200 dark:bg-slate-700"></div>
+                                <button 
+                                    onClick={signOut}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                                >
+                                    Sign Out
+                                </button>
                             </div>
                         )}
                     </div>
                 </div>
             </header>
-            {isRequestModalOpen && currentUser && (
+            {isRequestModalOpen && user && (
                 <CustomerRequestModal 
-                    cashier={currentUser}
+                    cashier={{id: user.id, name: user.email!, email: user.email!, roleId: 'cashier', businessLocationId: ''}}
                     onClose={() => setIsRequestModalOpen(false)}
                 />
             )}

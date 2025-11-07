@@ -5,10 +5,15 @@ interface PricingTierProps {
     price: number;
     features: string[];
     isFeatured?: boolean;
+    isCurrentPlan?: boolean;
+    onSelect: () => void;
 }
 
-const PricingTier: React.FC<PricingTierProps> = ({ name, price, features, isFeatured }) => {
+const PricingTier: React.FC<PricingTierProps> = ({ name, price, features, isFeatured, isCurrentPlan, onSelect }) => {
     const annualPrice = Math.round(price * 12 * 0.9);
+
+    const buttonText = isCurrentPlan ? 'Current Plan' : 'Select Plan';
+    const buttonDisabled = isCurrentPlan;
 
     return (
         <div className={`rounded-lg p-8 border ${isFeatured ? 'bg-indigo-50 dark:bg-slate-800 border-indigo-500' : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'}`}>
@@ -26,7 +31,7 @@ const PricingTier: React.FC<PricingTierProps> = ({ name, price, features, isFeat
             <ul className="mt-8 space-y-4 text-sm">
                 {features.map((feature, index) => (
                     <li key={index} className="flex items-start">
-                        <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         <span className="ml-3 text-slate-600 dark:text-slate-300">{feature}</span>
@@ -34,14 +39,15 @@ const PricingTier: React.FC<PricingTierProps> = ({ name, price, features, isFeat
                 ))}
             </ul>
              <button
-                disabled
+                onClick={onSelect}
+                disabled={buttonDisabled}
                 className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${
                     isFeatured 
-                        ? 'bg-indigo-600 text-white cursor-not-allowed opacity-50' 
-                        : 'bg-indigo-100 text-indigo-700 cursor-not-allowed opacity-50'
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-500 disabled:cursor-not-allowed' 
+                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 disabled:opacity-70 disabled:cursor-not-allowed'
                 }`}
             >
-                Get Started
+                {buttonText}
             </button>
         </div>
     );

@@ -80,7 +80,7 @@ const ProfitLossReportPage: React.FC = () => {
             const catName = expenseCategoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         
         const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
         

@@ -358,3 +358,14 @@ export interface BrandingSettings {
     phone: string;
     website?: string;
 }
+
+export interface NotificationTemplate {
+    id: string;
+    name: string;
+    description: string;
+    type: 'email' | 'sms';
+    subject: string;
+    body: string;
+    tags: string[];
+    group: 'customer' | 'supplier';
+}

@@ -28,7 +28,7 @@ const ProductSellReportPage: React.FC = () => {
             (!endDate || new Date(s.date) <= endDate)
         );
 
-        // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `productSales`, which resolves the spread operator error.
+        // FIX: Explicitly type the initial value of the `reduce` method to ensure the accumulator and its properties are correctly typed, resolving downstream spread operator errors.
         const productSales = filteredSales.reduce((acc: Record<string, { quantity: number; revenue: number; profit: number }>, sale) => {
             sale.items.forEach(item => {
                 if (!acc[item.id]) {
@@ -44,7 +44,7 @@ const ProductSellReportPage: React.FC = () => {
                 }
             });
             return acc;
-        }, {});
+        }, {} as Record<string, { quantity: number; revenue: number; profit: number }>);
         
         return Object.entries(productSales).map(([productId, data]) => ({
             product: productsMap.get(productId),

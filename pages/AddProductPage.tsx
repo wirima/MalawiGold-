@@ -156,12 +156,11 @@ const AddProductPage: React.FC = () => {
 
         // FIX: Explicitly type `combo` to resolve TS inference issues from the `cartesian` utility function.
         // This ensures `newMatrix` and the subsequent `variantsMatrix` state have the correct type.
+        // FIX: The `combo` parameter was being inferred as 'unknown'. Explicitly typing it resolves property access errors.
         const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
-            // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.valueId`. Explicitly typing `attr` resolves this.
-            const nameParts = attributes.map((attr: { variationId: string; valueId: string; }) => variationValueMap.get(attr.valueId)?.name || '');
-            // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.valueId`. Explicitly typing `attr` resolves this.
-            const skuParts = attributes.map((attr: { variationId: string; valueId: string; }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
+            const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
             formData.businessLocationIds.forEach(locId => {
@@ -297,7 +296,9 @@ const AddProductPage: React.FC = () => {
                 };
     
                 // FIX: The `variant` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `variant` resolves this.
+                // FIX: The `variant` parameter was being inferred as 'unknown'. Explicitly typing it as `VariantMatrixItem` resolves property access errors.
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
+                    // FIX: The `attr` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `attr` resolves this.
                     // FIX: Explicitly type `attr` to resolve type inference issue.
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr: { variationId: string; valueId: string; }) => ({
                         // FIX: The `attr` parameter was being inferred as 'unknown', causing a downstream error when trying to access `attr.variationId`. Explicitly typing `attr` resolves this.

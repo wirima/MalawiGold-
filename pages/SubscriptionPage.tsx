@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PricingTier from '../components/PricingTier';
 
@@ -15,7 +15,35 @@ const MarketingStrategyCard: React.FC<{ title: string; children: React.ReactNode
 );
 
 const SubscriptionPage: React.FC = () => {
-    const { hasPermission } = useAuth();
+    const { hasPermission, user } = useAuth();
+    const [subscription, setSubscription] = useState<{ plan: string, status: string } | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // In a real application, you would fetch the user's subscription
+        // status from your backend API here.
+        // GET /api/subscription
+        setLoading(true);
+        setTimeout(() => {
+            // This simulates a user who is currently on the "Regular" plan.
+            setSubscription({ plan: 'Regular', status: 'active' });
+            setLoading(false);
+        }, 1000);
+    }, [user]);
+
+    const handleManageSubscription = () => {
+        // This function would make a call to your backend to create a
+        // Stripe Billing Portal session.
+        // POST /api/stripe/create-portal-session
+        alert('Redirecting to Stripe Billing Portal... (Simulation)');
+        // window.location.href = portalUrl;
+    };
+    
+    const handleUpgrade = (plan: 'Regular' | 'Professional') => {
+        // This function would call your backend to create a Stripe Checkout session.
+        // POST /api/stripe/create-checkout-session
+        alert(`Initiating upgrade to ${plan}... (Simulation)`);
+    };
 
     if (!hasPermission('settings:subscription')) {
         return (
@@ -37,42 +65,43 @@ const SubscriptionPage: React.FC = () => {
     return (
         <div className="space-y-8">
             <div className="text-center">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">Subscription & Marketing Portal</h1>
+                <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">Subscription & Marketing</h1>
                 <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-500 dark:text-slate-400">
-                    Manage subscription plans, view marketing strategies, and understand the architectural vision for scaling the service.
+                    Manage your plan, view growth strategies, and understand the architectural vision for scaling the service.
                 </p>
             </div>
 
             {/* Pricing Tiers */}
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-bold mb-6 text-center">Subscription Plans</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                 <h2 className="text-2xl font-bold mb-2 text-center">Manage Your Subscription</h2>
+                 {loading ? (
+                    <div className="text-center p-8">Loading subscription status...</div>
+                 ) : subscription ? (
+                    <div className="text-center p-4 rounded-lg bg-slate-100 dark:bg-slate-700/50 max-w-md mx-auto">
+                        <p className="text-slate-600 dark:text-slate-300">You are currently on the <span className="font-bold text-indigo-600 dark:text-indigo-400">{subscription.plan}</span> plan.</p>
+                        <button onClick={handleManageSubscription} className="mt-3 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">Manage Billing & Invoices</button>
+                    </div>
+                 ) : null}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-6">
                     <PricingTier
                         name="Regular"
                         price={20}
                         features={[
-                            'Core POS Functionality',
-                            'Product & Inventory Management',
-                            'Customer Management',
-                            'Basic Sales Reports',
-                            '1 Business Location',
-                            '2 User Accounts',
-                            'Standard Support',
+                            'Core POS Functionality', 'Product & Inventory Management', 'Customer Management', 'Basic Sales Reports', '1 Business Location', '2 User Accounts', 'Standard Support',
                         ]}
+                        isCurrentPlan={subscription?.plan === 'Regular'}
+                        onSelect={() => subscription?.plan !== 'Regular' && handleUpgrade('Regular')}
                     />
                     <PricingTier
                         name="Professional"
                         price={35}
                         isFeatured
                         features={[
-                            'All features in Regular',
-                            'AI-Powered Business Insights',
-                            'Advanced Reporting & Analytics',
-                            'Multi-Location Support',
-                            'Unlimited User Accounts',
-                            'Third-Party Integrations',
-                            'Priority Support',
+                            'All features in Regular', 'AI-Powered Business Insights', 'Advanced Reporting & Analytics', 'Multi-Location Support', 'Unlimited User Accounts', 'Third-Party Integrations', 'Priority Support',
                         ]}
+                        isCurrentPlan={subscription?.plan === 'Professional'}
+                        onSelect={() => subscription?.plan !== 'Professional' && handleUpgrade('Professional')}
                     />
                 </div>
             </div>
