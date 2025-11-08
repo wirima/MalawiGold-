@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -81,18 +82,17 @@ const BackendArchitecturePage: React.FC = () => {
                     </Step>
                     
                     <Step number={2} title="Required Backend Architecture" isLast={true}>
-                        <p>This frontend design relies on a robust and secure backend with several key components. This backend must be built as a separate server application (e.g., using Node.js, Python, Go, etc.).</p>
+                        <p>This frontend design relies on a robust and secure backend. The recommended stack is <strong>Vercel Serverless Functions</strong> for hosting the logic, <strong>Supabase</strong> for the database, and <strong>Prisma</strong> as the data access layer.</p>
                         
-                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">Secure Storage</h4>
-                         <p>A dedicated <code>integrations</code> table in your database is necessary to store:</p>
+                        <h4 className="font-semibold text-slate-800 dark:text-slate-200">Secure Database & ORM</h4>
+                         <p>A dedicated database (provided by Supabase) is essential. All interactions with this database should be handled by <strong>Prisma</strong>, a modern ORM that provides type-safety and simplifies queries.</p>
                          <ul className="list-disc pl-5 space-y-2">
-                            <li>The integration type (e.g., 'stripe', 'quickbooks').</li>
-                            <li>User-provided configuration (e.g., display name, non-sensitive keys).</li>
-                            <li><strong>Encrypted API credentials</strong>. Never store secret keys in plaintext.</li>
+                            <li><strong>Prisma Schema:</strong> Define your entire database structure in the <code>prisma/schema.prisma</code> file.</li>
+                            <li><strong>Secure Credentials:</strong> Your database connection string is stored securely as an environment variable in Vercel, accessible only by your serverless functions.</li>
                         </ul>
                         
                         <h4 className="font-semibold text-slate-800 dark:text-slate-200 mt-4">Dedicated API Endpoints</h4>
-                        <p>Your backend must expose a set of RESTful endpoints for the frontend to call. These endpoints handle all the logic.</p>
+                        <p>Your backend must expose a set of RESTful endpoints for the frontend to call. These are created as files inside the <code>/api</code> directory in your project.</p>
                         <pre className="bg-slate-800 dark:bg-black/50 text-slate-100 rounded-lg p-4 font-mono text-sm overflow-x-auto"><code>{
 `// To securely save new credentials and run an initial test.
 POST /api/integrations

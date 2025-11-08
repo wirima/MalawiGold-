@@ -240,32 +240,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
+    const fetchAppUser = useCallback(async (session: Session | null) => {
+        if (!session) {
+            setCurrentUser(null);
+            return;
+        }
+        try {
+            // This fetch call goes to our Vercel Serverless function.
+            // It's a secure way to get the user's data from our own database (managed by Prisma).
+            const response = await fetch('/api/get-user-profile', {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) {
+                // If profile doesn't exist (e.g., a DB trigger hasn't run yet), sign out.
+                if (response.status === 404) {
+                    await supabase?.auth.signOut();
+                }
+                throw new Error('Failed to fetch user profile');
+            }
+            const appUser: User = await response.json();
+            setCurrentUser(appUser);
+            // In a real app, you would also fetch roles, products, etc. for this user's organization here.
+            // For now, we continue to use mock data for other entities.
+        } catch (error) {
+            console.error("Error fetching app user:", error);
+            // Sign out if we can't get the app profile, as something is wrong.
+            await supabase?.auth.signOut();
+            setCurrentUser(null);
+        }
+    }, []);
+
+
     useEffect(() => {
         if (supabase) {
             // Real session management
-            supabase.auth.getSession().then(({ data: { session } }) => {
+            setLoading(true);
+            const fetchSessionAndUser = async () => {
+                const { data: { session } } = await supabase.auth.getSession();
                 setSession(session);
-                const appUser = MOCK_USERS.find(u => u.email === session?.user.email);
-                setCurrentUser(appUser || null);
+                // After getting the Supabase session, fetch our application-specific user profile.
+                await fetchAppUser(session);
                 setLoading(false);
-            });
+            };
+            fetchSessionAndUser();
+
             const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
                 setSession(session);
-                const appUser = MOCK_USERS.find(u => u.email === session?.user.email);
-                setCurrentUser(appUser || null);
-                if (_event === 'SIGNED_OUT') {
+                fetchAppUser(session);
+                 if (_event === 'SIGNED_OUT') {
                     setCurrentUser(null);
                 }
             });
             return () => subscription.unsubscribe();
         } else {
-            // Mock mode: no session to check
+            // Mock mode: no session to check, just finish loading
             setLoading(false);
         }
-    }, []);
+    }, [fetchAppUser]);
 
     const hasPermission = useCallback((permission: Permission): boolean => {
         if (!currentUser) return false;
+        // In a real app, role data would be fetched with the user profile.
+        // We use mock roles here for demonstration.
         const userRole = roles.find(role => role.id === currentUser.roleId);
         if (!userRole) return false;
         if (userRole.id === 'admin') return true;
@@ -387,7 +423,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deletePaymentMethod: (id) => setPaymentMethods(p => p.filter(pm => pm.id !== id)),
         addStockTransferRequest: (d) => setStockTransferRequests(p => [...p, {...d, id: `str${Date.now()}`, date: new Date().toISOString(), status: 'pending'}]) ,
         updateStockTransferRequest: (id, status) => setStockTransferRequests(p => p.map(str => str.id === id ? {...str, status} : str)),
-    }), [session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions]);
+    }), [session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions, fetchAppUser]);
 
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

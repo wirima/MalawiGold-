@@ -43,7 +43,8 @@ export default async function handler(req: Request) {
             where: { id: user.id },
         });
 
-        // 4. If the profile doesn't exist, it's an error state.
+        // 4. If the profile doesn't exist, it's an error state. This can happen
+        // if the database trigger to create a profile hasn't run yet.
         if (!userProfile) {
             return new Response(JSON.stringify({ error: 'User profile not found in database' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
         }
