@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import LanguageSwitcher from '../src/components/LanguageSwitcher';
 import ThemeSwitcher from './ThemeSwitcher';
 
 const Header: React.FC = () => {
-    const { user, signOut, roles, hasPermission } = useAuth();
+    const { user, currentUser, signOut, roles, hasPermission } = useAuth();
     const navigate = useNavigate();
     const { isOnline, syncQueue } = useOffline();
     const { t } = useTranslation();
@@ -17,7 +17,7 @@ const Header: React.FC = () => {
     const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     
-    const currentRole = roles.find(r => r.id === user?.roleId);
+    const currentRole = useMemo(() => currentUser ? roles.find(r => r.id === currentUser.roleId) : undefined, [currentUser, roles]);
     const isCashier = currentRole?.name === 'Cashier';
 
     useEffect(() => {
@@ -37,7 +37,7 @@ const Header: React.FC = () => {
         navigate('/login');
     };
 
-    if (!user || !currentRole) {
+    if (!user || !currentUser || !currentRole) {
         // This should not happen if inside a protected route, but it's a good safeguard.
         return null;
     }
@@ -92,7 +92,7 @@ const Header: React.FC = () => {
                                 <img src={`https://i.pravatar.cc/100?u=${user.id}`} alt="User Avatar" className="w-full h-full rounded-full object-cover"/>
                             </div>
                             <div className="text-left hidden md:block">
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.user_metadata?.business_name || user.email}</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{currentUser.name || user.email}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">{currentRole.name}</p>
                             </div>
                             <svg className={`w-4 h-4 text-slate-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -114,9 +114,9 @@ const Header: React.FC = () => {
                     </div>
                 </div>
             </header>
-            {isRequestModalOpen && user && (
+            {isRequestModalOpen && currentUser && (
                 <CustomerRequestModal 
-                    cashier={{id: user.id, name: user.email!, email: user.email!, roleId: 'cashier', businessLocationId: ''}}
+                    cashier={currentUser}
                     onClose={() => setIsRequestModalOpen(false)}
                 />
             )}
