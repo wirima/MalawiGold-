@@ -58,6 +58,15 @@ const LoginPage: React.FC = () => {
                             className="mt-1 block w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:border-indigo-500 focus:ring-indigo-500 text-black"
                         />
                     </div>
+
+                     <div className="flex items-center justify-end">
+                        <div className="text-sm">
+                            <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
+                                Forgot your password?
+                            </Link>
+                        </div>
+                    </div>
+
                     {error && <p className="text-sm text-red-500 text-center">{error}</p>}
                     <div>
                         <button

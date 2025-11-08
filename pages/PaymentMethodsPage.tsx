@@ -10,15 +10,22 @@ const PaymentMethodFormModal: React.FC<{
     onSave: (data: PaymentMethod | Omit<PaymentMethod, 'id'>) => void;
     bankAccounts: BankAccount[];
 }> = ({ method, onClose, onSave, bankAccounts }) => {
+    const { integrations } = useAuth();
+    const paymentGateways = integrations.filter(i => i.provider === 'payment-gateway');
     const isEditing = !!method;
+
     const [name, setName] = useState(method?.name || '');
+    const [type, setType] = useState<PaymentMethod['type']>(method?.type || 'cash');
     const [accountId, setAccountId] = useState(method?.accountId || '');
+    const [integrationId, setIntegrationId] = useState(method?.integrationId || '');
     const [error, setError] = useState('');
 
     useEffect(() => {
         if (method) {
             setName(method.name);
+            setType(method.type);
             setAccountId(method.accountId || '');
+            setIntegrationId(method.integrationId || '');
         }
     }, [method]);
 
@@ -28,14 +35,22 @@ const PaymentMethodFormModal: React.FC<{
             setError('Method name is required.');
             return;
         }
+        if (type === 'integrated' && !integrationId) {
+            setError('An integration must be selected for this payment type.');
+            return;
+        }
         setError('');
         const saveData: PaymentMethod | Omit<PaymentMethod, 'id'> = {
             ...(isEditing && { id: method.id }),
             name,
-            ...(accountId && { accountId })
+            type,
+            ...(accountId && { accountId }),
+            ...(integrationId && type === 'integrated' && { integrationId }),
         };
         onSave(saveData);
     };
+    
+    const baseInputClasses = "mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500";
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -47,16 +62,36 @@ const PaymentMethodFormModal: React.FC<{
                     <div className="p-6 space-y-4">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium">Method Name*</label>
-                            <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} className={`mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500 ${error ? 'border-red-500' : ''}`} />
-                            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+                            <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} className={`${baseInputClasses} ${error && !name.trim() ? 'border-red-500' : ''}`} />
+                            {error && !name.trim() && <p className="text-sm text-red-500 mt-1">{error}</p>}
                         </div>
                         <div>
-                            <label htmlFor="accountId" className="block text-sm font-medium">Deposit To (Optional)</label>
-                            <select id="accountId" value={accountId} onChange={e => setAccountId(e.target.value)} className="mt-1 block w-full rounded-md bg-slate-100 dark:bg-slate-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">None (e.g., Cash)</option>
-                                {bankAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.accountName} ({acc.bankName})</option>)}
+                            <label htmlFor="type" className="block text-sm font-medium">Type*</label>
+                            <select id="type" value={type} onChange={e => setType(e.target.value as PaymentMethod['type'])} className={baseInputClasses}>
+                                <option value="cash">Cash</option>
+                                <option value="manual">Manual (Bank Transfer, Check, etc.)</option>
+                                <option value="integrated">Integrated Terminal</option>
                             </select>
                         </div>
+                         {type === 'integrated' && (
+                             <div>
+                                <label htmlFor="integrationId" className="block text-sm font-medium">Payment Gateway*</label>
+                                <select id="integrationId" value={integrationId} onChange={e => setIntegrationId(e.target.value)} className={`${baseInputClasses} ${error && type==='integrated' && !integrationId ? 'border-red-500' : ''}`}>
+                                    <option value="" disabled>-- Select a Gateway --</option>
+                                    {paymentGateways.map(gw => <option key={gw.id} value={gw.id}>{gw.name}</option>)}
+                                </select>
+                                {error && type==='integrated' && !integrationId && <p className="text-sm text-red-500 mt-1">{error}</p>}
+                            </div>
+                        )}
+                        {type !== 'integrated' && (
+                             <div>
+                                <label htmlFor="accountId" className="block text-sm font-medium">Deposit To (Optional)</label>
+                                <select id="accountId" value={accountId} onChange={e => setAccountId(e.target.value)} className={baseInputClasses}>
+                                    <option value="">None (e.g., Cash)</option>
+                                    {bankAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.accountName} ({acc.bankName})</option>)}
+                                </select>
+                            </div>
+                        )}
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</button>
@@ -69,7 +104,7 @@ const PaymentMethodFormModal: React.FC<{
 };
 
 const PaymentMethodsPage: React.FC = () => {
-    const { paymentMethods, bankAccounts, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, hasPermission } = useAuth();
+    const { paymentMethods, bankAccounts, integrations, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, hasPermission } = useAuth();
     const canManage = hasPermission('settings:payment');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,6 +113,7 @@ const PaymentMethodsPage: React.FC = () => {
     const [apiError, setApiError] = useState<string | null>(null);
 
     const bankAccountsMap = new Map(bankAccounts.map(acc => [acc.id, acc.accountName]));
+    const integrationsMap = new Map(integrations.map(i => [i.id, i.name]));
 
     if (!canManage) {
         return (
@@ -133,7 +169,8 @@ const PaymentMethodsPage: React.FC = () => {
                         <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
                             <tr>
                                 <th className="px-6 py-3">Method Name</th>
-                                <th className="px-6 py-3">Deposits To</th>
+                                <th className="px-6 py-3">Type</th>
+                                <th className="px-6 py-3">Linked To</th>
                                 <th className="px-6 py-3">Actions</th>
                             </tr>
                         </thead>
@@ -141,7 +178,13 @@ const PaymentMethodsPage: React.FC = () => {
                             {paymentMethods.map(method => (
                                 <tr key={method.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/50">
                                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{method.name}</td>
-                                    <td className="px-6 py-4">{method.accountId ? bankAccountsMap.get(method.accountId) : 'N/A'}</td>
+                                    <td className="px-6 py-4 capitalize">{method.type}</td>
+                                    <td className="px-6 py-4">
+                                        {method.type === 'integrated' 
+                                            ? (integrationsMap.get(method.integrationId || '') || 'N/A')
+                                            : (bankAccountsMap.get(method.accountId || '') || 'N/A')
+                                        }
+                                    </td>
                                     <td className="px-6 py-4 space-x-2">
                                         <button onClick={() => { setEditingMethod(method); setIsModalOpen(true); }} className="font-medium text-indigo-600 hover:underline">Edit</button>
                                         <button onClick={() => handleDelete(method)} className="font-medium text-red-600 hover:underline">Delete</button>

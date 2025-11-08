@@ -1,9 +1,22 @@
-import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount, StockTransferRequest, NotificationTemplate } from '../types';
+import { Product, Customer, Sale, Supplier, CustomerGroup, Role, User, Brand, Category, Unit, StockAdjustment, Variation, VariationValue, Draft, Quotation, Purchase, PurchaseReturn, ExpenseCategory, Expense, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, ProductDocument, CustomerReturn, BankAccount, StockTransferRequest, NotificationTemplate, IntegrationConnection } from '../types';
 
 export const MOCK_BUSINESS_LOCATIONS: BusinessLocation[] = [
     { id: 'LOC01', name: 'Main Warehouse' },
     { id: 'LOC02', name: 'Downtown Branch' },
     { id: 'LOC03', name: 'Westside Kiosk' },
+    { id: 'MGL01', name: 'MGL Branch' },
+];
+
+export const MOCK_INTEGRATIONS: IntegrationConnection[] = [
+    {
+        id: 'int_stripe_1',
+        provider: 'payment-gateway',
+        name: 'Stripe Terminal - Downtown',
+        config: {
+            publishableKey: 'pk_test_12345',
+            locationId: 'tml_12345'
+        }
+    }
 ];
 
 export const MOCK_BANK_ACCOUNTS: BankAccount[] = [
@@ -12,15 +25,16 @@ export const MOCK_BANK_ACCOUNTS: BankAccount[] = [
 ];
 
 export const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
-    { id: 'pay_cash', name: 'Cash' },
-    { id: 'pay_card', name: 'Card', accountId: 'ACC01' },
-    { id: 'pay_qr', name: 'QR Code', accountId: 'ACC02' },
-    { id: 'pay_nfc', name: 'NFC / Tap to Pay', accountId: 'ACC01' },
-    { id: 'pay_airtel', name: 'Airtel Money', accountId: 'ACC02' },
-    { id: 'pay_changu', name: 'PayChangu', accountId: 'ACC02' },
-    { id: 'pay_tnm', name: 'TNM Mpamba', accountId: 'ACC02' },
-    { id: 'pay_stripe', name: 'Stripe', accountId: 'ACC02' },
-    { id: 'pay_mo626', name: 'Mo626', accountId: 'ACC02' },
+    { id: 'pay_cash', name: 'Cash', type: 'cash' },
+    { id: 'pay_card', name: 'Card Terminal', type: 'integrated', integrationId: 'int_stripe_1' },
+    { id: 'pay_manual_card', name: 'Manual Card Entry', type: 'manual', accountId: 'ACC01' },
+    { id: 'pay_qr', name: 'QR Code', type: 'integrated', integrationId: 'int_stripe_1' },
+    { id: 'pay_nfc', name: 'NFC / Tap to Pay', type: 'integrated', integrationId: 'int_stripe_1' },
+    { id: 'pay_airtel', name: 'Airtel Money', type: 'manual', accountId: 'ACC02' },
+    { id: 'pay_changu', name: 'PayChangu', type: 'manual', accountId: 'ACC02' },
+    { id: 'pay_tnm', name: 'TNM Mpamba', type: 'manual', accountId: 'ACC02' },
+    { id: 'pay_stripe', name: 'Stripe Online', type: 'integrated', integrationId: 'int_stripe_1' },
+    { id: 'pay_mo626', name: 'Mo626', type: 'manual', accountId: 'ACC02' },
 ];
 
 export const MOCK_CUSTOMER_GROUPS: CustomerGroup[] = [
@@ -538,4 +552,5 @@ export const MOCK_USERS: User[] = [
     { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier', businessLocationId: 'LOC02' },
     { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager', businessLocationId: 'LOC03' },
     { id: 'USER005', name: 'Sarah Sales', email: 'sarah.sales@example.com', roleId: 'sales_rep', businessLocationId: 'LOC01' },
+    { id: 'USER-ADMIN-MGL', name: 'Admin MGL', email: 'Admin@zawipos.com', roleId: 'admin', businessLocationId: 'MGL01' },
 ];

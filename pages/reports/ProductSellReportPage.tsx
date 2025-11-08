@@ -44,7 +44,7 @@ const ProductSellReportPage: React.FC = () => {
                 }
             });
             return acc;
-        }, {} as Record<string, { quantity: number; revenue: number; profit: number }>);
+        }, {});
         
         return Object.entries(productSales).map(([productId, data]) => ({
             product: productsMap.get(productId),

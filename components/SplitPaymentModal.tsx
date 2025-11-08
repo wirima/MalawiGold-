@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import NfcPaymentModal from './NfcPaymentModal';
+import TerminalPaymentModal from './TerminalPaymentModal';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { TerminalPaymentResult } from '../services/paymentService';
 
 interface SplitPaymentModalProps {
     total: number;
@@ -14,8 +15,9 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
     const { formatCurrency } = useCurrency();
     const [payments, setPayments] = useState<{ methodId: string; amount: number; id: number }[]>([]);
     const [currentAmount, setCurrentAmount] = useState('');
-    const [isNfcModalOpen, setIsNfcModalOpen] = useState(false);
-    const [nfcAmount, setNfcAmount] = useState(0);
+    const [isTerminalModalOpen, setIsTerminalModalOpen] = useState(false);
+    const [terminalAmount, setTerminalAmount] = useState(0);
+    const [activeTerminalMethodId, setActiveTerminalMethodId] = useState('');
 
     const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + p.amount, 0), [payments]);
     const remaining = total - totalPaid;
@@ -43,16 +45,20 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
         let amount = parseFloat(currentAmount) || Math.max(0, remaining);
         if (amount <= 0.005) return; // use tolerance
 
+        const method = paymentMethods.find(p => p.id === methodId);
+        if (!method) return;
+
         // Cap payment amount to remaining balance for non-cash methods
-        if (methodId !== 'pay_cash' && amount > remaining) {
+        if (method.type !== 'cash' && amount > remaining) {
             amount = remaining;
         }
 
         if (amount <= 0.005) return; // check again after capping
 
-        if (methodId === 'pay_nfc') {
-            setNfcAmount(amount);
-            setIsNfcModalOpen(true);
+        if (method.type === 'integrated') {
+            setTerminalAmount(amount);
+            setActiveTerminalMethodId(method.id);
+            setIsTerminalModalOpen(true);
         } else {
             addPayment(methodId, amount);
         }
@@ -62,9 +68,9 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
         setPayments(prev => prev.filter(p => p.id !== paymentId));
     };
     
-    const handleNfcSuccess = () => {
-        addPayment('pay_nfc', nfcAmount);
-        setIsNfcModalOpen(false);
+    const handleTerminalSuccess = (result: TerminalPaymentResult) => {
+        addPayment(activeTerminalMethodId, terminalAmount);
+        setIsTerminalModalOpen(false);
     };
 
     const paymentMethodsMap = useMemo(() => new Map(paymentMethods.map(p => [p.id, p.name])), [paymentMethods]);
@@ -82,19 +88,17 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
 
             if (e.altKey) {
                 e.preventDefault();
-                const amount = parseFloat(currentAmount) || Math.max(0, remaining);
-                if (amount <= 0) return;
                 
                 const cashMethod = paymentMethods.find(p => p.id === 'pay_cash');
-                const cardMethod = paymentMethods.find(p => p.id === 'pay_card');
-                const qrMethod = paymentMethods.find(p => p.id === 'pay_qr');
-                const nfcMethod = paymentMethods.find(p => p.id === 'pay_nfc');
-
-                if (e.key.toLowerCase() === 'c' && cashMethod) addPayment(cashMethod.id, amount);
-                if (e.key.toLowerCase() === 'r' && cardMethod) handlePaymentMethodClick('pay_card');
-                if (e.key.toLowerCase() === 'q' && qrMethod) handlePaymentMethodClick('pay_qr');
-                if (e.key.toLowerCase() === 't' && nfcMethod) {
-                    handlePaymentMethodClick('pay_nfc');
+                const firstIntegratedMethod = paymentMethods.find(p => p.type === 'integrated');
+                
+                if (e.key.toLowerCase() === 'c' && cashMethod) {
+                    const amount = parseFloat(currentAmount) || Math.max(0, remaining);
+                    if (amount > 0) addPayment(cashMethod.id, amount);
+                }
+                
+                if (e.key.toLowerCase() === 't' && firstIntegratedMethod) {
+                    handlePaymentMethodClick(firstIntegratedMethod.id);
                 }
             }
         };
@@ -173,18 +177,26 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                                 <button onClick={() => handleAmountButtonClick('exact')} className="p-2 rounded-md bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600">Exact</button>
                             </div>
                             <div className="pt-4 border-t dark:border-slate-700 space-y-2">
-                                {paymentMethods.filter(p => ['pay_nfc', 'pay_cash', 'pay_card', 'pay_qr'].includes(p.id)).map(method => (
+                                {paymentMethods.filter(p => p.type === 'integrated').map(method => (
                                     <button
                                         key={method.id}
                                         onClick={() => handlePaymentMethodClick(method.id)}
-                                        className={`w-full p-3 rounded-lg font-semibold text-white ${method.id === 'pay_nfc' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                        className="w-full p-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700"
                                         data-testid={`payment-method-${method.id}`}
                                     >
                                         {method.name} 
-                                        {method.id === 'pay_nfc' && <span className="ml-2 text-blue-200 text-xs">(Alt+T)</span>}
-                                        {method.id === 'pay_cash' && <span className="ml-2 text-indigo-200 text-xs">(Alt+C)</span>}
-                                        {method.id === 'pay_card' && <span className="ml-2 text-indigo-200 text-xs">(Alt+R)</span>}
-                                        {method.id === 'pay_qr' && <span className="ml-2 text-indigo-200 text-xs">(Alt+Q)</span>}
+                                        <span className="ml-2 text-blue-200 text-xs">(Alt+T)</span>
+                                    </button>
+                                ))}
+                                {paymentMethods.filter(p => p.type === 'cash').map(method => (
+                                    <button
+                                        key={method.id}
+                                        onClick={() => handlePaymentMethodClick(method.id)}
+                                        className="w-full p-3 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700"
+                                        data-testid={`payment-method-${method.id}`}
+                                    >
+                                        {method.name}
+                                        <span className="ml-2 text-indigo-200 text-xs">(Alt+C)</span>
                                     </button>
                                 ))}
                             </div>
@@ -208,11 +220,11 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({ total, onClose, o
                 </div>
             </div>
 
-            <NfcPaymentModal
-                isOpen={isNfcModalOpen}
-                amount={nfcAmount}
-                onClose={() => setIsNfcModalOpen(false)}
-                onSuccess={handleNfcSuccess}
+            <TerminalPaymentModal
+                isOpen={isTerminalModalOpen}
+                amount={terminalAmount}
+                onClose={() => setIsTerminalModalOpen(false)}
+                onSuccess={handleTerminalSuccess}
             />
         </>
     );

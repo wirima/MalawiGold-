@@ -110,7 +110,9 @@ export interface BankAccount {
 export interface PaymentMethod {
     id: string;
     name: string;
+    type: 'cash' | 'manual' | 'integrated';
     accountId?: string;
+    integrationId?: string;
 }
 
 export interface Sale {

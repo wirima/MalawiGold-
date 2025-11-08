@@ -35,7 +35,7 @@ const ExpenseReportPage: React.FC = () => {
             const catName = categoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
 
         return { total, byCategory: Object.entries(byCategory).sort(([,a], [,b]) => b - a) };
     }, [filteredExpenses, categoriesMap]);

@@ -228,6 +228,7 @@ const tools: FunctionDeclaration[] = [
   },
 ];
 
+// FIX: Removed unused 'products' and 'sales' parameters as this function now uses mock data internally.
 export const processChat = async (
   history: Content[],
   message: string,
@@ -271,15 +272,13 @@ export const processChat = async (
 
           // Return the response in the format expected by the API
           return {
-            functionResponse: {
               name: functionCall.name,
               response: functionResponse,
-            }
           };
         }));
 
         // Send all function responses back to the model
-        const finalResponse = await chat.sendMessage(functionCallResponses);
+        const finalResponse = await chat.sendMessage({ functionResponses: functionCallResponses });
         return finalResponse.text;
       }
 

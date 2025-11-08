@@ -8,27 +8,25 @@ interface CustomerRequestModalProps {
 }
 
 const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({ cashier, onClose }) => {
-    const { addCustomerRequests, setCurrentUser, users } = useAuth();
+    const { addCustomerRequests, signOut } = useAuth();
     const [requestsText, setRequestsText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleLogout = () => {
-        // Log out by switching to the first user (usually admin)
-        const firstUser = users[0];
-        if (firstUser) {
-            setCurrentUser(firstUser);
-        }
+    const handleSignOutAndClose = async () => {
+        await signOut();
         onClose();
+        // The navigation will be handled by the effect in the main App component
     };
 
     const handleSubmit = () => {
         setIsSubmitting(true);
-        // In a real app, this might be an async call
-        addCustomerRequests(requestsText, cashier);
-        // Simulate a small delay for feedback
+        if(requestsText.trim()){
+            addCustomerRequests(requestsText, cashier);
+        }
+        // Simulate a small delay for feedback if needed, then sign out
         setTimeout(() => {
             setIsSubmitting(false);
-            handleLogout();
+            handleSignOutAndClose();
         }, 500);
     };
 
@@ -54,17 +52,17 @@ const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({ cashier, on
                 </div>
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg">
                     <button 
-                        onClick={handleLogout} 
+                        onClick={handleSignOutAndClose} 
                         className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600"
                     >
-                        Skip & Close
+                        Skip & Close Terminal
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={!requestsText.trim() || isSubmitting}
+                        disabled={isSubmitting}
                         className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed"
                     >
-                        {isSubmitting ? 'Submitting...' : 'Submit & Close'}
+                        {isSubmitting ? 'Submitting...' : 'Submit & Close Terminal'}
                     </button>
                 </div>
             </div>

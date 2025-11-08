@@ -1,8 +1,8 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { Session } from '@supabase/supabase-js';
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount, StockTransferRequest, NotificationTemplate } from '../types';
-import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS, MOCK_STOCK_TRANSFER_REQUESTS, MOCK_NOTIFICATION_TEMPLATES } from '../data/mockData';
+import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS, MOCK_STOCK_TRANSFER_REQUESTS, MOCK_NOTIFICATION_TEMPLATES, MOCK_INTEGRATIONS } from '../data/mockData';
 
 
 interface AgeVerificationSettings {
@@ -20,7 +20,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 
 interface AuthContextType {
     session: Session | null;
-    user: any; // Supabase user object
+    user: SupabaseUser | null;
     currentUser: User | null; // Application's user type
     setCurrentUser: (user: User) => void;
     users: User[];
@@ -57,6 +57,8 @@ interface AuthContextType {
     signIn: (email: string, pass: string) => Promise<any>;
     signOut: () => Promise<any>;
     signUp: (email: string, pass: string, metadata: { [key: string]: any }) => Promise<any>;
+    resetPasswordForEmail: (email: string) => Promise<any>;
+    updateUserPassword: (password: string) => Promise<any>;
     hasPermission: (permission: Permission) => boolean;
     // Data mutation functions
     addRole: (roleData: Omit<Role, 'id'>) => Role;
@@ -144,7 +146,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // AUTH STATE
     const [session, setSession] = useState<Session | null>(null);
-    const [currentUser, setCurrentUser] = useState<User | null>(MOCK_USERS[0]); // Default to admin for dev
+    const [currentUser, setCurrentUser] = useState<User | null>(null); // Application's user type
     const [loading, setLoading] = useState(true);
 
     // DATA STATE (simulating a database)
@@ -174,60 +176,93 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(MOCK_CUSTOMER_REQUESTS);
     const [productDocuments, setProductDocuments] = useState<ProductDocument[]>(MOCK_PRODUCT_DOCUMENTS);
     const [customerReturns, setCustomerReturns] = useState<CustomerReturn[]>(MOCK_CUSTOMER_RETURNS);
-    const [integrations, setIntegrations] = useState<IntegrationConnection[]>([]);
+    const [integrations, setIntegrations] = useState<IntegrationConnection[]>(MOCK_INTEGRATIONS);
     const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(MOCK_BANK_ACCOUNTS);
     const [stockTransferRequests, setStockTransferRequests] = useState<StockTransferRequest[]>(MOCK_STOCK_TRANSFER_REQUESTS);
     const [notificationTemplates, setNotificationTemplates] = useState<NotificationTemplate[]>(MOCK_NOTIFICATION_TEMPLATES);
     const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(DEFAULT_BRANDING);
     const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: true });
-
-    // Mock Auth Flow to work with UI components
-    useEffect(() => {
-        // This effect simulates checking for an active session on load
-        const mockSession = localStorage.getItem('mockSession');
-        if (mockSession) {
-            const parsedSession = JSON.parse(mockSession);
-            setSession(parsedSession);
-            const user = MOCK_USERS.find(u => u.id === parsedSession.user.id);
-            setCurrentUser(user || MOCK_USERS[0]);
+    
+    // DUAL-MODE AUTH
+    const authFunctions = useMemo(() => {
+        if (supabase) {
+            // REAL AUTH MODE
+            return {
+                signIn: async (email: string, pass: string) => {
+                    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+                    if (error) throw error;
+                },
+                signOut: async () => {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+                },
+                signUp: async (email: string, pass: string, metadata: { [key: string]: any }) => {
+                    const { error } = await supabase.auth.signUp({ email, password: pass, options: { data: metadata } });
+                    if (error) throw error;
+                },
+                resetPasswordForEmail: async (email: string) => {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/#/reset-password' });
+                    if (error) throw error;
+                },
+                updateUserPassword: async (password: string) => {
+                    const { error } = await supabase.auth.updateUser({ password });
+                    if (error) throw error;
+                },
+            };
+        } else {
+            // MOCK AUTH MODE
+            return {
+                signIn: async (email: string, pass: string) => {
+                    setLoading(true);
+                    await new Promise(res => setTimeout(res, 500)); // Simulate network delay
+                    if (email.toLowerCase() === 'admin@zawipos.com' && pass === '4321') {
+                        const adminUser = MOCK_USERS.find(u => u.email.toLowerCase() === 'admin@zawipos.com');
+                        if (adminUser) {
+                            const fakeSupabaseUser = { id: adminUser.id, email: adminUser.email, user_metadata: { business_name: 'MGL' }, app_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() };
+                            const fakeSession = { access_token: 'fake-token', user: fakeSupabaseUser, expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'fake-refresh', token_type: 'bearer' };
+                            setSession(fakeSession as any);
+                            setCurrentUser(adminUser);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                    setLoading(false);
+                    throw new Error('Invalid mock credentials. Use Admin@zawipos.com and 4321.');
+                },
+                signOut: async () => {
+                    setSession(null);
+                    setCurrentUser(null);
+                },
+                signUp: async () => { throw new Error("Sign up is disabled in mock mode."); },
+                resetPasswordForEmail: async () => { throw new Error("Password reset is disabled in mock mode."); },
+                updateUserPassword: async () => { throw new Error("Password update is disabled in mock mode."); },
+            };
         }
-        setLoading(false);
     }, []);
 
-    const signIn = async (email: string, password: string): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const user = MOCK_USERS.find(u => u.email === email);
-                if (user) { // No password check in mock
-                    const mockSession = { user: { id: user.id, email: user.email, user_metadata: { business_name: 'Mock Business' } } } as any;
-                    localStorage.setItem('mockSession', JSON.stringify(mockSession));
-                    setSession(mockSession);
-                    setCurrentUser(user);
-                    resolve();
-                } else {
-                    reject(new Error("Invalid email or password."));
+    useEffect(() => {
+        if (supabase) {
+            // Real session management
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                setSession(session);
+                const appUser = MOCK_USERS.find(u => u.email === session?.user.email);
+                setCurrentUser(appUser || null);
+                setLoading(false);
+            });
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                setSession(session);
+                const appUser = MOCK_USERS.find(u => u.email === session?.user.email);
+                setCurrentUser(appUser || null);
+                if (_event === 'SIGNED_OUT') {
+                    setCurrentUser(null);
                 }
-            }, 500);
-        });
-    };
-
-    const signUp = async (email: string, password: string, metadata: { [key: string]: any }): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            if (MOCK_USERS.some(u => u.email === email)) {
-                reject(new Error("User with this email already exists."));
-                return;
-            }
-            // In this mock, we don't actually create a user, just return success.
-            // A real implementation would call supabase.auth.signUp
-            resolve();
-        });
-    };
-
-    const signOut = async (): Promise<void> => {
-        localStorage.removeItem('mockSession');
-        setSession(null);
-        setCurrentUser(null);
-    };
+            });
+            return () => subscription.unsubscribe();
+        } else {
+            // Mock mode: no session to check
+            setLoading(false);
+        }
+    }, []);
 
     const hasPermission = useCallback((permission: Permission): boolean => {
         if (!currentUser) return false;
@@ -241,15 +276,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const addSale = (saleData: Omit<Sale, 'id' | 'date'>) => {
         const newSale: Sale = { ...saleData, id: `SALE${Date.now()}`, date: new Date().toISOString() };
         setSales(prev => [newSale, ...prev]);
-        // Update stock
         newSale.items.forEach(item => {
             setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: p.stock - item.quantity } : p));
         });
         return newSale;
     };
     
-    // Many other mock mutation functions would go here...
-    // For brevity, only a few key examples are fully implemented. The structure is the same.
     const addProduct = (productData: Omit<Product, 'id'|'imageUrl'>) => {
         const newProduct: Product = { ...productData, id: `PROD${Date.now()}`, imageUrl: 'https://picsum.photos/400' };
         setProducts(prev => [newProduct, ...prev]);
@@ -261,7 +293,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const deleteProduct = (productId: string) => {
-        // In a real app, check for dependencies (e.g., in sales)
         setProducts(prev => prev.filter(p => p.id !== productId));
     };
 
@@ -273,12 +304,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         users,
         roles,
         products,
-        // ... all other states
         stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates,
         loading,
-        signIn,
-        signOut,
-        signUp,
+        ...authFunctions,
         hasPermission,
         // Mock implementations
         addSale,
@@ -287,7 +315,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteProduct,
         brandingSettings,
         ageVerificationSettings,
-        // Add dummy functions for all other mutations to prevent crashes
         addRole: (d) => { setRoles(p => [...p, {...d, id: `r${Date.now()}`}]); return {...d, id: `r${Date.now()}`}; },
         updateRole: (d) => setRoles(p => p.map(r => r.id === d.id ? d : r)),
         deleteRole: (id) => setRoles(p => p.filter(r => r.id !== id)),
@@ -360,7 +387,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deletePaymentMethod: (id) => setPaymentMethods(p => p.filter(pm => pm.id !== id)),
         addStockTransferRequest: (d) => setStockTransferRequests(p => [...p, {...d, id: `str${Date.now()}`, date: new Date().toISOString(), status: 'pending'}]) ,
         updateStockTransferRequest: (id, status) => setStockTransferRequests(p => p.map(str => str.id === id ? {...str, status} : str)),
-    }), [session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission]);
+    }), [session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions]);
 
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
