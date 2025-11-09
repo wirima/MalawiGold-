@@ -8,7 +8,7 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Chatbot from './components/Chatbot';
-import ProtectedRoute from './components/ProtectedRoute';
+import { PublicRoute, ProtectedRoute } from './components/ProtectedRoute';
 import PublicHeader from './components/PublicHeader';
 import Footer from './components/Footer';
 
@@ -249,12 +249,14 @@ const App: React.FC = () => {
             <CurrencyProvider>
               <Routes>
                 {/* Public routes */}
-                <Route element={<PublicLayout />}>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignUpPage />} />
-                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route element={<PublicRoute />}>
+                    <Route element={<PublicLayout />}>
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/signup" element={<SignUpPage />} />
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    </Route>
                 </Route>
                 
                 {/* Protected app routes */}

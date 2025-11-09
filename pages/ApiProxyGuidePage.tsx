@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const CodeBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <pre className="bg-slate-800 dark:bg-black/50 text-slate-100 rounded-lg p-4 font-mono text-sm overflow-x-auto">
@@ -105,6 +106,9 @@ const ApiProxyGuidePage: React.FC = () => {
                     <li>This serverless function securely reads the <code>API_KEY</code> from your Vercel project's environment variables.</li>
                     <li>It then calls the Gemini API and returns the response to the frontend.</li>
                 </ul>
+                <p className="text-sm p-4 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 rounded-r-lg">
+                    <strong>Important:</strong> You must add your Gemini API key as an environment variable named <code>API_KEY</code> in your Vercel project settings. Refer to the <Link to="/app/settings/deployment" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Deployment Guide</Link> for detailed instructions.
+                </p>
                 <p className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 border-l-4 border-green-400 rounded-r-lg text-sm">
                     <strong>The frontend code has already been updated to use this new endpoint.</strong> Once you create this file and deploy to Vercel, your AI-powered reports will work securely.
                 </p>

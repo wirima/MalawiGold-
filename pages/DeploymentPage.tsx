@@ -86,18 +86,60 @@ DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@[HOST]:5432/postgres"`}</Cod
                         <CodeBlock>npx prisma db push</CodeBlock>
                         <p>Prisma will connect to your Supabase database and create all the tables, columns, and relations defined in <code>schema.prisma</code>. After it succeeds, you can go to the "Table Editor" in Supabase to see your new tables.</p>
                     </Step>
+
+                    <Step number={4} title="Create User Profile Trigger in Supabase">
+                        <p>This is a critical step. When a user signs up, Supabase creates a record in its private <code>auth.users</code> table. We need to automatically create a corresponding profile in our public <code>"User"</code> table.</p>
+                        <p>Go to your Supabase project dashboard, navigate to the <strong>SQL Editor</strong>, click <strong>+ New query</strong>, and run the following SQL code. This creates a function and a trigger that runs after every new user signup.</p>
+                        <CodeBlock>{`-- Creates a new BusinessLocation and a User profile when a new user signs up.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  new_location_id UUID;
+  manager_role_id TEXT;
+BEGIN
+  -- 1. Create a new business location named after the user's business from signup metadata
+  INSERT INTO "public"."BusinessLocation" (name)
+  VALUES (NEW.raw_user_meta_data->>'business_name')
+  RETURNING id INTO new_location_id;
+
+  -- 2. Find the ID of the 'Manager (Supervisor)' role to assign as default
+  SELECT id INTO manager_role_id FROM "public"."Role" WHERE name = 'Manager (Supervisor)';
+
+  -- 3. Create a user profile with the business name as their display name
+  INSERT INTO "public"."User" (id, email, name, "roleId", "businessLocationId")
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'business_name',
+    manager_role_id,
+    new_location_id
+  );
+  RETURN NEW;
+END;
+$$;
+
+-- Create the trigger that executes the function after a new user is added
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();`}</CodeBlock>
+                    </Step>
                     
-                    <Step number={4} title="Configure Vercel Environment Variables">
-                        <p>For your deployed application to connect to Supabase and Prisma, you must add your secret keys to your Vercel project's environment variables.</p>
+                    <Step number={5} title="Configure Vercel Environment Variables">
+                        <p>For your deployed application to connect to Supabase, Prisma, and Gemini, you must add your secret keys to your Vercel project's environment variables.</p>
                          <p>In your Vercel project dashboard, go to <strong>Settings &gt; Environment Variables</strong> and add the following:</p>
                         <ul className="list-disc pl-5 space-y-2">
-                            <li><strong>DATABASE_URL</strong>: The full Prisma connection string from Step 1.</li>
+                            <li><strong>API_KEY</strong>: Your Gemini API key. Used by backend functions like <code>/api/generate-insights</code>.</li>
+                            <li><strong>DATABASE_URL</strong>: The full Prisma connection string from Step 1. Used by the backend.</li>
                             <li><strong>SUPABASE_URL</strong>: Your project's URL from Supabase (API Settings).</li>
                             <li><strong>SUPABASE_ANON_KEY</strong>: Your project's `anon` (public) key from Supabase (API Settings).</li>
                         </ul>
+                         <p className="!mt-4 text-sm"><strong>Note:</strong> These variables are only accessible on the server side (in your <code>/api</code> functions). The frontend will securely fetch the public keys it needs from a dedicated API endpoint.</p>
                     </Step>
 
-                     <Step number={5} title="Build Your Backend with Serverless Functions" isLast={true}>
+                     <Step number={6} title="Build Your Backend with Serverless Functions" isLast={true}>
                          <p>Your database and frontend are now ready. The final piece is to build the backend logic inside Vercel Serverless Functions. All your Prisma queries must run on the server, never in the browser.</p>
                          <p>An example has been created at <code>/api/get-user-profile.ts</code>. You can follow this pattern to create more endpoints for fetching products, creating sales, etc. The frontend is already configured to call these API routes.</p>
                     </Step>

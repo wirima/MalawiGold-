@@ -1,4 +1,4 @@
-import { GoogleGenAI, FunctionDeclaration, Type, Part, Content } from "@google/genai";
+import { GoogleGenAI, FunctionDeclaration, Type, Part, Content, FunctionResponse, GenerateContentResponse } from "@google/genai";
 import { Sale, CustomerRequest, CustomerReturn, Product } from '../types';
 import { MOCK_CATEGORIES, MOCK_SALES, MOCK_PRODUCTS } from '../data/mockData';
 
@@ -146,146 +146,25 @@ export const getReturnAnalysisInsights = async (returns: CustomerReturn[]): Prom
 
 // --- CHATBOT FUNCTIONALITY ---
 
-// Note: In a real multi-tenant app, these helper functions would be replaced
-// by secure API calls to your backend, which would then query the database.
-// The backend would enforce that only data for the current user's tenant is returned.
-
-const getProductInfo = (
-  { productName }: { productName: string },
-) => {
-  // In a real app: This would be an API call `GET /api/products?name=${productName}`
-  const product = MOCK_PRODUCTS.find(p => p.name.toLowerCase() === productName.toLowerCase());
-  if (!product) {
-    return { error: `Product '${productName}' not found.` };
-  }
-  return {
-    name: product.name,
-    price: product.price,
-    stock: product.stock,
-    category: MOCK_CATEGORIES.find(c => c.id === product.categoryId)?.name || 'N/A'
-  };
-};
-
-const getTodaysSalesSummary = () => {
-   // In a real app: This would be an API call `GET /api/reports/sales-summary?period=today`
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todaysSales = MOCK_SALES.filter(s => new Date(s.date) >= today && s.status === 'completed');
-  const totalRevenue = todaysSales.reduce((acc, s) => acc + s.total, 0);
-  return {
-    numberOfSales: todaysSales.length,
-    totalRevenue: totalRevenue.toFixed(2)
-  };
-};
-
-const getLowStockProducts = (
-  { limit = 5 }: { limit: number },
-) => {
-  // In a real app: This would be an API call `GET /api/products?stockStatus=low&limit=${limit}`
-  const lowStock = MOCK_PRODUCTS
-    .filter(p => p.stock > 0 && p.stock <= p.reorderPoint)
-    .sort((a, b) => a.stock - b.stock)
-    .slice(0, limit);
-  
-  if (lowStock.length === 0) {
-    return { message: "All products are well-stocked." };
-  }
-  return lowStock.map(p => ({ name: p.name, stock: p.stock, reorderPoint: p.reorderPoint }));
-};
-
-const tools: FunctionDeclaration[] = [
-  {
-    name: 'getProductInfo',
-    description: 'Get information about a specific product, including its price and stock level.',
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        productName: {
-          type: Type.STRING,
-          description: 'The name of the product to look up.',
-        },
-      },
-      required: ['productName'],
-    },
-  },
-  {
-    name: 'getTodaysSalesSummary',
-    description: 'Get a summary of today\'s sales, including the total number of sales and total revenue.',
-    parameters: { type: Type.OBJECT, properties: {} },
-  },
-  {
-    name: 'getLowStockProducts',
-    description: 'Get a list of products that are low in stock (at or below their reorder point).',
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        limit: {
-          type: Type.NUMBER,
-          description: 'The maximum number of low-stock products to return.',
-        },
-      },
-    },
-  },
-];
-
-// FIX: Removed unused 'products' and 'sales' parameters as this function now uses mock data internally.
+// The client-side function calling demo has been removed as it was insecure and non-functional.
+// To re-enable it, you must create a dedicated backend endpoint (e.g., /api/chat) that
+// securely calls the Gemini API and performs the function logic on the server.
 export const processChat = async (
   history: Content[],
   message: string,
 ): Promise<string> => {
-    
-    // This entire function should be moved to a backend endpoint for security.
-    // The frontend should just call `POST /api/chat` with the message and history.
-    
-    // For demonstration, we will call the Gemini API directly here,
-    // but this exposes the API key and is not secure for production.
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      return "Sorry, the chatbot is not configured correctly. API key is missing.";
-    }
-    
-    const ai = new GoogleGenAI({ apiKey });
-
+    console.warn("processChat is a demo function. A secure backend endpoint is required for production use.");
     try {
-      // Create a chat session with the full history
-      const chat = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        history: history,
-        config: {
-          tools: [{functionDeclarations: tools}],
-        }
-      });
-      
-      const response = await chat.sendMessage({ message: message });
-      
-      if (response.functionCalls && response.functionCalls.length > 0) {
-        // FIX: Handle multiple function calls in parallel
-        const functionCallResponses = await Promise.all(response.functionCalls.map(async (functionCall) => {
-          let functionResponse;
-          if (functionCall.name === 'getProductInfo') {
-              functionResponse = getProductInfo(functionCall.args as {productName: string});
-          } else if (functionCall.name === 'getTodaysSalesSummary') {
-              functionResponse = getTodaysSalesSummary();
-          } else if (functionCall.name === 'getLowStockProducts') {
-              functionResponse = getLowStockProducts(functionCall.args as {limit: number});
-          }
-
-          // Return the response in the format expected by the API
-          return {
-              name: functionCall.name,
-              response: functionResponse,
-          };
-        }));
-
-        // Send all function responses back to the model
-        const finalResponse = await chat.sendMessage({ functionResponses: functionCallResponses });
-        return finalResponse.text;
-      }
-
-      return response.text;
+        // In a real app, this would call a secure backend endpoint:
+        // const response = await fetch('/api/chat', { method: 'POST', body: JSON.stringify({ history, message }) });
+        // const data = await response.json();
+        // return data.text;
+        
+        // Returning a message explaining the situation for the demo.
+        return "Sorry, the live chatbot functionality with function calling is disabled for security reasons in this deployed version. It requires a dedicated backend endpoint to process requests securely.";
 
     } catch (error) {
-        console.error("Error processing chat:", error);
-        return "Sorry, I encountered an error. The chatbot functionality requires a backend implementation for full security and function calling.";
+        console.error("Error in mock processChat:", error);
+        return "Sorry, I encountered an error. The chatbot requires a backend implementation.";
     }
 };

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
 const ResetPasswordPage: React.FC = () => {
+    const { supabase } = useAuth();
     const navigate = useNavigate();
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -10,20 +11,24 @@ const ResetPasswordPage: React.FC = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
+        if (!supabase) return;
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
             if (event === 'PASSWORD_RECOVERY') {
                 // This event fires when the user is redirected from the email link.
-                // Supabase client handles the session creation from the URL fragment.
-                // We don't need to manually parse the token.
             }
         });
         
         return () => subscription.unsubscribe();
-    }, []);
+    }, [supabase]);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!supabase) {
+            setError("Authentication service is not available.");
+            return;
+        }
         if (password.length < 6) {
             setError("Password must be at least 6 characters long.");
             return;
@@ -70,7 +75,7 @@ const ResetPasswordPage: React.FC = () => {
                         <div>
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || !supabase}
                                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
                             >
                                 {loading ? 'Updating...' : 'Update Password'}

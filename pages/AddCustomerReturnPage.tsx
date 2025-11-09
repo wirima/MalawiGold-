@@ -29,7 +29,7 @@ const AddCustomerReturnPage: React.FC = () => {
     const selectedSale = useMemo(() => sales.find(s => s.id === selectedSaleId), [selectedSaleId, sales]);
     const totalRefund = useMemo(() => {
         // FIX: Explicitly type the accumulator `acc` and `item` in the `reduce` function to ensure correct type inference for arithmetic operations.
-        return Object.values(itemsToReturn).reduce((acc: number, item: { product: CartItem, quantity: number }) => {
+        return Object.values(itemsToReturn).reduce((acc: number, item: { product: CartItem; quantity: number; }) => {
             return acc + item.product.price * item.quantity;
         }, 0);
     }, [itemsToReturn]);

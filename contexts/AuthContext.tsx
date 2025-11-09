@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
-import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount, StockTransferRequest, NotificationTemplate } from '../types';
 import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS, MOCK_STOCK_TRANSFER_REQUESTS, MOCK_NOTIFICATION_TEMPLATES, MOCK_INTEGRATIONS } from '../data/mockData';
 
@@ -19,6 +18,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 };
 
 interface AuthContextType {
+    supabase: SupabaseClient | null;
     session: Session | null;
     user: SupabaseUser | null;
     currentUser: User | null; // Application's user type
@@ -145,6 +145,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // AUTH STATE
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null); // Application's user type
     const [loading, setLoading] = useState(true);
@@ -183,8 +184,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(DEFAULT_BRANDING);
     const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: true });
     
-    // DUAL-MODE AUTH
+
+    // Initialize Supabase client asynchronously
+    useEffect(() => {
+        const initSupabase = async () => {
+            try {
+                // This endpoint will return the public keys from server-side environment variables
+                const response = await fetch('/api/public-config');
+                if (!response.ok) {
+                    throw new Error(`Could not fetch public config: ${response.statusText}`);
+                }
+                const { supabaseUrl, supabaseAnonKey } = await response.json();
+                
+                if (supabaseUrl && supabaseAnonKey) {
+                    setSupabase(createClient(supabaseUrl, supabaseAnonKey));
+                } else {
+                    throw new Error('Public config from API is invalid or missing.');
+                }
+            } catch (error) {
+                console.error("Supabase client initialization failed:", error);
+                // If init fails, stop the loading spinner so the app can render.
+                // Auth functions will throw errors because the client is null.
+                setLoading(false);
+            }
+        };
+
+        initSupabase();
+    }, []);
+
+
     const authFunctions = useMemo(() => {
+        const throwError = () => {
+            throw new Error("Supabase client is not initialized. Check server configuration and network.");
+        };
+
         if (supabase) {
             // REAL AUTH MODE
             return {
@@ -210,35 +243,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 },
             };
         } else {
-            // MOCK AUTH MODE
+            // No client, so auth functions should fail clearly.
             return {
-                signIn: async (email: string, pass: string) => {
-                    setLoading(true);
-                    await new Promise(res => setTimeout(res, 500)); // Simulate network delay
-                    if (email.toLowerCase() === 'admin@zawipos.com' && pass === '4321') {
-                        const adminUser = MOCK_USERS.find(u => u.email.toLowerCase() === 'admin@zawipos.com');
-                        if (adminUser) {
-                            const fakeSupabaseUser = { id: adminUser.id, email: adminUser.email, user_metadata: { business_name: 'MGL' }, app_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() };
-                            const fakeSession = { access_token: 'fake-token', user: fakeSupabaseUser, expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'fake-refresh', token_type: 'bearer' };
-                            setSession(fakeSession as any);
-                            setCurrentUser(adminUser);
-                            setLoading(false);
-                            return;
-                        }
-                    }
-                    setLoading(false);
-                    throw new Error('Invalid mock credentials. Use Admin@zawipos.com and 4321.');
-                },
-                signOut: async () => {
-                    setSession(null);
-                    setCurrentUser(null);
-                },
-                signUp: async () => { throw new Error("Sign up is disabled in mock mode."); },
-                resetPasswordForEmail: async () => { throw new Error("Password reset is disabled in mock mode."); },
-                updateUserPassword: async () => { throw new Error("Password update is disabled in mock mode."); },
+                signIn: async () => throwError(),
+                signOut: async () => throwError(),
+                signUp: async () => throwError(),
+                resetPasswordForEmail: async () => throwError(),
+                updateUserPassword: async () => throwError(),
             };
         }
-    }, []);
+    }, [supabase]);
 
     const fetchAppUser = useCallback(async (session: Session | null) => {
         if (!session) {
@@ -246,13 +260,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
         try {
-            // This fetch call goes to our Vercel Serverless function.
-            // It's a secure way to get the user's data from our own database (managed by Prisma).
             const response = await fetch('/api/get-user-profile', {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) {
-                // If profile doesn't exist (e.g., a DB trigger hasn't run yet), sign out.
                 if (response.status === 404) {
                     await supabase?.auth.signOut();
                 }
@@ -260,25 +271,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             const appUser: User = await response.json();
             setCurrentUser(appUser);
-            // In a real app, you would also fetch roles, products, etc. for this user's organization here.
-            // For now, we continue to use mock data for other entities.
         } catch (error) {
             console.error("Error fetching app user:", error);
-            // Sign out if we can't get the app profile, as something is wrong.
             await supabase?.auth.signOut();
             setCurrentUser(null);
         }
-    }, []);
+    }, [supabase]);
 
 
     useEffect(() => {
+        // This effect runs when the supabase client is successfully initialized.
         if (supabase) {
-            // Real session management
             setLoading(true);
             const fetchSessionAndUser = async () => {
                 const { data: { session } } = await supabase.auth.getSession();
                 setSession(session);
-                // After getting the Supabase session, fetch our application-specific user profile.
                 await fetchAppUser(session);
                 setLoading(false);
             };
@@ -287,21 +294,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
                 setSession(session);
                 fetchAppUser(session);
-                 if (_event === 'SIGNED_OUT') {
+                    if (_event === 'SIGNED_OUT') {
                     setCurrentUser(null);
                 }
             });
             return () => subscription.unsubscribe();
-        } else {
-            // Mock mode: no session to check, just finish loading
-            setLoading(false);
         }
-    }, [fetchAppUser]);
+    }, [supabase, fetchAppUser]);
 
     const hasPermission = useCallback((permission: Permission): boolean => {
         if (!currentUser) return false;
-        // In a real app, role data would be fetched with the user profile.
-        // We use mock roles here for demonstration.
         const userRole = roles.find(role => role.id === currentUser.roleId);
         if (!userRole) return false;
         if (userRole.id === 'admin') return true;
@@ -333,6 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const value = useMemo(() => ({
+        supabase,
         session,
         user: session?.user || null,
         currentUser,
@@ -423,7 +426,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deletePaymentMethod: (id) => setPaymentMethods(p => p.filter(pm => pm.id !== id)),
         addStockTransferRequest: (d) => setStockTransferRequests(p => [...p, {...d, id: `str${Date.now()}`, date: new Date().toISOString(), status: 'pending'}]) ,
         updateStockTransferRequest: (id, status) => setStockTransferRequests(p => p.map(str => str.id === id ? {...str, status} : str)),
-    }), [session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions, fetchAppUser]);
+    }), [supabase, session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions, fetchAppUser]);
 
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -233,7 +233,7 @@ const ProductsPage: React.FC = () => {
     const [apiError, setApiError] = useState<string | null>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(200);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
 
     const isFiltered = useMemo(() => searchTerm !== '' || categoryFilter !== 'all' || stockFilter !== 'all' || locationFilter !== 'all', [searchTerm, categoryFilter, stockFilter, locationFilter]);
 
@@ -253,12 +253,6 @@ const ProductsPage: React.FC = () => {
     const locationsMap = useMemo(() => new Map(businessLocations.map(l => [l.id, l.name])), [businessLocations]);
 
     // Sorting State and Logic
-    type SortableKeys = 'name' | 'sku' | 'categoryName' | 'brandName' | 'locationName' | 'price' | 'stock';
-    type SortDirection = 'ascending' | 'descending';
-    type SortConfig = {
-        key: SortableKeys;
-        direction: SortDirection;
-    } | null;
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'ascending' });
 
     const filteredProducts = useMemo(() => {
@@ -404,7 +398,7 @@ const ProductsPage: React.FC = () => {
 
     return (
         <>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md flex flex-col">
                 <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                     {apiError && (
                         <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -421,7 +415,7 @@ const ProductsPage: React.FC = () => {
                             <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your products inventory.</p>
                         </div>
                          <Link 
-                            to="/products/add"
+                            to="/app/products/add"
                             className={`bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold whitespace-nowrap order-first md:order-last ${!canAddProducts ? 'opacity-50 cursor-not-allowed' : ''}`}
                             onClick={(e) => !canAddProducts && e.preventDefault()}
                             aria-disabled={!canAddProducts}
@@ -481,43 +475,6 @@ const ProductsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <label htmlFor="itemsPerPage" className="text-sm font-medium">Products per page:</label>
-                        <select
-                            id="itemsPerPage"
-                            value={itemsPerPage}
-                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                            className="rounded-lg bg-slate-100 dark:bg-slate-700 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            <option value={200}>200</option>
-                            <option value={500}>500</option>
-                            <option value={1000}>1000</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm text-slate-500 dark:text-slate-400">
-                            Page {currentPage} of {totalPages > 0 ? totalPages : 1} ({filteredProducts.length} products)
-                        </span>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Next
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
                         <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
@@ -539,12 +496,12 @@ const ProductsPage: React.FC = () => {
                                 return (
                                 <tr key={product.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/50">
                                     <td className="px-6 py-4">
-                                        <Link to={`/products/${product.id}`}>
+                                        <Link to={`/app/products/${product.id}`}>
                                             <img src={product.imageUrl} alt={product.name} className="w-12 h-12 rounded-md object-cover transition-transform hover:scale-110"/>
                                         </Link>
                                     </td>
                                     <th scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">
-                                        <Link to={`/products/${product.id}`} className="hover:underline">
+                                        <Link to={`/app/products/${product.id}`} className="hover:underline">
                                             {product.name}
                                         </Link>
                                         {product.isNotForSale && (
@@ -582,7 +539,7 @@ const ProductsPage: React.FC = () => {
                                             Delete
                                         </button>
                                         <Link
-                                            to={`/products/add?duplicate_from=${product.id}`}
+                                            to={`/app/products/add?duplicate_from=${product.id}`}
                                             className={`font-medium text-blue-600 dark:text-blue-500 hover:underline ${!canAddProducts ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                                             aria-disabled={!canAddProducts}
                                             title={!canAddProducts ? "You don't have permission to add products" : "Duplicate this product"}
@@ -600,6 +557,45 @@ const ProductsPage: React.FC = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="itemsPerPage" className="text-sm font-medium">Products per page:</label>
+                        <select
+                            id="itemsPerPage"
+                            value={itemsPerPage}
+                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                            className="rounded-lg bg-slate-100 dark:bg-slate-700 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={200}>200</option>
+                            <option value={500}>500</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                            Page {currentPage} of {totalPages > 0 ? totalPages : 1} ({filteredProducts.length} products)
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {isModalOpen && (
