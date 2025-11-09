@@ -2,10 +2,6 @@
 // This Vercel Serverless Function securely provides the public environment
 // variables needed by the frontend to initialize the Supabase client.
 
-export const config = {
-  runtime: 'edge',
-};
-
 export default async function handler(req: Request) {
     if (req.method !== 'GET') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 

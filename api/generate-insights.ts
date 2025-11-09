@@ -1,11 +1,7 @@
 // File: /api/generate-insights.ts
-// This is a Vercel Serverless Function using the Edge Runtime.
+// This is a Vercel Serverless Function.
 
 import { GoogleGenAI } from '@google/genai';
-
-export const config = {
-  runtime: 'edge',
-};
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {

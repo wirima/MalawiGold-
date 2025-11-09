@@ -1,11 +1,6 @@
 // This is a Vercel Serverless Function, designed to be placed in the /api directory.
 // It creates a secure endpoint to fetch a user's application-specific profile.
 
-// It is recommended to use the Edge Runtime for performance in Vercel.
-export const config = {
-  runtime: 'edge',
-};
-
 // In a real project, you would install these packages. They are available in this environment.
 import { PrismaClient } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';

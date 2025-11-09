@@ -281,7 +281,7 @@ const AddProductPage: React.FC = () => {
                     businessLocationId: locationId,
                     stock: locationStocks.get(locationId) || 0,
                 };
-                addProduct(productData, imagePreview);
+                addProduct(productData);
 
             } else { // Variable Product
                 const variationValueMap = new Map(variationValues.map(v => [v.id, v]));
