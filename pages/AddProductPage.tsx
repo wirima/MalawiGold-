@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -157,12 +158,12 @@ const AddProductPage: React.FC = () => {
         const combinations = cartesian(...arraysToCombine);
 
         // FIX: The `combo` parameter was being inferred as 'unknown[]'. Explicitly typing it resolves property access errors.
-        const newMatrix = combinations.map((combo: { variationId: string; valueId: string; }[], index) => {
+        const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
             // FIX: Explicitly type `attr` to resolve type inference issue.
-            const nameParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name || '');
+            const nameParts = attributes.map((attr: { valueId: string }) => variationValueMap.get(attr.valueId)?.name || '');
             // FIX: Explicitly type `attr` to resolve type inference issue.
-            const skuParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            const skuParts = attributes.map((attr: { valueId: string }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
             formData.businessLocationIds.forEach(locId => {
@@ -186,9 +187,9 @@ const AddProductPage: React.FC = () => {
 
     // Effect to update matrix values (sku, price, etc.) when base form data changes
     useEffect(() => {
-        // FIX: Explicitly typing the 'variant' parameter to VariantMatrixItem to fix type inference issues.
+        // FIX: The `variant` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `variant` resolves this.
         setVariantsMatrix(prevMatrix => prevMatrix.map((variant: VariantMatrixItem) => {
-            // FIX: Explicitly type `attr` to resolve type inference issue.
+            // FIX: Explicitly type `attr` to resolve type inference issue, which resolves property access errors.
             const skuParts = variant.attributes.map((attr: { valueId: string; }) => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             return {
                 ...variant,

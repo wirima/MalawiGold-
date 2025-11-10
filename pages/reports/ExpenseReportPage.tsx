@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -32,7 +33,7 @@ const ExpenseReportPage: React.FC = () => {
     const summaryData = useMemo(() => {
         const total = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
         // FIX: Explicitly type the initial value of the `reduce` method to ensure correct type inference for `byCategory`, resolving downstream sort function errors.
-        const byCategory = filteredExpenses.reduce((acc: Record<string, number>, exp) => {
+        const byCategory = filteredExpenses.reduce((acc, exp) => {
             const catName = categoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;

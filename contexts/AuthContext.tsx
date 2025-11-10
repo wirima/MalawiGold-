@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import { createClient, SupabaseClient, Session, User as SupabaseUser } from '@supabase/supabase-js';
-// FIX: Moved ALL_PERMISSIONS import from './types' to './constants' as it is exported from constants.tsx
+// FIX: Moved ALL_PERMISSIONS import from './types' to '../constants' as it is exported from constants.tsx
 import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount, StockTransferRequest, NotificationTemplate } from '../types';
 import { ALL_PERMISSIONS } from '../constants';
 import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS, MOCK_STOCK_TRANSFER_REQUESTS, MOCK_NOTIFICATION_TEMPLATES, MOCK_INTEGRATIONS } from '../data/mockData';

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -30,7 +31,7 @@ const ProductSellReportPage: React.FC = () => {
         );
 
         // FIX: Explicitly type the initial value of the `reduce` method to ensure the accumulator and its properties are correctly typed, resolving downstream spread operator errors.
-        const productSales = filteredSales.reduce((acc: Record<string, { quantity: number; revenue: number; profit: number; }>, sale) => {
+        const productSales = filteredSales.reduce((acc, sale) => {
             sale.items.forEach(item => {
                 if (!acc[item.id]) {
                     acc[item.id] = { quantity: 0, revenue: 0, profit: 0 };
