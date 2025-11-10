@@ -57,7 +57,6 @@ interface AuthContextType {
     notificationTemplates: NotificationTemplate[];
     loading: boolean;
     signIn: (email: string, pass: string) => Promise<any>;
-    signInAsDeveloper: () => void;
     signOut: () => Promise<any>;
     signUp: (email: string, pass: string, metadata: { [key: string]: any }) => Promise<any>;
     resetPasswordForEmail: (email: string) => Promise<any>;
@@ -152,7 +151,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null); // Application's user type
     const [loading, setLoading] = useState(true);
-    const [isDeveloperMode, setIsDeveloperMode] = useState(false);
 
     // DATA STATE (simulating a database)
     const [users, setUsers] = useState<User[]>(MOCK_USERS);
@@ -217,22 +215,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initSupabase();
     }, []);
 
-    const signInAsDeveloper = () => {
-        const devUser: User = { id: 'dev-001', name: 'Super Admin', email: 'dev@zawipos.com', roleId: 'admin', businessLocationId: 'LOC01' };
-        const devRole: Role = { id: 'admin', name: 'Administrator', description: 'Full access', permissions: ALL_PERMISSIONS };
-        
-        const fakeSupabaseUser: SupabaseUser = { id: devUser.id, email: devUser.email, user_metadata: {}, app_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() };
-        const fakeSession: Session = { access_token: 'dev-token', user: fakeSupabaseUser, expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'dev-refresh', token_type: 'bearer' };
-        
-        setRoles(prev => prev.find(r => r.id === 'admin') ? prev : [...prev, devRole]);
-        setCurrentUser(devUser);
-        setSession(fakeSession);
-        setIsDeveloperMode(true);
-    };
-
     const authFunctions = useMemo(() => {
         const throwError = () => {
-            if (isDeveloperMode) return; // Don't throw if in dev mode
             throw new Error("Supabase client is not initialized. Check server configuration and network.");
         };
 
@@ -243,12 +227,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (error) throw error;
             },
             signOut: async () => {
-                if (isDeveloperMode) {
-                    setCurrentUser(null);
-                    setSession(null);
-                    setIsDeveloperMode(false);
-                    return;
-                }
                 if (!supabase) return throwError();
                 const { error } = await supabase.auth.signOut();
                 if (error) throw error;
@@ -269,7 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (error) throw error;
             },
         };
-    }, [supabase, isDeveloperMode]);
+    }, [supabase]);
 
     const fetchAppUser = useCallback(async (session: Session | null) => {
         if (!session) {
@@ -319,13 +297,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [supabase, fetchAppUser]);
 
     const hasPermission = useCallback((permission: Permission): boolean => {
-        if (isDeveloperMode) return true;
         if (!currentUser) return false;
         const userRole = roles.find(role => role.id === currentUser.roleId);
         if (!userRole) return false;
         if (userRole.id === 'admin') return true;
         return userRole.permissions.includes(permission);
-    }, [currentUser, roles, isDeveloperMode]);
+    }, [currentUser, roles]);
     
     // --- MOCK DATA MUTATIONS ---
     const addSale = (saleData: Omit<Sale, 'id' | 'date'>) => {
@@ -363,7 +340,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates,
         loading,
         ...authFunctions,
-        signInAsDeveloper,
         hasPermission,
         // Mock implementations
         addSale,
@@ -444,7 +420,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deletePaymentMethod: (id) => setPaymentMethods(p => p.filter(pm => pm.id !== id)),
         addStockTransferRequest: (d) => setStockTransferRequests(p => [...p, {...d, id: `str${Date.now()}`, date: new Date().toISOString(), status: 'pending'}]) ,
         updateStockTransferRequest: (id, status) => setStockTransferRequests(p => p.map(str => str.id === id ? {...str, status} : str)),
-    }), [supabase, session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions, fetchAppUser, isDeveloperMode]);
+    }), [supabase, session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions, fetchAppUser]);
 
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

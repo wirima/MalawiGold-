@@ -1,3 +1,5 @@
+import React from 'react';
+
 // FIX: Add React import and global JSX namespace declaration to fix project-wide JSX type issues.
 // The global declaration below was causing type conflicts and has been removed.
 

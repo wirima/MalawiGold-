@@ -1,7 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardCard from '../../components/DashboardCard';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { Expense } from '../../types';
 
 const ProfitLossReportPage: React.FC = () => {
     const { sales, expenses, expenseCategories, customerReturns, hasPermission } = useAuth();
@@ -76,11 +78,11 @@ const ProfitLossReportPage: React.FC = () => {
 
         const expenseCategoriesMap = new Map(expenseCategories.map(c => [c.id, c.name]));
         // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `expensesByCat`, preventing index signature and assignment errors.
-        const expensesByCat = filteredExpenses.reduce((acc: Record<string, number>, exp) => {
+        const expensesByCat = filteredExpenses.reduce((acc, exp: Expense) => {
             const catName = expenseCategoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         
         const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
         
@@ -102,6 +104,7 @@ const ProfitLossReportPage: React.FC = () => {
     const Icon: React.FC<{ path: string }> = ({ path }) => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d={path} /></svg>
     );
+
     
     return (
         <div className="space-y-6">

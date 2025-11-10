@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -37,7 +38,7 @@ const ProductPurchaseReportPage: React.FC = () => {
                 acc[item.id].total += item.price * item.quantity;
             });
             return acc;
-        }, {});
+        }, {} as Record<string, { quantity: number; total: number }>);
         
         return Object.entries(productPurchases).map(([productId, data]) => ({
             product: productsMap.get(productId),

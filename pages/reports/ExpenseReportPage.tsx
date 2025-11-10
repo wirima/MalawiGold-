@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -35,7 +36,7 @@ const ExpenseReportPage: React.FC = () => {
             const catName = categoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
 
         return { total, byCategory: Object.entries(byCategory).sort(([,a], [,b]) => b - a) };
     }, [filteredExpenses, categoriesMap]);

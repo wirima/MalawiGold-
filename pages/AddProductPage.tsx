@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -121,7 +122,7 @@ const AddProductPage: React.FC = () => {
                 if (brand) setBrandName(brand.name);
                 setImagePreview(null);
             }
-            navigate('/products/add', { replace: true });
+            navigate('/app/products/add', { replace: true });
         }
     }, [location.search, products, brands, navigate]);
 
@@ -131,7 +132,7 @@ const AddProductPage: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-full text-center">
                 <h1 className="text-5xl font-bold">Access Denied</h1>
                 <p className="mt-4">You do not have permission to add products.</p>
-                <Link to="/products" className="mt-6 btn-primary">Back to Products</Link>
+                <Link to="/app/products" className="mt-6 btn-primary">Back to Products</Link>
             </div>
         );
     }
@@ -158,8 +159,10 @@ const AddProductPage: React.FC = () => {
         // FIX: The `combo` parameter was being inferred as 'unknown[]'. Explicitly typing it resolves property access errors.
         const newMatrix = combinations.map((combo: { variationId: string; valueId: string; }[], index) => {
             const attributes = combo;
-            const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
-            const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            // FIX: Explicitly type `attr` to resolve type inference issue.
+            const nameParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name || '');
+            // FIX: Explicitly type `attr` to resolve type inference issue.
+            const skuParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
             formData.businessLocationIds.forEach(locId => {
@@ -185,7 +188,8 @@ const AddProductPage: React.FC = () => {
     useEffect(() => {
         // FIX: Explicitly typing the 'variant' parameter to VariantMatrixItem to fix type inference issues.
         setVariantsMatrix(prevMatrix => prevMatrix.map((variant: VariantMatrixItem) => {
-            const skuParts = variant.attributes.map(attr => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            // FIX: Explicitly type `attr` to resolve type inference issue.
+            const skuParts = variant.attributes.map((attr: { valueId: string; }) => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             return {
                 ...variant,
                 sku: `${formData.sku || 'SKU'}-${skuParts.join('-')}`,
@@ -689,7 +693,8 @@ const AddProductPage: React.FC = () => {
                                     <td className="p-2"><input type="text" value={variant.sku} onChange={e => handleVariantMatrixChange(index, 'sku', e.target.value)} className={baseInputClasses} /></td>
                                     <td className="p-2"><input type="number" value={variant.costPrice} onChange={e => handleVariantMatrixChange(index, 'costPrice', parseFloat(e.target.value))} className={baseInputClasses} /></td>
                                     <td className="p-2"><input type="number" value={variant.price} onChange={e => handleVariantMatrixChange(index, 'price', parseFloat(e.target.value))} className={baseInputClasses} /></td>
-                                    {Array.from(formData.businessLocationIds).map(locationId => (
+                                    {/* FIX: Explicitly typing `locationId` resolves type inference errors in this map function. */}
+                                    {Array.from(formData.businessLocationIds).map((locationId: string) => (
                                         <td key={locationId} className="p-2">
                                             <input type="number" value={variant.stocks.get(locationId) || ''} onChange={e => handleVariantMatrixStockChange(index, locationId, e.target.value)} className={`${baseInputClasses} w-24`} />
                                         </td>
@@ -702,7 +707,7 @@ const AddProductPage: React.FC = () => {
 
 
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t flex justify-end gap-3">
-                    <Link to="/products" className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600" tabIndex={19}>Cancel</Link>
+                    <Link to="/app/products" className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600" tabIndex={19}>Cancel</Link>
                     <button type="submit" className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" tabIndex={18}>Save Product</button>
                 </div>
             </div>
@@ -719,7 +724,7 @@ const AddProductPage: React.FC = () => {
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-3 rounded-b-lg">
                         <button type="button" onClick={() => { setIsSuccessModalOpen(false); resetForm(); setTimeout(() => nameInputRef.current?.focus(), 100); }} className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 bg-white dark:bg-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-600">Add Another Product</button>
-                        <button type="button" onClick={() => navigate('/products')} className="w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 font-medium text-white hover:bg-indigo-700">View All Products</button>
+                        <button type="button" onClick={() => navigate('/app/products')} className="w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 font-medium text-white hover:bg-indigo-700">View All Products</button>
                     </div>
                 </div>
             </div>

@@ -1,12 +1,14 @@
-// This is a Vercel Serverless Function, designed to be placed in the /api directory.
-// It creates a secure endpoint to fetch a user's application-specific profile.
+// File: /api/get-user-profile.ts
+// This is a Vercel Serverless Function to securely fetch a user's application profile.
 
-// In a real project, you would install these packages. They are available in this environment.
-import { PrismaClient } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 
+// This function can run on Vercel's Edge runtime for better performance.
+export const config = {
+  runtime: 'edge',
+};
+
 export default async function handler(req: Request) {
-    // We only want to handle GET requests for this endpoint.
     if (req.method !== 'GET') {
         return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
     }
@@ -19,8 +21,8 @@ export default async function handler(req: Request) {
         }
         const token = authHeader.split(' ')[1];
 
-        // 2. Initialize the Supabase client and verify the user's token.
-        // These environment variables must be set in your Vercel project settings.
+        // 2. Initialize a temporary Supabase client to verify the user's token.
+        // These env vars must be set in your Vercel project settings.
         const supabase = createClient(
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_ANON_KEY!
@@ -28,23 +30,32 @@ export default async function handler(req: Request) {
         const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
         if (userError || !user) {
-            return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify({ error: `Unauthorized: ${userError?.message || 'Invalid token'}` }), { status: 401, headers: { 'Content-Type': 'application/json' } });
         }
 
-        // 3. Initialize Prisma and fetch the user's profile from your "User" table.
-        // The DATABASE_URL env var must be set in Vercel for Prisma to connect.
-        const prisma = new PrismaClient();
-        const userProfile = await prisma.user.findUnique({
-            where: { id: user.id },
-        });
+        // 3. Initialize a Supabase admin client to fetch data, bypassing RLS.
+        // The SUPABASE_SERVICE_ROLE_KEY env var must be set in Vercel.
+        const supabaseAdmin = createClient(
+            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        const { data: userProfile, error: profileError } = await supabaseAdmin
+            .from('User') // Note: Table name is case-sensitive and must match your schema.
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-        // 4. If the profile doesn't exist, it's an error state. This can happen
-        // if the database trigger to create a profile hasn't run yet.
-        if (!userProfile) {
-            return new Response(JSON.stringify({ error: 'User profile not found in database' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+        if (profileError) {
+             console.error('Supabase profile fetch error:', profileError.message);
+             // If the profile doesn't exist, it could be a race condition with the db trigger.
+            if (profileError.code === 'PGRST116') { // "PGRST116: JSON object requested, but row not found"
+                 return new Response(JSON.stringify({ error: 'User profile not found in database. Please try again shortly.' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+            }
+            throw profileError;
         }
 
-        // 5. Return the user profile data.
+        // 4. Return the user profile data.
         return new Response(JSON.stringify(userProfile), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
