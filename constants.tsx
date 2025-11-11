@@ -1,8 +1,9 @@
 import React from 'react';
 import { Permission } from './types';
- 
+
 // Heroicons SVG paths
 const ICONS = {
+    HOME: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" />,
     DASHBOARD: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />,
     PRODUCTS: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6C2.754 12 2.25 11.496 2.25 10.875v-3.75zM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-8.25zM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-2.25z" />,
     CONTACTS: <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.969A3 3 0 0010.5 9.5m-7.5 5.25c0-1.02.394-1.943 1.054-2.652A3 3 0 019 12.5m6-3.75a3 3 0 11-6 0 3 3 0 016 0zM12 12.75a3 3 0 00-3 3h6a3 3 0 00-3-3z" />,
@@ -17,7 +18,7 @@ const ICONS = {
     SETTINGS: <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-1.025 1.11-1.11a1.125 1.125 0 011.085.056l.053.042a.562.562 0 00.56.096c.38.118.74.298 1.07.538a.562.562 0 00.672.032l.094-.055a1.125 1.125 0 011.185.19l.044.053a1.125 1.125 0 01-.202 1.554l-.089.07a.562.562 0 00-.28.592c.03.407.054.819.054 1.234a.562.562 0 00.28.592l.089.07a1.125 1.125 0 01.202 1.554l-.044.053a1.125 1.125 0 01-1.185-.19l-.094-.055a.562.562 0 00-.672.032c-.33.24-.69.42-1.07.538a.562.562 0 00-.56.096l-.053.042a1.125 1.125 0 01-1.085-.056c-.55-.085-1.02-.568-1.11-1.11a.562.562 0 00-.948 0c-.09.542-.56 1.025-1.11 1.11a1.125 1.125 0 01-1.085-.056l-.053-.042a.562.562 0 00-.56-.096c-.38-.118-.74-.298-1.07-.538a.562.562 0 00-.672-.032l-.094.055a1.125 1.125 0 01-1.185-.19l-.044-.053a1.125 1.125 0 01.202-1.554l.089-.07a.562.562 0 00.28-.592c-.03-.407-.054-.819-.054-1.234a.562.562 0 00.28.592l-.089-.07a1.125 1.125 0 01-.202-1.554l.044-.053a1.125 1.125 0 011.185-.19l.094.055a.562.562 0 00.672-.032c.33-.24.69-.42-1.07-.538a.562.562 0 00.56-.096l.053-.042a1.125 1.125 0 011.085-.056c.55.085 1.02.568 1.11 1.11a.562.562 0 00.948 0zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />,
     GROWTH: <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
 };
- 
+
 export const ALL_PERMISSIONS: Permission[] = [
     'dashboard:view',
     'growth:view',
@@ -36,13 +37,13 @@ export const ALL_PERMISSIONS: Permission[] = [
     'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification', 'settings:integrations',
     'settings:accounts', 'settings:subscription'
 ];
- 
+
 const NavIcon: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
         {children}
     </svg>
 );
- 
+
 export interface NavItem {
     path?: string;
     label: string;
@@ -50,67 +51,68 @@ export interface NavItem {
     permission?: Permission | string;
     subItems?: Omit<NavItem, 'icon' | 'subItems'>[];
 }
- 
+
 export const getNavItems = (t: (key: string) => string): NavItem[] => [
+  { path: '/', label: 'Home', icon: <NavIcon>{ICONS.HOME}</NavIcon> },
   { path: '/', label: t('dashboard'), icon: <NavIcon>{ICONS.DASHBOARD}</NavIcon>, permission: 'dashboard:view' },
-  {
+  { 
     label: t('contacts'),
     icon: <NavIcon>{ICONS.CONTACTS}</NavIcon>,
     permission: 'contacts:view',
     subItems: [
-        { path: '/contacts', label: 'Customers' },
-        { path: '/contacts/suppliers', label: 'Suppliers' },
-        { path: '/contacts/groups', label: 'Customer Groups' },
-        { path: '/contacts/import', label: 'Import Contacts', permission: 'contacts:import' },
+        { path: 'contacts', label: 'Customers' },
+        { path: 'contacts/suppliers', label: 'Suppliers' },
+        { path: 'contacts/groups', label: 'Customer Groups' },
+        { path: 'contacts/import', label: 'Import Contacts', permission: 'contacts:import' },
     ]
   },
-  {
+  { 
     label: t('products'),
-    icon: <NavIcon>{ICONS.PRODUCTS}</NavIcon>,
+    icon: <NavIcon>{ICONS.PRODUCTS}</NavIcon>, 
     permission: 'products:view',
     subItems: [
-        { path: '/products', label: 'List Products' },
-        { path: '/products/add', label: 'Add Product', permission: 'products:add' },
-        { path: '/products/update-price', label: 'Update Price', permission: 'products:update_price' },
-        { path: '/products/print-labels', label: 'Print Labels', permission: 'products:print_labels' },
-        { path: '/products/variations', label: 'Variations', permission: 'products:variations' },
-        { path: '/products/import', label: 'Import Products', permission: 'products:import' },
-        { path: '/products/import-opening-stock', label: 'Import Opening Stock', permission: 'products:import_stock' },
-        { path: '/products/selling-price-group', label: 'Selling Price Group', permission: 'products:price_groups' },
-        { path: '/products/units', label: 'Units', permission: 'products:units' },
-        { path: '/products/categories', label: 'Categories', permission: 'products:categories' },
-        { path: '/products/brands', label: 'Brands', permission: 'products:brands' },
-        { path: '/products/documents', label: 'Product Documents', permission: 'products:documents' },
+        { path: 'products', label: 'List Products' },
+        { path: 'products/add', label: 'Add Product', permission: 'products:add' },
+        { path: 'products/update-price', label: 'Update Price', permission: 'products:update_price' },
+        { path: 'products/print-labels', label: 'Print Labels', permission: 'products:print_labels' },
+        { path: 'products/variations', label: 'Variations', permission: 'products:variations' },
+        { path: 'products/import', label: 'Import Products', permission: 'products:import' },
+        { path: 'products/import-opening-stock', label: 'Import Opening Stock', permission: 'products:import_stock' },
+        { path: 'products/selling-price-group', label: 'Selling Price Group', permission: 'products:price_groups' },
+        { path: 'products/units', label: 'Units', permission: 'products:units' },
+        { path: 'products/categories', label: 'Categories', permission: 'products:categories' },
+        { path: 'products/brands', label: 'Brands', permission: 'products:brands' },
+        { path: 'products/documents', label: 'Product Documents', permission: 'products:documents' },
     ]
   },
-  {
+  { 
     label: t('purchases'),
     icon: <NavIcon>{ICONS.PURCHASES}</NavIcon>,
     permission: 'purchases:view',
     subItems: [
-        { path: '/purchases', label: 'List Purchases' },
-        { path: '/purchases/add', label: 'Add Purchase', permission: 'purchases:manage' },
-        { path: '/purchases/returns', label: 'List Purchase Return' },
+        { path: 'purchases', label: 'List Purchases' },
+        { path: 'purchases/add', label: 'Add Purchase', permission: 'purchases:manage' },
+        { path: 'purchases/returns', label: 'List Purchase Return' },
     ]
   },
-  {
+  { 
     label: t('sell'),
     icon: <NavIcon>{ICONS.SELL}</NavIcon>,
     permission: 'sell:view',
     subItems: [
-        { path: '/sell/sales', label: 'All Sales', permission: 'sell:sales' },
-        { path: '/sell/add', label: 'Add Sale', permission: 'sell:manage' },
-        { path: '/sell/pos-list', label: 'List POS', permission: 'sell:pos' },
-        { path: '/sell/pos', label: 'POS', permission: 'sell:pos' },
-        { path: '/sell/drafts/add', label: 'Add Draft', permission: 'sell:manage' },
-        { path: '/sell/drafts', label: 'List Drafts', permission: 'sell:view' },
-        { path: '/sell/quotations/add', label: 'Add Quotation', permission: 'sell:manage' },
-        { path: '/sell/quotations', label: 'List Quotations', permission: 'sell:view' },
-        { path: '/sell/returns', label: 'Customer Returns', permission: 'returns:view' },
-        { path: '/sell/returns/add', label: 'Add Customer Return', permission: 'returns:manage' },
-        { path: '/sell/shipments', label: 'Shipments', permission: 'shipping:view' },
-        { path: '/sell/discounts', label: 'Discounts', permission: 'discounts:view' },
-        { path: '/sell/import', label: 'Import Sales', permission: 'sell:manage' },
+        { path: 'sell/sales', label: 'All Sales', permission: 'sell:sales' },
+        { path: 'sell/add', label: 'Add Sale', permission: 'sell:manage' },
+        { path: 'sell/pos-list', label: 'List POS', permission: 'sell:pos' },
+        { path: 'sell/pos', label: 'POS', permission: 'sell:pos' },
+        { path: 'sell/drafts/add', label: 'Add Draft', permission: 'sell:manage' },
+        { path: 'sell/drafts', label: 'List Drafts', permission: 'sell:view' },
+        { path: 'sell/quotations/add', label: 'Add Quotation', permission: 'sell:manage' },
+        { path: 'sell/quotations', label: 'List Quotations', permission: 'sell:view' },
+        { path: 'sell/returns', label: 'Customer Returns', permission: 'returns:view' },
+        { path: 'sell/returns/add', label: 'Add Customer Return', permission: 'returns:manage' },
+        { path: 'sell/shipments', label: 'Shipments', permission: 'shipping:view' },
+        { path: 'sell/discounts', label: 'Discounts', permission: 'discounts:view' },
+        { path: 'sell/import', label: 'Import Sales', permission: 'sell:manage' },
     ]
   },
   {
@@ -118,9 +120,9 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     icon: <NavIcon>{ICONS.STOCK_TRANSFERS}</NavIcon>,
     permission: 'stock_transfer:view',
     subItems: [
-        { path: '/stock-transfers', label: 'List Stock transfers' },
-        { path: '/stock-transfers/add', label: 'Add Stock transfers', permission: 'stock_transfer:manage' },
-        { path: '/stock-transfers/requests', label: 'Transfer Requests', permission: 'stock_transfer:manage' },
+        { path: 'stock-transfers', label: 'List Stock transfers' },
+        { path: 'stock-transfers/add', label: 'Add Stock transfers', permission: 'stock_transfer:manage' },
+        { path: 'stock-transfers/requests', label: 'Transfer Requests', permission: 'stock_transfer:manage' },
     ]
   },
   {
@@ -128,8 +130,8 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     icon: <NavIcon>{ICONS.STOCK_ADJUSTMENTS}</NavIcon>,
     permission: 'stock_adjustment:view',
     subItems: [
-        { path: '/stock-adjustments', label: 'List Stock Adjustments' },
-        { path: '/stock-adjustments/add', label: 'Add Stock Adjustment', permission: 'stock_adjustment:manage' },
+        { path: 'stock-adjustments', label: 'List Stock Adjustments' },
+        { path: 'stock-adjustments/add', label: 'Add Stock Adjustment', permission: 'stock_adjustment:manage' },
     ]
   },
   {
@@ -137,9 +139,9 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     icon: <NavIcon>{ICONS.EXPENSES}</NavIcon>,
     permission: 'expense:view',
     subItems: [
-        { path: '/expenses', label: 'List Expenses' },
-        { path: '/expenses/add', label: 'Add Expense', permission: 'expense:manage' },
-        { path: '/expenses/categories', label: 'Expense Categories', permission: 'expense:manage' },
+        { path: 'expenses', label: 'List Expenses' },
+        { path: 'expenses/add', label: 'Add Expense', permission: 'expense:manage' },
+        { path: 'expenses/categories', label: 'Expense Categories', permission: 'expense:manage' },
     ]
   },
   {
@@ -147,41 +149,42 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
     icon: <NavIcon>{ICONS.REPORTS}</NavIcon>,
     permission: 'reports:view',
     subItems: [
-      { path: '/reports/profit-loss', label: 'Profit/Loss Reports' },
-      { path: '/reports/purchase-sale', label: 'Purchase & Sale' },
-      { path: '/reports/sales-analysis', label: 'Sales Analysis Report' },
-      { path: '/reports/tax', label: 'Tax Report' },
-      { path: '/reports/supplier-customer', label: 'Supplier & Customer Report' },
-      { path: '/reports/customer-group', label: 'Customer Group Report' },
-      { path: '/reports/stock', label: 'Stock Report' },
-      { path: '/reports/stock-adjustment', label: 'Stock Adjustment Report' },
-      { path: '/reports/trending-products', label: 'Trending Products' },
-      { path: '/reports/items', label: 'Items Report' },
-      { path: '/reports/product-purchase', label: 'Product Purchase Report' },
-      { path: '/reports/product-sell', label: 'Product Sell Report' },
-      { path: '/reports/expense', label: 'Expense Report' },
-      { path: '/reports/register', label: 'Register Report' },
-      { path: '/reports/sales-rep', label: 'Sales Representative Report' },
-      { path: '/reports/activity-log', label: 'Activity Log' },
-      { path: '/reports/customer-demand', label: 'Customer Demand Report', permission: 'reports:customer_demand' },
-      { path: '/reports/return-analysis', label: 'Return Analysis Report', permission: 'reports:return_analysis' },
+      { path: 'reports/profit-loss', label: 'Profit/Loss Reports' },
+      { path: 'reports/purchase-sale', label: 'Purchase & Sale' },
+      { path: 'reports/sales-analysis', label: 'Sales Analysis Report' },
+      { path: 'reports/tax', label: 'Tax Report' },
+      { path: 'reports/supplier-customer', label: 'Supplier & Customer Report' },
+      { path: 'reports/customer-group', label: 'Customer Group Report' },
+      { path: 'reports/stock', label: 'Stock Report' },
+      { path: 'reports/stock-adjustment', label: 'Stock Adjustment Report' },
+      { path: 'reports/trending-products', label: 'Trending Products' },
+      { path: 'reports/items', label: 'Items Report' },
+      { path: 'reports/product-purchase', label: 'Product Purchase Report' },
+      { path: 'reports/product-sell', label: 'Product Sell Report' },
+      { path: 'reports/expense', label: 'Expense Report' },
+      { path: 'reports/register', label: 'Register Report' },
+      { path: 'reports/sales-rep', label: 'Sales Representative Report' },
+      { path: 'reports/activity-log', label: 'Activity Log' },
+      { path: 'reports/customer-demand', label: 'Customer Demand Report', permission: 'reports:customer_demand' },
+      { path: 'reports/return-analysis', label: 'Return Analysis Report', permission: 'reports:return_analysis' },
     ]
   },
-  { path: '/users', label: t('userManagement'), icon: <NavIcon>{ICONS.USERS}</NavIcon>, permission: 'users:view' },
-  { path: '/growth', label: 'Growth Suggestions', icon: <NavIcon>{ICONS.GROWTH}</NavIcon>, permission: 'growth:view' },
-  { path: '/notification-templates', label: t('notificationTemplates'), icon: <NavIcon>{ICONS.NOTIFICATIONS}</NavIcon>, permission: 'notifications:manage' },
-  {
+  { path: 'users', label: t('userManagement'), icon: <NavIcon>{ICONS.USERS}</NavIcon>, permission: 'users:view' },
+  { path: 'growth', label: 'Growth Suggestions', icon: <NavIcon>{ICONS.GROWTH}</NavIcon>, permission: 'growth:view' },
+  { path: 'notification-templates', label: t('notificationTemplates'), icon: <NavIcon>{ICONS.NOTIFICATIONS}</NavIcon>, permission: 'notifications:manage' },
+  { 
     label: t('settings'),
-    icon: <NavIcon>{ICONS.SETTINGS}</NavIcon>,
+    icon: <NavIcon>{ICONS.SETTINGS}</NavIcon>, 
     permission: 'settings:view',
     subItems: [
-        { path: '/settings', label: t('generalSettings') },
-        { path: '/settings/branding', label: t('branding'), permission: 'settings:view' },
-        { path: '/settings/locations', label: t('businessLocations'), permission: 'settings:locations' },
-        { path: '/settings/payment-methods', label: t('paymentMethods'), permission: 'settings:payment' },
-        { path: '/settings/bank-accounts', label: 'Bank Accounts', permission: 'settings:accounts' },
-        { path: '/settings/age-verification', label: t('ageVerification'), permission: 'settings:age_verification' },
-        { path: '/settings/integrations', label: 'Integrations', permission: 'settings:integrations' },
+        { path: 'settings', label: t('generalSettings') },
+        { path: 'settings/branding', label: t('branding'), permission: 'settings:view' },
+        { path: 'settings/locations', label: t('businessLocations'), permission: 'settings:locations' },
+        { path: 'settings/payment-methods', label: t('paymentMethods'), permission: 'settings:payment' },
+        { path: 'settings/bank-accounts', label: 'Bank Accounts', permission: 'settings:accounts' },
+        { path: 'settings/age-verification', label: t('ageVerification'), permission: 'settings:age_verification' },
+        { path: 'settings/integrations', label: 'Integrations', permission: 'settings:integrations' },
+        { path: 'settings/api-proxy-guide', label: 'API Proxy Guide', permission: 'settings:view' },
     ]
   }
 ];

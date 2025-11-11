@@ -15,7 +15,7 @@ export type LanguageCode = keyof typeof languages;
 // Translation data
 const translations: Record<LanguageCode, Record<string, string>> = {
     en: {
-        appTitle: "Gemini POS - Smart Point of Sale System",
+        appTitle: "TranscendPOS - Smart Point of Sale System",
         // Sidebar
         dashboard: "Dashboard",
         contacts: "Contacts",
@@ -51,7 +51,7 @@ const translations: Record<LanguageCode, Record<string, string>> = {
         languageSettingsDescription: "Choose the display language for the application."
     },
     ar: {
-        appTitle: "Gemini POS - نظام نقاط البيع الذكي",
+        appTitle: "TranscendPOS - نظام نقاط البيع الذكي",
         // Sidebar
         dashboard: "لوحة التحكم",
         contacts: "جهات الاتصال",
@@ -87,7 +87,7 @@ const translations: Record<LanguageCode, Record<string, string>> = {
         languageSettingsDescription: "اختر لغة عرض التطبيق."
     },
     ny: {
-        appTitle: "Gemini POS - Njira Yogulitsira Mwanzeru",
+        appTitle: "TranscendPOS - Njira Yogulitsira Mwanzeru",
         // Sidebar
         dashboard: "Dashboard",
         contacts: "Othandizira",

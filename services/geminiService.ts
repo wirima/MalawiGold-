@@ -1,6 +1,6 @@
-import { GoogleGenAI, FunctionDeclaration, Type, Part, Content, FunctionResponse, GenerateContentResponse } from "@google/genai";
-import { Sale, CustomerRequest, CustomerReturn, Product } from '../types';
-import { MOCK_CATEGORIES, MOCK_SALES, MOCK_PRODUCTS } from '../data/mockData';
+import { Content } from "@google/genai";
+import { Sale, CustomerRequest, CustomerReturn } from '../types';
+import { MOCK_CATEGORIES } from '../data/mockData';
 
 // This is a new, secure function that calls our own backend proxy.
 const generateSecureInsights = async (prompt: string): Promise<string> => {

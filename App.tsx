@@ -11,6 +11,7 @@ import Chatbot from './components/Chatbot';
 import { PublicRoute, ProtectedRoute } from './components/ProtectedRoute';
 import PublicHeader from './components/PublicHeader';
 import Footer from './components/Footer';
+import DemoModeBanner from './components/DemoModeBanner';
 
 // Loading indicator for lazy-loaded pages
 const PageLoader: React.FC = () => (
@@ -26,6 +27,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const SubscriptionPage = React.lazy(() => import('./pages/SubscriptionPage'));
+const DatabaseSetupPage = React.lazy(() => import('./pages/DatabaseSetupPage'));
 
 
 // Lazy-load all main application page components
@@ -99,12 +101,14 @@ const PaymentGatewayConnectionPage = React.lazy(() => import('./pages/PaymentGat
 const BankAccountsPage = React.lazy(() => import('./pages/BankAccountsPage'));
 const StockTransferRequestsPage = React.lazy(() => import('./pages/StockTransferRequestsPage'));
 const GrowthSuggestionsPage = React.lazy(() => import('./pages/GrowthSuggestionsPage'));
+const ApiProxyGuidePage = React.lazy(() => import('./pages/ApiProxyGuidePage'));
 
 // Layout for the main protected application
 const MainLayout: React.FC = () => (
   <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
     <Sidebar />
     <div className="flex-1 flex flex-col overflow-hidden">
+      <DemoModeBanner />
       <Header />
       <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-800 p-4 sm:p-6 lg:p-8">
         <React.Suspense fallback={<PageLoader />}>
@@ -147,6 +151,7 @@ const App: React.FC = () => {
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="/reset-password" element={<ResetPasswordPage />} />
                         <Route path="/subscription" element={<SubscriptionPage />} />
+                        <Route path="/database-setup" element={<DatabaseSetupPage />} />
                     </Route>
                 </Route>
                 
@@ -252,6 +257,7 @@ const App: React.FC = () => {
                     <Route path="settings/integrations/vendor-api/:connectionId" element={<VendorApiConnectionPage />} />
                     <Route path="settings/integrations/payment-gateway" element={<PaymentGatewayConnectionPage />} />
                     <Route path="settings/integrations/payment-gateway/:connectionId" element={<PaymentGatewayConnectionPage />} />
+                    <Route path="settings/api-proxy-guide" element={<ApiProxyGuidePage />} />
 
                     {/* Catch-all */}
                     <Route path="*" element={<NotFoundPage />} />

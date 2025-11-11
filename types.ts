@@ -133,6 +133,7 @@ export interface Sale {
   };
   isQueued?: boolean;
   customerEmailForDocs?: string;
+  businessLocationId?: string;
 }
 
 export interface CustomerReturn {
@@ -353,6 +354,7 @@ export interface User {
     email: string;
     roleId: Role['id'];
     businessLocationId: string;
+    account_status: 'trial' | 'active';
 }
 
 export interface BrandingSettings {

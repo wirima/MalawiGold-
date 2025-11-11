@@ -547,10 +547,16 @@ export const MOCK_ROLES: Role[] = [
 ];
 
 export const MOCK_USERS: User[] = [
-    { id: 'USER001', name: 'Alice Admin', email: 'alice.admin@example.com', roleId: 'admin', businessLocationId: 'LOC01' },
-    { id: 'USER002', name: 'Mike Supervisor', email: 'mike.manager@example.com', roleId: 'manager', businessLocationId: 'LOC01' },
-    { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier', businessLocationId: 'LOC02' },
-    { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager', businessLocationId: 'LOC03' },
-    { id: 'USER005', name: 'Sarah Sales', email: 'sarah.sales@example.com', roleId: 'sales_rep', businessLocationId: 'LOC01' },
-    { id: 'USER-ADMIN-MGL', name: 'Admin MGL', email: 'Admin@zawipos.com', roleId: 'admin', businessLocationId: 'MGL01' },
+    // FIX: Added 'account_status' property to satisfy the User type.
+    { id: 'USER001', name: 'Alice Admin', email: 'alice.admin@example.com', roleId: 'admin', businessLocationId: 'LOC01', account_status: 'trial' },
+    // FIX: Added 'account_status' property to satisfy the User type.
+    { id: 'USER002', name: 'Mike Supervisor', email: 'mike.manager@example.com', roleId: 'manager', businessLocationId: 'LOC01', account_status: 'trial' },
+    // FIX: Added 'account_status' property to satisfy the User type.
+    { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier', businessLocationId: 'LOC02', account_status: 'trial' },
+    // FIX: Added 'account_status' property to satisfy the User type.
+    { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager', businessLocationId: 'LOC03', account_status: 'trial' },
+    // FIX: Added 'account_status' property to satisfy the User type.
+    { id: 'USER005', name: 'Sarah Sales', email: 'sarah.sales@example.com', roleId: 'sales_rep', businessLocationId: 'LOC01', account_status: 'trial' },
+    // FIX: Added 'account_status' property to satisfy the User type.
+    { id: 'USER-ADMIN-MGL', name: 'Admin MGL', email: 'Admin@transcendpos.com', roleId: 'admin', businessLocationId: 'MGL01', account_status: 'trial' },
 ];

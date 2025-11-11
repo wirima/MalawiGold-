@@ -30,7 +30,7 @@ const ProductPurchaseReportPage: React.FC = () => {
         );
 
         // FIX: Explicitly type the initial value of the `reduce` method to ensure the accumulator and its properties are correctly typed, resolving downstream spread operator errors.
-        const productPurchases = filteredPurchases.reduce((acc, purchase) => {
+        const productPurchases = filteredPurchases.reduce<Record<string, { quantity: number; total: number }>>((acc, purchase) => {
             purchase.items.forEach(item => {
                 if (!acc[item.id]) {
                     acc[item.id] = { quantity: 0, total: 0 };
@@ -39,7 +39,7 @@ const ProductPurchaseReportPage: React.FC = () => {
                 acc[item.id].total += item.price * item.quantity;
             });
             return acc;
-        }, {} as Record<string, { quantity: number; total: number }>);
+        }, {});
         
         return Object.entries(productPurchases).map(([productId, data]) => ({
             product: productsMap.get(productId),

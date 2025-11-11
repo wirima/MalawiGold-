@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
                         The All-in-One POS to Run &amp; <span className="text-indigo-600 dark:text-indigo-400">Grow Your Business</span>
                     </h1>
                     <p className="mt-6 max-w-3xl mx-auto text-lg text-slate-500 dark:text-slate-400">
-                        Go beyond transactions. ZawiPOS combines fast, reliable checkout with powerful inventory management, customer tracking, and AI-driven insights to help you make smarter decisions and increase profits.
+                        Go beyond transactions. TranscendPOS combines fast, reliable checkout with powerful inventory management, customer tracking, and AI-driven insights to help you make smarter decisions and increase profits.
                     </p>
                     <div className="mt-8 flex justify-center gap-4">
                         <Link
@@ -95,7 +95,7 @@ const LandingPage: React.FC = () => {
                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">A Smarter Way to Run Your Business</h2>
-                        <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">ZawiPOS is packed with powerful tools to save you time and boost your bottom line.</p>
+                        <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">TranscendPOS is packed with powerful tools to save you time and boost your bottom line.</p>
                     </div>
                     <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <FeatureCard title="Intuitive POS" icon={<Icon path="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />}>
@@ -123,8 +123,8 @@ const LandingPage: React.FC = () => {
                     </div>
                     <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <TestimonialCard author="Sarah L." company="Owner, The Cozy Cafe" quote="The AI insights are a game-changer. It suggested a 'coffee & pastry' combo that increased our average order value by 15%." />
-                        <TestimonialCard author="Mike R." company="Manager, Urban Bloom Boutique" quote="Managing inventory across our two locations used to be a nightmare. ZawiPOS made it simple and saved us hours every week." />
-                        <TestimonialCard author="Fatima A." company="Founder, Artisan Gifts" quote="As a small business, I need tools that are powerful but easy to use. ZawiPOS is exactly that. The offline mode is a lifesaver during busy market days." />
+                        <TestimonialCard author="Mike R." company="Manager, Urban Bloom Boutique" quote="Managing inventory across our two locations used to be a nightmare. TranscendPOS made it simple and saved us hours every week." />
+                        <TestimonialCard author="Fatima A." company="Founder, Artisan Gifts" quote="As a small business, I need tools that are powerful but easy to use. TranscendPOS is exactly that. The offline mode is a lifesaver during busy market days." />
                     </div>
                 </div>
             </section>
@@ -134,7 +134,7 @@ const LandingPage: React.FC = () => {
                 <div className="max-w-3xl mx-auto text-center px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">Ready to Transform Your Business?</h2>
                     <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
-                        Join hundreds of businesses growing with ZawiPOS. Start your free 14-day trial today, no credit card required.
+                        Join hundreds of businesses growing with TranscendPOS. Start your free 14-day trial today, no credit card required.
                     </p>
                     <div className="mt-8">
                         <Link

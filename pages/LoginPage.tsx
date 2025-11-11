@@ -29,7 +29,7 @@ const LoginPage: React.FC = () => {
             <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
                 <div className="text-center">
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Sign In</h1>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Welcome back to ZawiPOS</p>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Welcome back to TranscendPOS</p>
                 </div>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div>

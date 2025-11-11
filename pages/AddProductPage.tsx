@@ -161,9 +161,9 @@ const AddProductPage: React.FC = () => {
         const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
             // FIX: Explicitly type `attr` to resolve type inference issue.
-            const nameParts = attributes.map((attr: { valueId: string }) => variationValueMap.get(attr.valueId)?.name || '');
+            const nameParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name || '');
             // FIX: Explicitly type `attr` to resolve type inference issue.
-            const skuParts = attributes.map((attr: { valueId: string }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            const skuParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
             formData.businessLocationIds.forEach(locId => {
@@ -190,7 +190,7 @@ const AddProductPage: React.FC = () => {
         // FIX: The `variant` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `variant` resolves this.
         setVariantsMatrix(prevMatrix => prevMatrix.map((variant: VariantMatrixItem) => {
             // FIX: Explicitly type `attr` to resolve type inference issue, which resolves property access errors.
-            const skuParts = variant.attributes.map((attr: { valueId: string; }) => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            const skuParts = variant.attributes.map((attr: { variationId: string; valueId: string; }) => variationValues.find(v => v.id === attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             return {
                 ...variant,
                 sku: `${formData.sku || 'SKU'}-${skuParts.join('-')}`,
@@ -463,7 +463,8 @@ const AddProductPage: React.FC = () => {
         if (!locationId) return;
         const numValue = parseInt(value, 10);
         if (isNaN(numValue) || numValue < 0) return;
-        setVariantsMatrix(prev => prev.map(variant => {
+        // FIX: Explicitly typing the 'variant' parameter to fix type inference issues.
+        setVariantsMatrix(prev => prev.map((variant: VariantMatrixItem) => {
             const newStocks = new Map(variant.stocks);
             newStocks.set(locationId, numValue);
             return {...variant, stocks: newStocks};

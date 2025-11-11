@@ -79,11 +79,11 @@ const ProfitLossReportPage: React.FC = () => {
 
         const expenseCategoriesMap = new Map(expenseCategories.map(c => [c.id, c.name]));
         // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `expensesByCat`, preventing index signature and assignment errors.
-        const expensesByCat = filteredExpenses.reduce((acc, exp: Expense) => {
+        const expensesByCat = filteredExpenses.reduce<Record<string, number>>((acc, exp) => {
             const catName = expenseCategoriesMap.get(exp.categoryId) || 'Uncategorized';
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
         
         const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
         
