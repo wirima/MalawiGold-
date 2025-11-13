@@ -13,6 +13,7 @@ export const config = {
 const supabaseAdmin: SupabaseClient = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const apiKey = process.env.API_KEY;
 );
 
 export default async function handler(req: Request) {
