@@ -1,70 +1,105 @@
-// File: /api/get-user-profile.ts
-// This is a Vercel Edge Function to securely fetch a user's application profile.
-
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+// File: /api/chat.ts
+import { 
+  GoogleGenerativeAI, 
+  Content, 
+  HarmCategory, 
+  HarmBlockThreshold 
+} from '@google/generative-ai';
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'edge',
 };
 
-// Create a single Supabase Admin Client.
-// This client can bypass RLS and also verify user tokens.
+// Best practice: Initialize the client *once* outside the handler.
+// Use a specific ENV var name to avoid conflicts.
+const apiKey = process.env.GOOGLE_AI_API_KEY;
+if (!apiKey) {
+  console.error("GOOGLE_AI_API_KEY is not set.");
+}
+const genAI = new GoogleGenerativeAI(apiKey!);
+
+// Define safety settings for the model
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
 // These environment variables MUST be set in your Vercel project settings.
 const supabaseAdmin: SupabaseClient = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-  const apiKey = process.env.API_KEY;
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(req: Request) {
-  if (req.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
-  }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+        status: 405, headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
-  try {
-    // 1. Extract the JWT from the Authorization header.
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized: No token provided' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-    }
-    const token = authHeader.split(' ')[1];
+  try {
+    const { history, message, salesSummary, productsSummary } = await req.json();
 
-    // 2. Verify the user's token using the ADMIN client.
-    // We safely destructure 'data' first, then 'user' to prevent a TypeError.
-    const { data, error: userError } = await supabaseAdmin.auth.getUser(token);
-    const user = data?.user;
+    if (!message) {
+      return new Response(JSON.stringify({ error: 'Message is required' }), { 
+          status: 400, headers: { 'Content-Type': 'application/json' }  
+      });
+    }
 
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: `Unauthorized: ${userError?.message || 'Invalid token'}` }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-    }
+    // Check for the API key (which was checked at startup)
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'API key not configured on server' }), { 
+          status: 500, headers: { 'Content-Type': 'application/json' } 
+       });
+    }
 
-    // 3. Fetch the user's profile data from the 'profiles' table.
-    //    We already have the admin client, so no need to create a new one.
-    const { data: userProfile, error: profileError } = await supabaseAdmin
-      .from('profiles') // **Note:** Changed 'User' to 'profiles'. 'profiles' is the Supabase standard. Please match this to your table name.
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    // --- This is the corrected SDK flow ---
 
-    if (profileError) {
-      console.error('Supabase profile fetch error:', profileError.message);
-      
-      // "PGRST116: JSON object requested, but row not found"
-      // This means auth.user exists, but the 'profiles' row does not.
-      if (profileError.code === 'PGRST116') { 
-        return new Response(JSON.stringify({ error: 'User profile not found in database.' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
-      }
-      throw profileError; // Throw other errors to be caught by the catch block
-    }
+    // 1. Define the System Instruction (Context)
+    const systemInstruction = `You are an AI assistant for an App system called Tiyeni.
+Your role is to help the user understand their business data.
+Answer questions based on the provided sales and product data.
+Be concise and helpful. Format your answers clearly.
+Current date is ${new Date().toLocaleDateString()}.
 
-    // 4. Return the user profile data.
-    return new Response(JSON.stringify(userProfile), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+Here is a summary of the business data:
+- Recent Sales: ${JSON.stringify(salesSummary, null, 2)}
+- Products with low stock: ${JSON.stringify(productsSummary, null, 2)}
+`;
+    
+    // 2. Get the model, passing the system instruction
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: {
+        role: "system",
+        parts: [{ text: systemInstruction }]
+      },
+      safetySettings,
     });
 
-  } catch (error: any) {
-    console.error("Error in get-user-profile function:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-  }
+    // 3. Start the chat with the existing history
+    // Note: 'history' must be an array matching the Content[] type, e.g.:
+    // [{ role: "user", parts: [{ text: "Hello" }] }, { role: "model", parts: [{ text: "Hi!" }] }]
+    const chat = model.startChat({
+        history: history as Content[], // Cast history to the SDK's Content type
+    });
+
+    // 4. Send the new message (as a string, not an object)
+    const result = await chat.sendMessage(message);
+    const response = result.response;
+    
+    // 5. Get the text by calling the text() function
+    const text = response.text();
+
+    return new Response(JSON.stringify({ text: text }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error: any) {
+    console.error("Error in chat function:", error);
+    return new Response(JSON.stringify({ error: 'Failed to get chat response from backend.' }), { 
+        status: 500, headers: { 'Content-Type': 'application/json' } 
+    });
+  }
 }
