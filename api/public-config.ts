@@ -18,6 +18,7 @@ export default async function handler(req: Request) {
     // This function can access them because it runs on the server.
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    const apiKey = process.env.API_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
         console.error("Server configuration missing for Supabase public keys.");
