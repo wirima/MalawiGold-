@@ -24,11 +24,11 @@ const safetySettings = [
     category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
     threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
   },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-];
+// These environment variables MUST be set in your Vercel project settings.
+const supabaseAdmin: SupabaseClient = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
@@ -56,7 +56,7 @@ export default async function handler(req: Request) {
     // --- This is the corrected SDK flow ---
 
     // 1. Define the System Instruction (Context)
-    const systemInstruction = `You are an AI assistant for a POS system called TranscendPOS.
+    const systemInstruction = `You are an AI assistant for an App system called Tiyeni.
 Your role is to help the user understand their business data.
 Answer questions based on the provided sales and product data.
 Be concise and helpful. Format your answers clearly.
