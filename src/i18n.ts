@@ -8,6 +8,18 @@ export const languages = {
     es: { name: 'Español', dir: 'ltr' },
     fr: { name: 'Français', dir: 'ltr' },
     pt: { name: 'Português', dir: 'ltr' },
+    de: { name: 'Deutsch', dir: 'ltr' },
+    hi: { name: 'हिन्दी', dir: 'ltr' },
+    it: { name: 'Italiano', dir: 'ltr' },
+    ja: { name: '日本語', dir: 'ltr' },
+    ko: { name: '한국어', dir: 'ltr' },
+    nl: { name: 'Nederlands', dir: 'ltr' },
+    pl: { name: 'Polski', dir: 'ltr' },
+    ru: { name: 'Русский', dir: 'ltr' },
+    tr: { name: 'Türkçe', dir: 'ltr' },
+    vi: { name: 'Tiếng Việt', dir: 'ltr' },
+    zh: { name: '中文 (简体)', dir: 'ltr' },
+    bn: { name: 'বাংলা', dir: 'ltr' },
 };
 
 export type LanguageCode = keyof typeof languages;
@@ -125,6 +137,18 @@ const translations: Record<LanguageCode, Record<string, string>> = {
     es: {},
     fr: {},
     pt: {},
+    de: {},
+    hi: {},
+    it: {},
+    ja: {},
+    ko: {},
+    nl: {},
+    pl: {},
+    ru: {},
+    tr: {},
+    vi: {},
+    zh: {},
+    bn: {},
 };
 
 interface LanguageContextType {

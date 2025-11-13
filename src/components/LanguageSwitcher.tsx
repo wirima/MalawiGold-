@@ -3,7 +3,7 @@ import { useTranslation, languages, LanguageCode } from '../i18n';
 
 const LanguageSwitcher: React.FC = () => {
     const { language, changeLanguage } = useTranslation();
-    const activeLanguages: LanguageCode[] = ['en', 'ar', 'ny'];
+    const activeLanguages: LanguageCode[] = ['en', 'ar', 'ny', 'es', 'fr', 'pt', 'de', 'hi', 'it', 'ja', 'ko', 'nl', 'pl', 'ru', 'tr', 'vi', 'zh', 'bn'];
 
     return (
         <div className="relative">

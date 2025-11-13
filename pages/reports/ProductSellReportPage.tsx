@@ -1,8 +1,7 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { Product } from '../../types';
 
 const ProductSellReportPage: React.FC = () => {
     const { sales, products, customers, hasPermission } = useAuth();
@@ -30,8 +29,7 @@ const ProductSellReportPage: React.FC = () => {
             (!endDate || new Date(s.date) <= endDate)
         );
 
-        // FIX: Explicitly type the initial value of the `reduce` method to ensure the accumulator and its properties are correctly typed, resolving downstream spread operator errors.
-        const productSales = filteredSales.reduce<Record<string, { quantity: number; revenue: number; profit: number; }>>((acc, sale) => {
+        const productSales = filteredSales.reduce((acc: Record<string, { quantity: number; revenue: number; profit: number; }>, sale) => {
             sale.items.forEach(item => {
                 if (!acc[item.id]) {
                     acc[item.id] = { quantity: 0, revenue: 0, profit: 0 };
@@ -46,10 +44,11 @@ const ProductSellReportPage: React.FC = () => {
                 }
             });
             return acc;
-        }, {});
+        }, {} as Record<string, { quantity: number; revenue: number; profit: number; }>);
         
         return Object.entries(productSales).map(([productId, data]) => ({
             product: productsMap.get(productId),
+// FIX: Spread types may only be created from object types.
             ...data
         })).filter(item => item.product).sort((a,b) => b.quantity - a.quantity);
 

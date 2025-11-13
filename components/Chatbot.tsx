@@ -1,13 +1,10 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { processChat } from '../services/geminiService';
 import { Content } from '@google/genai';
 
 const Chatbot: React.FC = () => {
-    // FIX: Removed unused products and sales from useAuth call
-    const {} = useAuth();
+    const { sales, products } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Content[]>([
         { role: 'model', parts: [{ text: 'Hello! How can I help you with your sales, products, or stock today?' }] }
@@ -27,14 +24,14 @@ const Chatbot: React.FC = () => {
         const userMessage = inputValue.trim();
         if (!userMessage) return;
 
-        const newMessages: Content[] = [...messages, { role: 'user', parts: [{ text: userMessage }] }];
-        setMessages(newMessages);
+        const currentHistory: Content[] = [...messages];
+        
+        setMessages(prev => [...prev, { role: 'user', parts: [{ text: userMessage }] }]);
         setInputValue('');
         setIsLoading(true);
 
         try {
-            // FIX: Removed products and sales from processChat call as they are no longer needed
-            const modelResponseText = await processChat(newMessages, userMessage);
+            const modelResponseText = await processChat(currentHistory, userMessage, sales, products);
             setMessages(prev => [...prev, { role: 'model', parts: [{ text: modelResponseText }] }]);
         } catch (error) {
             console.error("Chatbot error:", error);

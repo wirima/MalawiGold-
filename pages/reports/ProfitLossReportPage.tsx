@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardCard from '../../components/DashboardCard';
@@ -78,12 +76,12 @@ const ProfitLossReportPage: React.FC = () => {
         const grossProfit = netSales - netCogs;
 
         const expenseCategoriesMap = new Map(expenseCategories.map(c => [c.id, c.name]));
-        // FIX: Explicitly typed the `reduce` accumulator to ensure correct type inference for `expensesByCat`, preventing index signature and assignment errors.
-        const expensesByCat = filteredExpenses.reduce<Record<string, number>>((acc, exp) => {
+        const expensesByCat = filteredExpenses.reduce((acc: Record<string, number>, exp: Expense) => {
             const catName = expenseCategoriesMap.get(exp.categoryId) || 'Uncategorized';
+// FIX: Type 'unknown' cannot be used as an index type.
             acc[catName] = (acc[catName] || 0) + exp.amount;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         
         const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
         
@@ -159,7 +157,7 @@ const ProfitLossReportPage: React.FC = () => {
                     </div>
                     
                     {/* Final Net Profit */}
-                     <div className="flex justify-between py-3 mt-4 border-t-2 border-slate-900 dark:border-slate-200 font-bold text-xl"><span >Net Profit / Loss</span><span className={reportData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>{formatCurrency(reportData.netProfit)}</span></div>
+                     <div className="flex justify-between py-3 mt-4 border-t-2 border-slate-900 dark:border-slate-200 font-bold text-xl"><span >Net Profit / Loss</span><span className={reportData.netProfit >= 0 ? 'text-green-600' : 'text-red-500'}>{formatCurrency(reportData.netProfit)}</span></div>
 
                 </div>
             </div>

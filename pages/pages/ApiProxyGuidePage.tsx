@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const CodeBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <pre className="bg-slate-800 dark:bg-black/50 text-slate-100 rounded-lg p-4 font-mono text-sm overflow-x-auto">
@@ -58,12 +58,6 @@ export default async function handler(req: Request) {
 
 const ApiProxyGuidePage: React.FC = () => {
     const { hasPermission } = useAuth();
-    const location = useLocation();
-    const isDemo = location.pathname.startsWith('/demo');
-
-    if (isDemo) {
-        return <Navigate to="/demo/settings" replace />;
-    }
     
     if (!hasPermission('settings:view')) {
          return (

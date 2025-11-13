@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Shipment, Sale } from '../types';
@@ -112,6 +111,7 @@ const ShipmentFormModal: React.FC<{
 // #endregion
 
 const ShipmentsPage: React.FC = () => {
+    // FIX: Destructure missing shipment management functions from useAuth.
     const { shipments, sales, hasPermission, addShipment, updateShipment, deleteShipment } = useAuth();
     const canManage = hasPermission('shipping:manage');
     const canView = hasPermission('shipping:view');
@@ -126,7 +126,7 @@ const ShipmentsPage: React.FC = () => {
 
     const handleSave = (data: Shipment | Omit<Shipment, 'id'>) => {
         if ('id' in data) {
-            updateShipment(data);
+            updateShipment(data as Shipment);
         } else {
             addShipment(data);
         }

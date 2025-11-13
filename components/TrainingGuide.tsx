@@ -57,7 +57,11 @@ const TrainingGuide: React.FC<TrainingGuideProps> = ({
     resetCart
 }) => {
     const [currentStep, setCurrentStep] = useState(0);
-    const [styles, setStyles] = useState({
+    // FIX: Correctly typed the 'styles' state to use React.CSSProperties for both highlight and tooltip.
+    const [styles, setStyles] = useState<{
+        highlight: React.CSSProperties;
+        tooltip: React.CSSProperties;
+    }>({
         highlight: { opacity: 0 },
         tooltip: { opacity: 0 }
     });

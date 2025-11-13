@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
     const { signIn } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        if (params.get('demo') === 'true') {
+            // For backward compatibility, redirect to the new demo route
+            navigate('/demo', { replace: true });
+        }
+    }, [location.search, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,6 +94,12 @@ const LoginPage: React.FC = () => {
                         Sign up
                     </Link>
                 </p>
+
+                <div className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400 border-t pt-4 dark:border-slate-700">
+                     <Link to="/demo" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                        Or, explore the Live Demo &rarr;
+                    </Link>
+                </div>
             </div>
         </div>
     );

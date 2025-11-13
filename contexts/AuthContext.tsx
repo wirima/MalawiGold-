@@ -1,10 +1,6 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import { createClient, SupabaseClient, Session, User as SupabaseUser } from '@supabase/supabase-js';
-// FIX: Added 'CartItem' to the import list.
 import { User, Role, Permission, Product, StockAdjustment, Customer, CustomerGroup, Supplier, Variation, VariationValue, Brand, Category, Unit, Sale, Draft, Quotation, Purchase, PurchaseReturn, Expense, ExpenseCategory, BusinessLocation, StockTransfer, Shipment, PaymentMethod, CustomerRequest, BrandingSettings, ProductDocument, CustomerReturn, IntegrationConnection, BankAccount, StockTransferRequest, NotificationTemplate, CartItem } from '../types';
-import { ALL_PERMISSIONS } from '../constants';
-import { MOCK_USERS, MOCK_ROLES, MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_CUSTOMERS, MOCK_CUSTOMER_GROUPS, MOCK_SUPPLIERS, MOCK_VARIATIONS, MOCK_VARIATION_VALUES, MOCK_BRANDS, MOCK_CATEGORIES, MOCK_UNITS, MOCK_SALES, MOCK_DRAFTS, MOCK_QUOTATIONS, MOCK_PURCHASES, MOCK_PURCHASE_RETURNS, MOCK_EXPENSES, MOCK_EXPENSE_CATEGORIES, MOCK_BUSINESS_LOCATIONS, MOCK_STOCK_TRANSFERS, MOCK_SHIPMENTS, MOCK_PAYMENT_METHODS, MOCK_CUSTOMER_REQUESTS, MOCK_PRODUCT_DOCUMENTS, MOCK_CUSTOMER_RETURNS, MOCK_BANK_ACCOUNTS, MOCK_STOCK_TRANSFER_REQUESTS, MOCK_NOTIFICATION_TEMPLATES, MOCK_INTEGRATIONS } from '../data/mockData';
-
 
 interface AgeVerificationSettings {
     minimumAge: number;
@@ -19,7 +15,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
     website: 'www.transcendpos.com'
 };
 
-interface AuthContextType {
+export interface AuthContextType {
     supabase: SupabaseClient | null;
     session: Session | null;
     user: SupabaseUser | null;
@@ -62,94 +58,109 @@ interface AuthContextType {
     resetPasswordForEmail: (email: string) => Promise<any>;
     updateUserPassword: (password: string) => Promise<any>;
     hasPermission: (permission: Permission) => boolean;
+    subscribeToPlan: (planName: string) => Promise<void>;
+    verifyLicense: (licenseKey: string) => Promise<void>;
+    completeOnboarding: () => Promise<void>;
+    signUpAndSubscribe: (details: { email: string; password: string; businessName: string; planName: string; }) => Promise<void>;
     // Data mutation functions
-    addRole: (roleData: Omit<Role, 'id'>) => Role;
-    updateRole: (roleData: Role) => void;
-    deleteRole: (roleId: string) => void;
-    addUser: (userData: Omit<User, 'id'>) => void;
-    updateUser: (userData: User) => void;
-    deleteUser: (userId: string) => void;
-    addProduct: (productData: Omit<Product, 'id' | 'imageUrl'>) => Promise<Product>;
-    addVariableProduct: (parentData: Omit<Product, 'id' | 'imageUrl'>, variantsData: Omit<Product, 'id'|'imageUrl'>[]) => void;
-    updateProduct: (productData: Product) => void;
-    updateMultipleProducts: (productsData: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => void;
-    deleteProduct: (productId: string) => void;
-    addSale: (saleData: Omit<Sale, 'id' | 'date' | 'payments'> & { payments: { methodId: string; amount: number }[] }) => Promise<Sale>;
-    voidSale: (saleId: string) => void;
-    updateSaleWithEmail: (saleId: string, email: string) => void;
-    addStockAdjustment: (adjData: Omit<StockAdjustment, 'id' | 'date'>) => void;
-    addCustomer: (customerData: Omit<Customer, 'id'>) => void;
-    updateCustomer: (customerData: Customer) => void;
-    deleteCustomer: (customerId: string) => void;
-    addSupplier: (supplierData: Omit<Supplier, 'id'>) => void;
-    updateSupplier: (supplierData: Supplier) => void;
-    deleteSupplier: (supplierId: string) => void;
-    addCustomerGroup: (groupData: Omit<CustomerGroup, 'id'>) => void;
-    updateCustomerGroup: (groupData: CustomerGroup) => void;
-    deleteCustomerGroup: (groupId: string) => void;
-    addDraft: (draftData: Omit<Draft, 'id' | 'date'>) => void;
-    updateDraft: (draftData: Draft) => void;
-    deleteDraft: (draftId: string) => void;
-    addQuotation: (quoteData: Omit<Quotation, 'id' | 'date'>) => void;
-    updateQuotation: (quoteData: Quotation) => void;
-    deleteQuotation: (quoteId: string) => void;
-    addPurchase: (purchaseData: Omit<Purchase, 'id' | 'date'>) => void;
-    addPurchaseReturn: (returnData: Omit<PurchaseReturn, 'id' | 'date'>) => void;
-    addExpense: (expenseData: Omit<Expense, 'id' | 'date'>) => void;
-    updateExpense: (expenseData: Expense) => void;
-    deleteExpense: (expenseId: string) => void;
-    addExpenseCategory: (categoryData: Omit<ExpenseCategory, 'id'>) => void;
-    updateExpenseCategory: (categoryData: ExpenseCategory) => void;
-    deleteExpenseCategory: (categoryId: string) => void;
-    addBrand: (brandData: Omit<Brand, 'id'>) => Brand;
-    updateBrand: (brandData: Brand) => void;
-    deleteBrand: (brandId: string) => void;
-    addCategory: (categoryData: Omit<Category, 'id'>) => void;
-    updateCategory: (categoryData: Category) => void;
-    deleteCategory: (categoryId: string) => void;
-    addUnit: (unitData: Omit<Unit, 'id'>) => void;
-    updateUnit: (unitData: Unit) => void;
-    deleteUnit: (unitId: string) => void;
-    addVariation: (variationData: Omit<Variation, 'id'>) => void;
-    updateVariation: (variationData: Variation) => void;
-    deleteVariation: (variationId: string) => void;
-    addVariationValue: (valueData: Omit<VariationValue, 'id'>) => void;
-    updateVariationValue: (valueData: VariationValue) => void;
-    deleteVariationValue: (valueId: string) => void;
-    addBusinessLocation: (locationData: Omit<BusinessLocation, 'id'>) => void;
-    updateBusinessLocation: (locationData: BusinessLocation) => void;
-    deleteBusinessLocation: (locationId: string) => void;
-    addStockTransfer: (transferData: Omit<StockTransfer, 'id'|'date'>) => void;
-    addCustomerRequests: (requestsText: string, cashier: User) => void;
+    addRole: (roleData: Omit<Role, 'id'>) => Promise<Role>;
+    updateRole: (roleData: Role) => Promise<void>;
+    deleteRole: (roleId: string) => Promise<void>;
+    addUser: (userData: Omit<User, 'id'>) => Promise<void>;
+    updateUser: (userData: User) => Promise<void>;
+    deleteUser: (userId: string) => Promise<void>;
+    addProduct: (productData: Omit<Product, 'id' | 'imageUrl'>, imagePreview: string | null) => Promise<Product>;
+    addVariableProduct: (parentData: Omit<Product, 'id'|'imageUrl'>, variantsData: Omit<Product, 'id'|'imageUrl'>[]) => Promise<void>;
+    updateProduct: (productData: Product) => Promise<void>;
+    updateMultipleProducts: (productsData: Pick<Product, 'id' | 'price' | 'costPrice'>[]) => Promise<void>;
+    deleteProduct: (productId: string) => Promise<void>;
+    addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Promise<Sale>;
+    voidSale: (saleId: string) => Promise<void>;
+    updateSaleWithEmail: (saleId: string, email: string) => Promise<void>;
+    addStockAdjustment: (adjData: Omit<StockAdjustment, 'id' | 'date'>) => Promise<void>;
+    addCustomer: (customerData: Omit<Customer, 'id'>) => Promise<void>;
+    updateCustomer: (customerData: Customer) => Promise<void>;
+    deleteCustomer: (customerId: string) => Promise<void>;
+    addSupplier: (supplierData: Omit<Supplier, 'id'>) => Promise<void>;
+    updateSupplier: (supplierData: Supplier) => Promise<void>;
+    deleteSupplier: (supplierId: string) => Promise<void>;
+    addCustomerGroup: (groupData: Omit<CustomerGroup, 'id'>) => Promise<void>;
+    updateCustomerGroup: (groupData: CustomerGroup) => Promise<void>;
+    deleteCustomerGroup: (groupId: string) => Promise<void>;
+    addDraft: (draftData: Omit<Draft, 'id' | 'date'>) => Promise<void>;
+    updateDraft: (draftData: Draft) => Promise<void>;
+    deleteDraft: (draftId: string) => Promise<void>;
+    addQuotation: (quoteData: Omit<Quotation, 'id' | 'date'>) => Promise<void>;
+    updateQuotation: (quoteData: Quotation) => Promise<void>;
+    deleteQuotation: (quoteId: string) => Promise<void>;
+    addPurchase: (purchaseData: Omit<Purchase, 'id' | 'date'>) => Promise<void>;
+    addPurchaseReturn: (returnData: Omit<PurchaseReturn, 'id' | 'date'>) => Promise<void>;
+    addExpense: (expenseData: Omit<Expense, 'id' | 'date'>) => Promise<void>;
+    updateExpense: (expenseData: Expense) => Promise<void>;
+    deleteExpense: (expenseId: string) => Promise<void>;
+    addExpenseCategory: (categoryData: Omit<ExpenseCategory, 'id'>) => Promise<void>;
+    updateExpenseCategory: (categoryData: ExpenseCategory) => Promise<void>;
+    deleteExpenseCategory: (categoryId: string) => Promise<void>;
+    addBrand: (brandData: Omit<Brand, 'id'>) => Promise<Brand>;
+    updateBrand: (brandData: Brand) => Promise<void>;
+    deleteBrand: (brandId: string) => Promise<void>;
+    addCategory: (categoryData: Omit<Category, 'id'>) => Promise<void>;
+    updateCategory: (categoryData: Category) => Promise<void>;
+    deleteCategory: (categoryId: string) => Promise<void>;
+    addUnit: (unitData: Omit<Unit, 'id'>) => Promise<void>;
+    updateUnit: (unitData: Unit) => Promise<void>;
+    deleteUnit: (unitId: string) => Promise<void>;
+    addVariation: (variationData: Omit<Variation, 'id'>) => Promise<void>;
+    updateVariation: (variationData: Variation) => Promise<void>;
+    deleteVariation: (variationId: string) => Promise<void>;
+    addVariationValue: (valueData: Omit<VariationValue, 'id'>) => Promise<void>;
+    updateVariationValue: (valueData: VariationValue) => Promise<void>;
+    deleteVariationValue: (valueId: string) => Promise<void>;
+    addBusinessLocation: (locationData: Omit<BusinessLocation, 'id'>) => Promise<void>;
+    updateBusinessLocation: (locationData: BusinessLocation) => Promise<void>;
+    deleteBusinessLocation: (locationId: string) => Promise<void>;
+    addStockTransfer: (transferData: Omit<StockTransfer, 'id'|'date'>) => Promise<void>;
+    addCustomerRequests: (requestsText: string, cashier: User) => Promise<void>;
     brandingSettings: BrandingSettings;
-    updateBrandingSettings: (newSettings: BrandingSettings) => void;
-    resetBrandingSettings: () => void;
+    updateBrandingSettings: (newSettings: BrandingSettings) => Promise<void>;
+    resetBrandingSettings: () => Promise<void>;
     ageVerificationSettings: AgeVerificationSettings;
-    updateAgeVerificationSettings: (newSettings: AgeVerificationSettings, productIds: string[]) => void;
-    addProductDocument: (docData: Omit<ProductDocument, 'id' | 'uploadedDate'>) => void;
-    updateProductDocument: (docData: ProductDocument) => void;
-    deleteProductDocument: (docId: string) => void;
-    addCustomerReturn: (returnData: Omit<CustomerReturn, 'id' | 'date'>) => void;
-    addIntegration: (connectionData: Omit<IntegrationConnection, 'id'>) => void;
-    updateIntegration: (connectionData: IntegrationConnection) => void;
-    deleteIntegration: (connectionId: string) => void;
-    addBankAccount: (accountData: Omit<BankAccount, 'id'>) => void;
-    updateBankAccount: (accountData: BankAccount) => void;
-    deleteBankAccount: (accountId: string) => void;
-    addPaymentMethod: (methodData: Omit<PaymentMethod, 'id'>) => void;
-    updatePaymentMethod: (methodData: PaymentMethod) => void;
-    deletePaymentMethod: (methodId: string) => void;
-    addStockTransferRequest: (requestData: Omit<StockTransferRequest, 'id' | 'date' | 'status'>) => void;
-    updateStockTransferRequest: (requestId: string, status: 'approved' | 'rejected') => void;
+    updateAgeVerificationSettings: (newSettings: AgeVerificationSettings, productIds: string[]) => Promise<void>;
+    addProductDocument: (docData: Omit<ProductDocument, 'id' | 'uploadedDate'>) => Promise<void>;
+    updateProductDocument: (docData: ProductDocument) => Promise<void>;
+    deleteProductDocument: (docId: string) => Promise<void>;
+    addCustomerReturn: (returnData: Omit<CustomerReturn, 'id' | 'date'>) => Promise<void>;
+    addIntegration: (connectionData: Omit<IntegrationConnection, 'id'>) => Promise<void>;
+    updateIntegration: (connectionData: IntegrationConnection) => Promise<void>;
+    deleteIntegration: (connectionId: string) => Promise<void>;
+    addBankAccount: (accountData: Omit<BankAccount, 'id'>) => Promise<void>;
+    updateBankAccount: (accountData: BankAccount) => Promise<void>;
+    deleteBankAccount: (accountId: string) => Promise<void>;
+    addPaymentMethod: (methodData: Omit<PaymentMethod, 'id'>) => Promise<void>;
+    updatePaymentMethod: (methodData: PaymentMethod) => Promise<void>;
+    deletePaymentMethod: (methodId: string) => Promise<void>;
+    addStockTransferRequest: (requestData: Omit<StockTransferRequest, 'id' | 'date' | 'status'>) => Promise<void>;
+    updateStockTransferRequest: (requestId: string, status: 'approved' | 'rejected') => Promise<void>;
+    addShipment: (shipmentData: Omit<Shipment, 'id'>) => Promise<void>;
+    updateShipment: (shipmentData: Shipment) => Promise<void>;
+    deleteShipment: (shipmentId: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const PLAN_PERMISSIONS: Record<string, string[]> = {
+    pos: ['dashboard', 'contacts', 'sell', 'shipping', 'discounts', 'returns', 'pos', 'settings', 'users'],
+    inventory: ['dashboard', 'contacts', 'products', 'purchases', 'stock_transfer', 'stock_adjustment', 'settings', 'users'],
+    bundle: ['dashboard', 'contacts', 'sell', 'shipping', 'discounts', 'returns', 'pos', 'products', 'purchases', 'stock_transfer', 'stock_adjustment', 'settings', 'users'],
+    professional: ['*'], // All permissions
+};
+
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // AUTH STATE
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
     const [session, setSession] = useState<Session | null>(null);
-    const [currentUser, setCurrentUser] = useState<User | null>(null); // Application's user type
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     // DATA STATE - Initialized as empty arrays
@@ -186,96 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(DEFAULT_BRANDING);
     const [ageVerificationSettings, setAgeVerificationSettings] = useState<AgeVerificationSettings>({ minimumAge: 21, isIdScanningEnabled: true });
     
-    // Initialize Supabase client asynchronously
-    useEffect(() => {
-        const initSupabase = async () => {
-            try {
-                // This endpoint will return the public keys from server-side environment variables
-                const response = await fetch('/api/public-config');
-                if (!response.ok) {
-                    if (response.status === 404) {
-                         console.error("The API endpoint at /api/public-config was not found. Please ensure the file exists at the correct path and has been deployed correctly on Vercel.");
-                         throw new Error(`Could not fetch public config: File not found`);
-                    }
-                    throw new Error(`Could not fetch public config: Server responded with status ${response.status}`);
-                }
-                const { supabaseUrl, supabaseAnonKey } = await response.json();
-                
-                if (supabaseUrl && supabaseAnonKey) {
-                    setSupabase(createClient(supabaseUrl, supabaseAnonKey));
-                } else {
-                    throw new Error('Public config from API is invalid or missing.');
-                }
-            } catch (error) {
-                console.error("Supabase client initialization failed:", error);
-                setLoading(false);
-            }
-        };
-
-        initSupabase();
-    }, []);
-
-    const authFunctions = useMemo(() => {
-        const throwError = () => {
-            throw new Error("Supabase client is not initialized. Check server configuration and network.");
-        };
-
-        return {
-            signIn: async (email: string, pass: string) => {
-                if (!supabase) return throwError();
-                const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-                if (error) throw error;
-            },
-            signOut: async () => {
-                if (!supabase) return throwError();
-                const { error } = await supabase.auth.signOut();
-                if (error) throw error;
-            },
-            signUp: async (email: string, pass: string, metadata: { [key: string]: any }) => {
-                if (!supabase) return throwError();
-                const { error } = await supabase.auth.signUp({ email, password: pass, options: { data: metadata } });
-                if (error) throw error;
-            },
-            resetPasswordForEmail: async (email: string) => {
-                if (!supabase) return throwError();
-                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/#/reset-password' });
-                if (error) throw error;
-            },
-            updateUserPassword: async (password: string) => {
-                if (!supabase) return throwError();
-                const { error } = await supabase.auth.updateUser({ password });
-                if (error) throw error;
-            },
-        };
-    }, [supabase]);
-
-    const fetchAppUser = useCallback(async (session: Session | null): Promise<User | null> => {
-        if (!session) {
-            setCurrentUser(null);
-            return null;
-        }
-        try {
-            const response = await fetch('/api/get-user-profile', {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
-            });
-            if (!response.ok) {
-                if (response.status === 404) {
-                    await supabase?.auth.signOut();
-                }
-                throw new Error('Failed to fetch user profile');
-            }
-            const appUser: User = await response.json();
-            setCurrentUser(appUser);
-            return appUser;
-        } catch (error) {
-            console.error("Error fetching app user:", error);
-            await supabase?.auth.signOut();
-            setCurrentUser(null);
-            return null;
-        }
-    }, [supabase]);
-
-    const clearAllData = () => {
+     const clearAllData = () => {
         setUsers([]); setRoles([]); setProducts([]); setStockAdjustments([]); setCustomers([]);
         setCustomerGroups([]); setSuppliers([]); setVariations([]); setVariationValues([]);
         setBrands([]); setCategories([]); setUnits([]); setSales([]); setDrafts([]);
@@ -285,19 +207,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProductDocuments([]); setCustomerReturns([]); setIntegrations([]);
         setBankAccounts([]); setStockTransferRequests([]); setNotificationTemplates([]);
     };
+    
+    // ASYNC INITIALIZATION
+    useEffect(() => {
+        const initialize = async () => {
+            try {
+                const response = await fetch('/api/public-config');
+                if (!response.ok) {
+                    throw new Error('Could not fetch public config: File not found');
+                }
+                const config = await response.json();
+                if (config.supabaseUrl && config.supabaseAnonKey) {
+                    const supabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey);
+                    setSupabase(supabaseClient);
+                    console.log('Supabase client initialized successfully.');
+                } else {
+                    throw new Error('Invalid config from server');
+                }
+            } catch (error: any) {
+                console.warn(error.message);
+                console.warn('Falling back to mock/demo mode. If you are not in demo mode, please check your backend configuration.');
+                setSupabase(null);
+            }
+        };
 
-    const fetchAllData = useCallback(async (session: Session) => {
+        initialize().finally(() => setLoading(false));
+    }, []);
+
+    const fetchAppUser = useCallback(async (session: Session | null) => {
+        if (!session || !supabase) {
+            setCurrentUser(null);
+            return;
+        }
+        try {
+            // This now calls our own secure endpoint instead of Supabase directly from the client
+            const response = await fetch('/api/get-user-profile', {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user profile');
+            const userProfile = await response.json();
+            setCurrentUser(userProfile as User);
+        } catch (error) {
+            console.error("Error fetching app user profile:", error);
+            setCurrentUser(null);
+        }
+    }, [supabase]);
+    
+    const fetchAllData = useCallback(async (session: Session | null) => {
+        if (!session) return;
+        setLoading(true);
         try {
             const response = await fetch('/api/app-data', {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
-            if (!response.ok) throw new Error('Failed to fetch app data from backend.');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Failed to fetch app data: ${response.statusText}`);
+            }
             const data = await response.json();
             
+            // Set all state from the response
             setUsers(data.users || []);
             setRoles(data.roles || []);
             setProducts(data.products || []);
-            setSales(data.sales || []);
+            setStockAdjustments(data.stockAdjustments || []);
             setCustomers(data.customers || []);
             setCustomerGroups(data.customerGroups || []);
             setSuppliers(data.suppliers || []);
@@ -306,7 +279,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setBrands(data.brands || []);
             setCategories(data.categories || []);
             setUnits(data.units || []);
-            setStockAdjustments(data.stockAdjustments || []);
+            setSales(data.sales || []);
             setDrafts(data.drafts || []);
             setQuotations(data.quotations || []);
             setPurchases(data.purchases || []);
@@ -324,241 +297,285 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setBankAccounts(data.bankAccounts || []);
             setStockTransferRequests(data.stockTransferRequests || []);
             setNotificationTemplates(data.notificationTemplates || []);
-            console.log('Successfully fetched all live application data from backend.');
 
         } catch (error) {
             console.error("Error fetching all app data:", error);
+        } finally {
+            setLoading(false);
         }
     }, []);
 
     useEffect(() => {
         if (supabase) {
             setLoading(true);
-
-            const handleAuthChange = async (_event: string, session: Session | null) => {
+            const fetchInitialSession = async () => {
+                const { data: { session } } = await supabase.auth.getSession();
                 setSession(session);
-                const appUser = await fetchAppUser(session);
-
-                if (appUser && session) {
-                    if (appUser.account_status === 'trial') {
-                        console.log('User is in trial mode. Loading mock data.');
-                        setUsers(MOCK_USERS);
-                        setRoles(MOCK_ROLES);
-                        setProducts(MOCK_PRODUCTS);
-                        setStockAdjustments(MOCK_STOCK_ADJUSTMENTS);
-                        setCustomers(MOCK_CUSTOMERS);
-                        setCustomerGroups(MOCK_CUSTOMER_GROUPS);
-                        setSuppliers(MOCK_SUPPLIERS);
-                        setVariations(MOCK_VARIATIONS);
-                        setVariationValues(MOCK_VARIATION_VALUES);
-                        setBrands(MOCK_BRANDS);
-                        setCategories(MOCK_CATEGORIES);
-                        setUnits(MOCK_UNITS);
-                        setSales(MOCK_SALES);
-                        setDrafts(MOCK_DRAFTS);
-                        setQuotations(MOCK_QUOTATIONS);
-                        setPurchases(MOCK_PURCHASES);
-                        setPurchaseReturns(MOCK_PURCHASE_RETURNS);
-                        setExpenses(MOCK_EXPENSES);
-                        setExpenseCategories(MOCK_EXPENSE_CATEGORIES);
-                        setBusinessLocations(MOCK_BUSINESS_LOCATIONS);
-                        setStockTransfers(MOCK_STOCK_TRANSFERS);
-                        setShipments(MOCK_SHIPMENTS);
-                        setPaymentMethods(MOCK_PAYMENT_METHODS);
-                        setCustomerRequests(MOCK_CUSTOMER_REQUESTS);
-                        setProductDocuments(MOCK_PRODUCT_DOCUMENTS);
-                        setCustomerReturns(MOCK_CUSTOMER_RETURNS);
-                        setIntegrations(MOCK_INTEGRATIONS);
-                        setBankAccounts(MOCK_BANK_ACCOUNTS);
-                        setStockTransferRequests(MOCK_STOCK_TRANSFER_REQUESTS);
-                        setNotificationTemplates(MOCK_NOTIFICATION_TEMPLATES);
-                    } else if (appUser.account_status === 'active') {
-                        console.log('User is in active mode. Fetching live data...');
-                        await fetchAllData(session);
-                    }
-                } else {
-                    // User is signed out
-                    clearAllData();
-                    setCurrentUser(null);
+                if (session) {
+                    await fetchAppUser(session);
+                    await fetchAllData(session);
                 }
                 setLoading(false);
             };
+            fetchInitialSession();
 
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                handleAuthChange('INITIAL_SESSION', session);
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+                setSession(session);
+                if(session) {
+                    await fetchAppUser(session);
+                    await fetchAllData(session);
+                } else {
+                    clearAllData();
+                    setCurrentUser(null);
+                }
             });
-            
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
             return () => subscription.unsubscribe();
+        } else {
+            setLoading(false); // Not using Supabase, probably demo mode.
         }
     }, [supabase, fetchAppUser, fetchAllData]);
+    
+    const signUp = async (email: string, pass: string, metadata: { [key: string]: any }) => {
+        if (!supabase) throw new Error("Backend not connected.");
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password: pass,
+            options: {
+                data: metadata
+            }
+        });
+        if (error) throw error;
+        // The trigger will handle profile creation.
+        // We just need to set the session for the new user.
+        if (data.session) {
+            setSession(data.session);
+            await fetchAppUser(data.session);
+        }
+    };
+    
+    const subscribeToPlan = async (planName: string) => {
+        console.log(`Subscribing to ${planName} (This would be a backend call)`);
+        if (currentUser && supabase && session) {
+            const { error } = await supabase.from('User').update({ account_status: 'onboarding_pending', subscriptionPlan: planName.toLowerCase().split(' ')[0] }).eq('id', currentUser.id);
+            if (error) throw error;
+            setCurrentUser(u => u ? { ...u, account_status: 'onboarding_pending' } : null);
+        }
+        return Promise.resolve();
+    };
+
+    const signUpAndSubscribe = async (details: { email: string; password: string; businessName: string; planName: string; }) => {
+        await signUp(details.email, details.password, { business_name: details.businessName });
+        await subscribeToPlan(details.planName);
+    };
+    
+    const verifyLicense = async (licenseKey: string) => {
+        console.log(`Verifying license: ${licenseKey} (This would be a backend call)`);
+        return new Promise<void>((resolve, reject) => {
+            setTimeout(() => {
+                if (licenseKey.toUpperCase() === 'VALID-LICENSE-KEY') {
+                    if (currentUser && supabase && session) {
+                        supabase.from('User').update({ account_status: 'active' }).eq('id', currentUser.id).then(({error}) => {
+                            if (error) reject(error);
+                            else {
+                                setCurrentUser(u => u ? { ...u, account_status: 'active' } : null);
+                                resolve();
+                            }
+                        });
+                    } else {
+                        resolve();
+                    }
+                } else {
+                    reject(new Error('The provided license key is invalid or has expired.'));
+                }
+            }, 1000);
+        });
+    };
+
+    const completeOnboarding = async () => {
+        console.log(`Completing onboarding (This would be a backend call)`);
+        if (currentUser && supabase && session) {
+            const { error } = await supabase.from('User').update({ onboarding_complete: true }).eq('id', currentUser.id);
+            if (error) throw error;
+            setCurrentUser(u => u ? { ...u, onboarding_complete: true } : null);
+        }
+        return Promise.resolve();
+    }
+
+
+    const authFunctions = useMemo(() => ({
+        signIn: async (email: string, pass: string) => { 
+            if(!supabase) throw new Error("Backend not connected.");
+            const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+            if (error) throw error;
+        },
+        signOut: async () => { 
+            if(!supabase) throw new Error("Backend not connected.");
+            await supabase.auth.signOut();
+            clearAllData();
+        },
+        signUp,
+        resetPasswordForEmail: async (email: string) => {
+            if (!supabase) throw new Error("Backend not connected.");
+            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            if (error) throw error;
+        },
+        updateUserPassword: async (password: string) => {
+            if (!supabase) throw new Error("Backend not connected.");
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) throw error;
+        },
+    }), [supabase]);
 
     const hasPermission = useCallback((permission: Permission): boolean => {
-        if (!currentUser) return false;
+        if (!currentUser || !currentUser.subscriptionPlan) return false;
         const userRole = roles.find(role => role.id === currentUser.roleId);
         if (!userRole) return false;
-        if (userRole.id === 'admin') return true;
-        return userRole.permissions.includes(permission);
+
+        if (currentUser.subscriptionPlan === 'professional') return true;
+
+        if (!userRole.permissions.includes(permission)) return false;
+
+        const allowedModules = PLAN_PERMISSIONS[currentUser.subscriptionPlan];
+        if (!allowedModules) return false;
+        if (allowedModules.includes('*')) return true;
+
+        const permissionModule = permission.split(':')[0];
+        return allowedModules.includes(permissionModule);
     }, [currentUser, roles]);
     
-    // --- DATA MUTATION FUNCTIONS ---
-    const mutateData = useCallback(async (type: string, payload: any) => {
+    // --- DATA MUTATION FUNCTIONS (Backend-ready) ---
+    const mutateData = async (type: string, payload: any) => {
         if (!session) throw new Error("Not authenticated");
         const response = await fetch('/api/app-data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
+                'Authorization': `Bearer ${session.access_token}`
             },
-            body: JSON.stringify({ type, payload }),
+            body: JSON.stringify({ type, payload })
         });
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.error || `API mutation failed for type: ${type}`);
+            throw new Error(err.details || err.error || 'API mutation failed');
         }
-        return await response.json();
-    }, [session]);
+        return response.json();
+    };
 
-    const addSale = async (saleData: Omit<Sale, 'id' | 'date'>) => {
-        if (currentUser?.account_status === 'active') {
-            const newSale = await mutateData('ADD_SALE', saleData);
-            setSales(prev => [newSale, ...prev]);
-            // The backend RPC handles stock updates, but we need to update local state too.
-            const productUpdates = new Map<string, number>();
-            newSale.items.forEach((item: any) => { // Using any temporarily as CartItem is not defined on sale response
-                productUpdates.set(item.productId, (productUpdates.get(item.productId) || 0) - item.quantity);
-            });
-            setProducts(prev => prev.map(p => productUpdates.has(p.id) ? { ...p, stock: p.stock + productUpdates.get(p.id)! } : p));
-            return newSale;
-        } else {
-            // Trial mode: Local mutation
-            const newSale: Sale = { ...saleData, id: `SALE${Date.now()}`, date: new Date().toISOString() };
-            setSales(prev => [newSale, ...prev]);
-            // FIX: Cannot find name 'CartItem'. This is now fixed by importing CartItem.
-            newSale.items.forEach((item: CartItem) => {
-                setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: p.stock - item.quantity } : p));
-            });
-            return newSale;
-        }
+    const addSale = async (saleData: Omit<Sale, 'id' | 'date'>): Promise<Sale> => {
+        const newSale = await mutateData('ADD_SALE', saleData);
+        setSales(prev => [newSale, ...prev]);
+        // Update product stock locally for immediate UI feedback
+        newSale.items.forEach((item: CartItem) => {
+            setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: p.stock - item.quantity } : p));
+        });
+        return newSale;
     };
     
-    const addProduct = async (productData: Omit<Product, 'id'|'imageUrl'>) => {
-         if (currentUser?.account_status === 'active') {
-            const newProduct = await mutateData('ADD_PRODUCT', productData);
-            setProducts(prev => [newProduct, ...prev]);
-            return newProduct;
-         } else {
-            // Trial mode: Local mutation
-            const newProduct: Product = { ...productData, id: `PROD${Date.now()}`, imageUrl: 'https://picsum.photos/400' };
-            setProducts(prev => [newProduct, ...prev]);
-            return newProduct;
-         }
+    const addProduct = async (productData: Omit<Product, 'id'|'imageUrl'>): Promise<Product> => {
+        const newProduct = await mutateData('ADD_PRODUCT', productData);
+        setProducts(prev => [newProduct, ...prev]);
+        return newProduct;
     };
     
-    const updateProduct = (productData: Product) => {
-        // For now, local update for both modes. Can be expanded to call API.
-        setProducts(prev => prev.map(p => p.id === productData.id ? productData : p));
+    const updateProduct = async (productData: Product) => {
+        const updatedProduct = await mutateData('UPDATE_PRODUCT', productData);
+        setProducts(p => p.map(i => i.id === updatedProduct.id ? updatedProduct : i));
     };
 
-    const deleteProduct = (productId: string) => {
-        // For now, local update for both modes. Can be expanded to call API.
-        setProducts(prev => prev.filter(p => p.id !== productId));
+    const deleteProduct = async (productId: string) => {
+        await mutateData('DELETE_PRODUCT', { id: productId });
+        setProducts(p => p.filter(i => i.id !== productId));
     };
+    
+    const addShipment = async (shipmentData: Omit<Shipment, 'id'>) => console.warn("Not implemented");
+    const updateShipment = async (shipmentData: Shipment) => console.warn("Not implemented");
+    const deleteShipment = async (shipmentId: string) => console.warn("Not implemented");
 
-    const value = useMemo(() => ({
-        supabase,
-        session,
-        user: session?.user || null,
-        currentUser,
-        setCurrentUser,
-        users,
-        roles,
-        products,
-        stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates,
+    const value: AuthContextType = {
+        supabase, session, user: session?.user || null, currentUser, setCurrentUser,
+        users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates,
         loading,
         ...authFunctions,
         hasPermission,
-        // Mock implementations
-        addSale,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        brandingSettings,
-        ageVerificationSettings,
-        addRole: (d) => { setRoles(p => [...p, {...d, id: `r${Date.now()}`}]); return {...d, id: `r${Date.now()}`}; },
-        updateRole: (d) => setRoles(p => p.map(r => r.id === d.id ? d : r)),
-        deleteRole: (id) => setRoles(p => p.filter(r => r.id !== id)),
-        addUser: (d) => setUsers(p => [...p, {...d, id: `u${Date.now()}`}]) ,
-        updateUser: (d) => setUsers(p => p.map(u => u.id === d.id ? d : u)),
-        deleteUser: (id) => setUsers(p => p.filter(u => u.id !== id)),
-        addVariableProduct: () => {},
-        updateMultipleProducts: () => {},
-        voidSale: (id) => setSales(p => p.map(s => s.id === id ? {...s, status: 'voided'} : s)),
-        updateSaleWithEmail: (id, email) => setSales(p => p.map(s => s.id === id ? {...s, customerEmailForDocs: email} : s)),
-        addStockAdjustment: (d) => setStockAdjustments(p => [...p, {...d, id: `sa${Date.now()}`, date: new Date().toISOString()}]),
-        addCustomer: (d) => setCustomers(p => [...p, {...d, id: `c${Date.now()}`}]) ,
-        updateCustomer: (d) => setCustomers(p => p.map(c => c.id === d.id ? d : c)),
-        deleteCustomer: (id) => setCustomers(p => p.filter(c => c.id !== id)),
-        addSupplier: (d) => setSuppliers(p => [...p, {...d, id: `s${Date.now()}`}]) ,
-        updateSupplier: (d) => setSuppliers(p => p.map(s => s.id === d.id ? d : s)),
-        deleteSupplier: (id) => setSuppliers(p => p.filter(s => s.id !== id)),
-        addCustomerGroup: (d) => setCustomerGroups(p => [...p, {...d, id: `cg${Date.now()}`}]) ,
-        updateCustomerGroup: (d) => setCustomerGroups(p => p.map(cg => cg.id === d.id ? d : cg)),
-        deleteCustomerGroup: (id) => setCustomerGroups(p => p.filter(cg => cg.id !== id)),
-        addDraft: (d) => setDrafts(p => [...p, {...d, id: `d${Date.now()}`, date: new Date().toISOString()}]) ,
-        updateDraft: (d) => setDrafts(p => p.map(dr => dr.id === d.id ? d : dr)),
-        deleteDraft: (id) => setDrafts(p => p.filter(dr => dr.id !== id)),
-        addQuotation: (d) => setQuotations(p => [...p, {...d, id: `q${Date.now()}`, date: new Date().toISOString()}]) ,
-        updateQuotation: (d) => setQuotations(p => p.map(q => q.id === d.id ? d : q)),
-        deleteQuotation: (id) => setQuotations(p => p.filter(q => q.id !== id)),
-        addPurchase: (d) => setPurchases(p => [...p, {...d, id: `pur${Date.now()}`, date: new Date().toISOString()}]) ,
-        addPurchaseReturn: (d) => setPurchaseReturns(p => [...p, {...d, id: `pr${Date.now()}`, date: new Date().toISOString()}]) ,
-        addExpense: (d) => setExpenses(p => [...p, {...d, id: `e${Date.now()}`, date: new Date().toISOString()}]) ,
-        updateExpense: (d) => setExpenses(p => p.map(e => e.id === d.id ? d : e)),
-        deleteExpense: (id) => setExpenses(p => p.filter(e => e.id !== id)),
-        addExpenseCategory: (d) => setExpenseCategories(p => [...p, {...d, id: `ec${Date.now()}`}]) ,
-        updateExpenseCategory: (d) => setExpenseCategories(p => p.map(ec => ec.id === d.id ? d : ec)),
-        deleteExpenseCategory: (id) => setExpenseCategories(p => p.filter(ec => ec.id !== id)),
-        addBrand: (d) => { const newBrand = {...d, id: `b${Date.now()}`}; setBrands(p => [...p, newBrand]); return newBrand; },
-        updateBrand: (d) => setBrands(p => p.map(b => b.id === d.id ? d : b)),
-        deleteBrand: (id) => setBrands(p => p.filter(b => b.id !== id)),
-        addCategory: (d) => setCategories(p => [...p, {...d, id: `cat${Date.now()}`}]) ,
-        updateCategory: (d) => setCategories(p => p.map(c => c.id === d.id ? d : c)),
-        deleteCategory: (id) => setCategories(p => p.filter(c => c.id !== id)),
-        addUnit: (d) => setUnits(p => [...p, {...d, id: `u${Date.now()}`}]) ,
-        updateUnit: (d) => setUnits(p => p.map(u => u.id === d.id ? d : u)),
-        deleteUnit: (id) => setUnits(p => p.filter(u => u.id !== id)),
-        addVariation: (d) => setVariations(p => [...p, {...d, id: `v${Date.now()}`}]) ,
-        updateVariation: (d) => setVariations(p => p.map(v => v.id === d.id ? d : v)),
-        deleteVariation: (id) => setVariations(p => p.filter(v => v.id !== id)),
-        addVariationValue: (d) => setVariationValues(p => [...p, {...d, id: `vv${Date.now()}`}]) ,
-        updateVariationValue: (d) => setVariationValues(p => p.map(vv => vv.id === d.id ? d : vv)),
-        deleteVariationValue: (id) => setVariationValues(p => p.filter(vv => vv.id !== id)),
-        addBusinessLocation: (d) => setBusinessLocations(p => [...p, {...d, id: `bl${Date.now()}`}]) ,
-        updateBusinessLocation: (d) => setBusinessLocations(p => p.map(bl => bl.id === d.id ? d : bl)),
-        deleteBusinessLocation: (id) => setBusinessLocations(p => p.filter(bl => bl.id !== id)),
-        addStockTransfer: (d) => setStockTransfers(p => [...p, {...d, id: `st${Date.now()}`, date: new Date().toISOString()}]) ,
-        addCustomerRequests: (text, cashier) => setCustomerRequests(p => [...p, {id: `cr${Date.now()}`, text, cashierId: cashier.id, cashierName: cashier.name, date: new Date().toISOString()}]),
-        updateBrandingSettings: setBrandingSettings,
-        resetBrandingSettings: () => setBrandingSettings(DEFAULT_BRANDING),
-        updateAgeVerificationSettings: (settings, ids) => { setAgeVerificationSettings(settings); setProducts(p => p.map(prod => ({...prod, isAgeRestricted: ids.includes(prod.id)}))) },
-        addProductDocument: (d) => setProductDocuments(p => [...p, {...d, id: `doc${Date.now()}`, uploadedDate: new Date().toISOString()}]) ,
-        updateProductDocument: (d) => setProductDocuments(p => p.map(doc => doc.id === d.id ? d : doc)),
-        deleteProductDocument: (id) => setProductDocuments(p => p.filter(doc => doc.id !== id)),
-        addCustomerReturn: (d) => setCustomerReturns(p => [...p, {...d, id: `crn${Date.now()}`, date: new Date().toISOString()}]) ,
-        addIntegration: (d) => setIntegrations(p => [...p, {...d, id: `int${Date.now()}`}]) ,
-        updateIntegration: (d) => setIntegrations(p => p.map(i => i.id === d.id ? d : i)),
-        deleteIntegration: (id) => setIntegrations(p => p.filter(i => i.id !== id)),
-        addBankAccount: (d) => setBankAccounts(p => [...p, {...d, id: `ba${Date.now()}`}]) ,
-        updateBankAccount: (d) => setBankAccounts(p => p.map(ba => ba.id === d.id ? d : ba)),
-        deleteBankAccount: (id) => setBankAccounts(p => p.filter(ba => ba.id !== id)),
-        addPaymentMethod: (d) => setPaymentMethods(p => [...p, {...d, id: `pm${Date.now()}`}]) ,
-        updatePaymentMethod: (d) => setPaymentMethods(p => p.map(pm => pm.id === d.id ? d : pm)),
-        deletePaymentMethod: (id) => setPaymentMethods(p => p.filter(pm => pm.id !== id)),
-        addStockTransferRequest: (d) => setStockTransferRequests(p => [...p, {...d, id: `str${Date.now()}`, date: new Date().toISOString(), status: 'pending'}]) ,
-        updateStockTransferRequest: (id, status) => setStockTransferRequests(p => p.map(str => str.id === id ? {...str, status} : str)),
-    }), [session, currentUser, loading, users, roles, products, stockAdjustments, customers, customerGroups, suppliers, variations, variationValues, brands, categories, units, sales, drafts, quotations, purchases, purchaseReturns, expenses, expenseCategories, businessLocations, stockTransfers, shipments, paymentMethods, customerRequests, productDocuments, customerReturns, integrations, bankAccounts, stockTransferRequests, notificationTemplates, brandingSettings, ageVerificationSettings, hasPermission, authFunctions, fetchAppUser]);
-
+        addSale, addProduct, updateProduct, deleteProduct, addShipment, updateShipment, deleteShipment,
+        brandingSettings, ageVerificationSettings,
+        subscribeToPlan,
+        verifyLicense,
+        completeOnboarding,
+        signUpAndSubscribe,
+        addRole: async () => { throw new Error("Not implemented"); },
+        updateRole: async () => console.warn("Not implemented"),
+        deleteRole: async () => console.warn("Not implemented"),
+        addUser: async () => console.warn("Not implemented"),
+        updateUser: async () => console.warn("Not implemented"),
+        deleteUser: async () => console.warn("Not implemented"),
+        addVariableProduct: async () => console.warn("Not implemented"),
+        updateMultipleProducts: async () => console.warn("Not implemented"),
+        voidSale: async () => console.warn("Not implemented"),
+        updateSaleWithEmail: async () => console.warn("Not implemented"),
+        addStockAdjustment: async () => console.warn("Not implemented"),
+        addCustomer: async () => console.warn("Not implemented"),
+        updateCustomer: async () => console.warn("Not implemented"),
+        deleteCustomer: async () => console.warn("Not implemented"),
+        addSupplier: async () => console.warn("Not implemented"),
+        updateSupplier: async () => console.warn("Not implemented"),
+        deleteSupplier: async () => console.warn("Not implemented"),
+        addCustomerGroup: async () => console.warn("Not implemented"),
+        updateCustomerGroup: async () => console.warn("Not implemented"),
+        deleteCustomerGroup: async () => console.warn("Not implemented"),
+        addDraft: async () => console.warn("Not implemented"),
+        updateDraft: async () => console.warn("Not implemented"),
+        deleteDraft: async () => console.warn("Not implemented"),
+        addQuotation: async () => console.warn("Not implemented"),
+        updateQuotation: async () => console.warn("Not implemented"),
+        deleteQuotation: async () => console.warn("Not implemented"),
+        addPurchase: async () => console.warn("Not implemented"),
+        addPurchaseReturn: async () => console.warn("Not implemented"),
+        addExpense: async () => console.warn("Not implemented"),
+        updateExpense: async () => console.warn("Not implemented"),
+        deleteExpense: async () => console.warn("Not implemented"),
+        addExpenseCategory: async () => console.warn("Not implemented"),
+        updateExpenseCategory: async () => console.warn("Not implemented"),
+        deleteExpenseCategory: async () => console.warn("Not implemented"),
+        addBrand: async () => { throw new Error("Not implemented"); },
+        updateBrand: async () => console.warn("Not implemented"),
+        deleteBrand: async () => console.warn("Not implemented"),
+        addCategory: async () => console.warn("Not implemented"),
+        updateCategory: async () => console.warn("Not implemented"),
+        deleteCategory: async () => console.warn("Not implemented"),
+        addUnit: async () => console.warn("Not implemented"),
+        updateUnit: async () => console.warn("Not implemented"),
+        deleteUnit: async () => console.warn("Not implemented"),
+        addVariation: async () => console.warn("Not implemented"),
+        updateVariation: async () => console.warn("Not implemented"),
+        deleteVariation: async () => console.warn("Not implemented"),
+        addVariationValue: async () => console.warn("Not implemented"),
+        updateVariationValue: async () => console.warn("Not implemented"),
+        deleteVariationValue: async () => console.warn("Not implemented"),
+        addBusinessLocation: async () => console.warn("Not implemented"),
+        updateBusinessLocation: async () => console.warn("Not implemented"),
+        deleteBusinessLocation: async () => console.warn("Not implemented"),
+        addStockTransfer: async () => console.warn("Not implemented"),
+        addCustomerRequests: async () => console.warn("Not implemented"),
+        updateBrandingSettings: async () => console.warn("Not implemented"),
+        resetBrandingSettings: async () => console.warn("Not implemented"),
+        updateAgeVerificationSettings: async () => console.warn("Not implemented"),
+        addProductDocument: async () => console.warn("Not implemented"),
+        updateProductDocument: async () => console.warn("Not implemented"),
+        deleteProductDocument: async () => console.warn("Not implemented"),
+        addCustomerReturn: async () => console.warn("Not implemented"),
+        addIntegration: async () => console.warn("Not implemented"),
+        updateIntegration: async () => console.warn("Not implemented"),
+        deleteIntegration: async () => console.warn("Not implemented"),
+        addBankAccount: async () => console.warn("Not implemented"),
+        updateBankAccount: async () => console.warn("Not implemented"),
+        deleteBankAccount: async () => console.warn("Not implemented"),
+        addPaymentMethod: async () => console.warn("Not implemented"),
+        updatePaymentMethod: async () => console.warn("Not implemented"),
+        deletePaymentMethod: async () => console.warn("Not implemented"),
+        addStockTransferRequest: async () => console.warn("Not implemented"),
+        updateStockTransferRequest: async () => console.warn("Not implemented"),
+    };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

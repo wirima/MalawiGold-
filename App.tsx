@@ -1,14 +1,11 @@
+
 import * as React from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { OfflineProvider } from './contexts/OfflineContext';
-import { LanguageProvider } from './src/i18n';
-import { CurrencyProvider } from './contexts/CurrencyContext';
+import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Chatbot from './components/Chatbot';
-import { PublicRoute, ProtectedRoute } from './components/ProtectedRoute';
+import { PublicRoute, ProtectedRoute, OnboardingRoute } from './components/ProtectedRoute';
 import PublicHeader from './components/PublicHeader';
 import Footer from './components/Footer';
 import DemoModeBanner from './components/DemoModeBanner';
@@ -28,6 +25,14 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const SubscriptionPage = React.lazy(() => import('./pages/SubscriptionPage'));
 const DatabaseSetupPage = React.lazy(() => import('./pages/DatabaseSetupPage'));
+const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage'));
+
+
+// Onboarding Pages
+const OnboardingLayout = React.lazy(() => import('./pages/onboarding/OnboardingLayout'));
+const WelcomePage = React.lazy(() => import('./pages/onboarding/WelcomePage'));
+const LicensePage = React.lazy(() => import('./pages/onboarding/LicensePage'));
+const BusinessInfoPage = React.lazy(() => import('./pages/onboarding/BusinessInfoPage'));
 
 
 // Lazy-load all main application page components
@@ -120,7 +125,7 @@ const MainLayout: React.FC = () => (
   </div>
 );
 
-// Layout for the public-facing pages (Landing, Login, Signup)
+// Layout for the public-facing pages (Landing, etc.) that have a header and footer
 const PublicLayout: React.FC = () => (
     <div className="min-h-screen flex flex-col">
         <PublicHeader />
@@ -133,142 +138,161 @@ const PublicLayout: React.FC = () => (
     </div>
 );
 
+// Reusable component for all protected application routes
+const AppRoutes = (
+  <Route element={<MainLayout />}>
+    <Route index element={<Dashboard />} />
+    {/* Products Routes */}
+    <Route path="products" element={<ProductsPage />} />
+    <Route path="products/:productId" element={<ProductDetailPage />} />
+    <Route path="products/add" element={<AddProductPage />} />
+    <Route path="products/update-price" element={<UpdatePricePage />} />
+    <Route path="products/print-labels" element={<PrintLabelsPage />} />
+    <Route path="products/variations" element={<VariationsPage />} />
+    <Route path="products/import" element={<ImportProductsPage />} />
+    <Route path="products/import-opening-stock" element={<ImportOpeningStockPage />} />
+    <Route path="products/selling-price-group" element={<NotFoundPage />} />
+    <Route path="products/units" element={<UnitsPage />} />
+    <Route path="products/units/import" element={<ImportUnitsPage />} />
+    <Route path="products/categories" element={<CategoriesPage />} />
+    <Route path="products/brands" element={<BrandsPage />} />
+    <Route path="products/documents" element={<ProductDocumentsPage />} />
+
+    {/* Contacts Routes */}
+    <Route path="contacts" element={<ContactsPage />} />
+    <Route path="contacts/suppliers" element={<ContactsPage />} />
+    <Route path="contacts/groups" element={<ContactsPage />} />
+    <Route path="contacts/import" element={<ImportContactsPage />} />
+
+    {/* Purchases Routes */}
+    <Route path="purchases" element={<PurchasesPage />} />
+    <Route path="purchases/add" element={<AddPurchasePage />} />
+    <Route path="purchases/returns" element={<ListPurchaseReturnsPage />} />
+    <Route path="purchases/returns/add" element={<AddPurchaseReturnPage />} />
+
+    {/* Sell Routes */}
+    <Route path="sell/sales" element={<SalesListPage />} />
+    <Route path="sell/add" element={<AddSalePage />} />
+    <Route path="sell/pos-list" element={<POSPage />} />
+    <Route path="sell/pos" element={<POSPage />} />
+    <Route path="sell/drafts" element={<ListDraftsPage />} />
+    <Route path="sell/drafts/add" element={<AddDraftPage />} />
+    <Route path="sell/drafts/edit/:draftId" element={<AddDraftPage />} />
+    <Route path="sell/quotations/add" element={<AddQuotationPage />} />
+    <Route path="sell/quotations/edit/:quotationId" element={<AddQuotationPage />} />
+    <Route path="sell/quotations" element={<ListQuotationsPage />} />
+    <Route path="sell/returns" element={<ListCustomerReturnsPage />} />
+    <Route path="sell/returns/add" element={<AddCustomerReturnPage />} />
+    <Route path="sell/shipments" element={<ShipmentsPage />} />
+    <Route path="sell/discounts" element={<POSPage />} />
+    <Route path="sell/import" element={<POSPage />} />
+    <Route path="sell/receipt/:saleId" element={<SaleReceiptPage />} />
+    
+    {/* Stock Adjustment & Transfer Routes */}
+    <Route path="stock-adjustments" element={<StockAdjustmentsPage />} />
+    <Route path="stock-adjustments/add" element={<AddStockAdjustmentPage />} />
+    <Route path="stock-transfers" element={<StockTransfersPage />} />
+    <Route path="stock-transfers/add" element={<AddStockTransferPage />} />
+    <Route path="stock-transfers/requests" element={<StockTransferRequestsPage />} />
+    
+    {/* Expenses Routes */}
+    <Route path="expenses" element={<ExpensesPage />} />
+    <Route path="expenses/add" element={<ExpensesPage />} />
+    <Route path="expenses/categories" element={<ExpenseCategoriesPage />} />
+
+    {/* Reports Routes */}
+    <Route path="reports/profit-loss" element={<ProfitLossReportPage />} />
+    <Route path="reports/purchase-sale" element={<PurchaseSaleReportPage />} />
+    <Route path="reports/sales-analysis" element={<SalesAnalysisReportPage />} />
+    <Route path="reports/tax" element={<TaxReportPage />} />
+    <Route path="reports/supplier-customer" element={<SupplierCustomerReportPage />} />
+    <Route path="reports/customer-group" element={<CustomerGroupReportPage />} />
+    <Route path="reports/stock" element={<StockReportPage />} />
+    <Route path="reports/stock-adjustment" element={<StockAdjustmentReportPage />} />
+    <Route path="reports/trending-products" element={<TrendingProductsReportPage />} />
+    <Route path="reports/items" element={<ItemsReportPage />} />
+    <Route path="reports/product-purchase" element={<ProductPurchaseReportPage />} />
+    <Route path="reports/product-sell" element={<ProductSellReportPage />} />
+    <Route path="reports/expense" element={<ExpenseReportPage />} />
+    <Route path="reports/register" element={<RegisterReportPage />} />
+    <Route path="reports/sales-rep" element={<SalesRepReportPage />} />
+    <Route path="reports/activity-log" element={<ActivityLogPage />} />
+    <Route path="reports/customer-demand" element={<CustomerDemandReportPage />} />
+    <Route path="reports/return-analysis" element={<ReturnAnalysisReportPage />} />
+
+    {/* User Management Routes */}
+    <Route path="users" element={<UsersRolesPage />} />
+    <Route path="profile" element={<UserProfilePage />} />
+    
+    {/* Growth & Strategy */}
+    <Route path="growth" element={<GrowthSuggestionsPage />} />
+
+    {/* Settings & Notifications */}
+    <Route path="notification-templates" element={<NotificationTemplatesPage />} />
+    <Route path="settings" element={<SettingsPage />} />
+    <Route path="settings/branding" element={<BrandingSettingsPage />} />
+    <Route path="settings/locations" element={<BusinessLocationsPage />} />
+    <Route path="settings/payment-methods" element={<PaymentMethodsPage />} />
+    <Route path="settings/bank-accounts" element={<BankAccountsPage />} />
+    <Route path="settings/age-verification" element={<AgeVerificationSettingsPage />} />
+    <Route path="settings/integrations" element={<IntegrationsPage />} />
+    <Route path="settings/integrations/vendor-api" element={<VendorApiConnectionPage />} />
+    <Route path="settings/integrations/vendor-api/:connectionId" element={<VendorApiConnectionPage />} />
+    <Route path="settings/integrations/payment-gateway" element={<PaymentGatewayConnectionPage />} />
+    <Route path="settings/integrations/payment-gateway/:connectionId" element={<PaymentGatewayConnectionPage />} />
+    <Route path="settings/api-proxy-guide" element={<ApiProxyGuidePage />} />
+    <Route path="settings/subscription" element={<Navigate to="/subscription" replace />} />
+
+
+    {/* Catch-all */}
+    <Route path="*" element={<NotFoundPage />} />
+  </Route>
+);
+
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <OfflineProvider>
-          <LanguageProvider>
-            <CurrencyProvider>
-              <Routes>
-                {/* Public routes */}
-                <Route element={<PublicRoute />}>
-                    <Route element={<PublicLayout />}>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/signup" element={<SignUpPage />} />
-                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                        <Route path="/reset-password" element={<ResetPasswordPage />} />
-                        <Route path="/subscription" element={<SubscriptionPage />} />
-                        <Route path="/database-setup" element={<DatabaseSetupPage />} />
-                    </Route>
-                </Route>
-                
-                {/* Protected app routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/app" element={<MainLayout />}>
-                    <Route index element={<Dashboard />} />
-                    {/* Products Routes */}
-                    <Route path="products" element={<ProductsPage />} />
-                    <Route path="products/:productId" element={<ProductDetailPage />} />
-                    <Route path="products/add" element={<AddProductPage />} />
-                    <Route path="products/update-price" element={<UpdatePricePage />} />
-                    <Route path="products/print-labels" element={<PrintLabelsPage />} />
-                    <Route path="products/variations" element={<VariationsPage />} />
-                    <Route path="products/import" element={<ImportProductsPage />} />
-                    <Route path="products/import-opening-stock" element={<ImportOpeningStockPage />} />
-                    <Route path="products/selling-price-group" element={<NotFoundPage />} />
-                    <Route path="products/units" element={<UnitsPage />} />
-                    <Route path="products/units/import" element={<ImportUnitsPage />} />
-                    <Route path="products/categories" element={<CategoriesPage />} />
-                    <Route path="products/brands" element={<BrandsPage />} />
-                    <Route path="products/documents" element={<ProductDocumentsPage />} />
+    <Routes>
+      {/* Public routes */}
+      <Route element={<PublicRoute />}>
+          <Route element={<PublicLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/database-setup" element={<DatabaseSetupPage />} />
+              <Route path="/subscription" element={<SubscriptionPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+          </Route>
+          {/* Routes without the public header/footer */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+      </Route>
 
-                    {/* Contacts Routes */}
-                    <Route path="contacts" element={<ContactsPage />} />
-                    <Route path="contacts/suppliers" element={<ContactsPage />} />
-                    <Route path="contacts/groups" element={<ContactsPage />} />
-                    <Route path="contacts/import" element={<ImportContactsPage />} />
+      {/* Onboarding routes */}
+      <Route path="/onboarding" element={<OnboardingRoute />}>
+          <Route element={<OnboardingLayout />}>
+              <Route path="welcome" element={<WelcomePage />} />
+              <Route path="license" element={<LicensePage />} />
+              <Route path="business-info" element={<BusinessInfoPage />} />
+          </Route>
+      </Route>
+      
+      {/* Protected demo app routes */}
+      <Route path="/demo" element={<ProtectedRoute />}>
+        {AppRoutes}
+      </Route>
 
-                    {/* Purchases Routes */}
-                    <Route path="purchases" element={<PurchasesPage />} />
-                    <Route path="purchases/add" element={<AddPurchasePage />} />
-                    <Route path="purchases/returns" element={<ListPurchaseReturnsPage />} />
-                    <Route path="purchases/returns/add" element={<AddPurchaseReturnPage />} />
+      {/* Protected main app routes */}
+      <Route path="/app" element={<ProtectedRoute />}>
+        {AppRoutes}
+      </Route>
 
-                    {/* Sell Routes */}
-                    <Route path="sell/sales" element={<SalesListPage />} />
-                    <Route path="sell/add" element={<AddSalePage />} />
-                    <Route path="sell/pos-list" element={<POSPage />} />
-                    <Route path="sell/pos" element={<POSPage />} />
-                    <Route path="sell/drafts" element={<ListDraftsPage />} />
-                    <Route path="sell/drafts/add" element={<AddDraftPage />} />
-                    <Route path="sell/drafts/edit/:draftId" element={<AddDraftPage />} />
-                    <Route path="sell/quotations/add" element={<AddQuotationPage />} />
-                    <Route path="sell/quotations/edit/:quotationId" element={<AddQuotationPage />} />
-                    <Route path="sell/quotations" element={<ListQuotationsPage />} />
-                    <Route path="sell/returns" element={<ListCustomerReturnsPage />} />
-                    <Route path="sell/returns/add" element={<AddCustomerReturnPage />} />
-                    <Route path="sell/shipments" element={<ShipmentsPage />} />
-                    <Route path="sell/discounts" element={<POSPage />} />
-                    <Route path="sell/import" element={<POSPage />} />
-                    <Route path="sell/receipt/:saleId" element={<SaleReceiptPage />} />
-                    
-                    {/* Stock Adjustment & Transfer Routes */}
-                    <Route path="stock-adjustments" element={<StockAdjustmentsPage />} />
-                    <Route path="stock-adjustments/add" element={<AddStockAdjustmentPage />} />
-                    <Route path="stock-transfers" element={<StockTransfersPage />} />
-                    <Route path="stock-transfers/add" element={<AddStockTransferPage />} />
-                    <Route path="stock-transfers/requests" element={<StockTransferRequestsPage />} />
-                    
-                    {/* Expenses Routes */}
-                    <Route path="expenses" element={<ExpensesPage />} />
-                    <Route path="expenses/add" element={<ExpensesPage />} />
-                    <Route path="expenses/categories" element={<ExpenseCategoriesPage />} />
+      {/* Redirect base authenticated route to the correct app */}
+      <Route path="/app" element={<Navigate to="/app" replace />} />
+      <Route path="/demo" element={<Navigate to="/demo" replace />} />
 
-                    {/* Reports Routes */}
-                    <Route path="reports/profit-loss" element={<ProfitLossReportPage />} />
-                    <Route path="reports/purchase-sale" element={<PurchaseSaleReportPage />} />
-                    <Route path="reports/sales-analysis" element={<SalesAnalysisReportPage />} />
-                    <Route path="reports/tax" element={<TaxReportPage />} />
-                    <Route path="reports/supplier-customer" element={<SupplierCustomerReportPage />} />
-                    <Route path="reports/customer-group" element={<CustomerGroupReportPage />} />
-                    <Route path="reports/stock" element={<StockReportPage />} />
-                    <Route path="reports/stock-adjustment" element={<StockAdjustmentReportPage />} />
-                    <Route path="reports/trending-products" element={<TrendingProductsReportPage />} />
-                    <Route path="reports/items" element={<ItemsReportPage />} />
-                    <Route path="reports/product-purchase" element={<ProductPurchaseReportPage />} />
-                    <Route path="reports/product-sell" element={<ProductSellReportPage />} />
-                    <Route path="reports/expense" element={<ExpenseReportPage />} />
-                    <Route path="reports/register" element={<RegisterReportPage />} />
-                    <Route path="reports/sales-rep" element={<SalesRepReportPage />} />
-                    <Route path="reports/activity-log" element={<ActivityLogPage />} />
-                    <Route path="reports/customer-demand" element={<CustomerDemandReportPage />} />
-                    <Route path="reports/return-analysis" element={<ReturnAnalysisReportPage />} />
-
-                    {/* User Management Routes */}
-                    <Route path="users" element={<UsersRolesPage />} />
-                    <Route path="profile" element={<UserProfilePage />} />
-                    
-                    {/* Growth & Strategy */}
-                    <Route path="growth" element={<GrowthSuggestionsPage />} />
-
-                    {/* Settings & Notifications */}
-                    <Route path="notification-templates" element={<NotificationTemplatesPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="settings/branding" element={<BrandingSettingsPage />} />
-                    <Route path="settings/locations" element={<BusinessLocationsPage />} />
-                    <Route path="settings/payment-methods" element={<PaymentMethodsPage />} />
-                    <Route path="settings/bank-accounts" element={<BankAccountsPage />} />
-                    <Route path="settings/age-verification" element={<AgeVerificationSettingsPage />} />
-                    <Route path="settings/integrations" element={<IntegrationsPage />} />
-                    <Route path="settings/integrations/vendor-api" element={<VendorApiConnectionPage />} />
-                    <Route path="settings/integrations/vendor-api/:connectionId" element={<VendorApiConnectionPage />} />
-                    <Route path="settings/integrations/payment-gateway" element={<PaymentGatewayConnectionPage />} />
-                    <Route path="settings/integrations/payment-gateway/:connectionId" element={<PaymentGatewayConnectionPage />} />
-                    <Route path="settings/api-proxy-guide" element={<ApiProxyGuidePage />} />
-
-                    {/* Catch-all */}
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                </Route>
-              </Routes>
-            </CurrencyProvider>
-          </LanguageProvider>
-        </OfflineProvider>
-      </AuthProvider>
-    </ThemeProvider>
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 };
 

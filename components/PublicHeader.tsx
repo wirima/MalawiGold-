@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import ThemeSwitcher from './ThemeSwitcher';
 
 const PublicHeader: React.FC = () => {
     const { brandingSettings } = useAuth();
@@ -19,21 +18,20 @@ const PublicHeader: React.FC = () => {
                         </Link>
                     </div>
                     <div className="flex items-center gap-2">
-                        <ThemeSwitcher />
                         <Link to="/" className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                             Home
                         </Link>
                         <Link to="/subscription" className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                             Pricing
                         </Link>
-                        <Link to="/signup" className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                        <Link to="/demo" className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                             Live Demo
                         </Link>
                         <Link to="/login" className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                             Sign In
                         </Link>
                         <Link to="/signup" className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                            Sign Up
+                            Get Started
                         </Link>
                     </div>
                 </div>

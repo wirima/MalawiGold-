@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -157,13 +159,13 @@ const AddProductPage: React.FC = () => {
         
         const combinations = cartesian(...arraysToCombine);
 
-        // FIX: The `combo` parameter was being inferred as 'unknown[]'. Explicitly typing it resolves property access errors.
+        // FIX: Explicitly typed the 'combo' parameter in the map function to resolve type inference errors when accessing its properties.
         const newMatrix = combinations.map((combo: { variationId: string; valueId: string }[], index) => {
             const attributes = combo;
-            // FIX: Explicitly type `attr` to resolve type inference issue.
-            const nameParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name || '');
-            // FIX: Explicitly type `attr` to resolve type inference issue.
-            const skuParts = attributes.map((attr: { variationId: string; valueId: string }) => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
+            // FIX: Property 'name' does not exist on type 'unknown'. By typing `combo` above, `attr` is correctly inferred here.
+            const nameParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name || '');
+            // FIX: Property 'name' does not exist on type 'unknown'. By typing `combo` above, `attr` is correctly inferred here.
+            const skuParts = attributes.map(attr => variationValueMap.get(attr.valueId)?.name?.substring(0, 3).toUpperCase() || 'XXX');
             
             const initialStocks = new Map<string, number>();
             formData.businessLocationIds.forEach(locId => {
@@ -254,7 +256,7 @@ const AddProductPage: React.FC = () => {
         return isValid;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
         
@@ -263,7 +265,9 @@ const AddProductPage: React.FC = () => {
         if (existingBrand) {
             brandId = existingBrand.id;
         } else {
-            brandId = addBrand({ name: brandName.trim() }).id;
+            // FIX: Awaited the async addBrand function to get the new brand's ID correctly.
+            const newBrand = await addBrand({ name: brandName.trim() });
+            brandId = newBrand.id;
         }
             
         const locationsToProcess = Array.from(formData.businessLocationIds);
@@ -286,25 +290,29 @@ const AddProductPage: React.FC = () => {
                     businessLocationId: locationId,
                     stock: locationStocks.get(locationId) || 0,
                 };
-                addProduct(productData);
+                addProduct(productData, imagePreview);
 
             } else { // Variable Product
                 const variationValueMap = new Map(variationValues.map(v => [v.id, v]));
                 const variationMap = new Map(variationTemplates.map(v => [v.id, v]));
 
                 const parentSku = formData.sku.trim() || `P${Date.now()}`;
+                // FIX: Add missing 'stock' property for parent variable products.
                 const parentData: Omit<Product, 'id' | 'imageUrl'> = { 
                     ...restFormData,
                     brandId, 
                     sku: parentSku,
-                    businessLocationId: locationId 
+                    businessLocationId: locationId,
+                    stock: 0,
                 };
     
                 // FIX: The `variant` parameter was being inferred as 'unknown', leading to a type error when trying to access its properties. Explicitly typing `variant` resolves this.
                 const variantsData: Omit<Product, 'id' | 'imageUrl'>[] = variantsMatrix.map((variant: VariantMatrixItem) => {
                     // FIX: Explicitly typing the 'attr' parameter to fix type inference issues, which resolves property access errors.
                     const attributes: ProductVariationAttribute[] = variant.attributes.map((attr: { variationId: string; valueId: string; }) => ({
+                        // FIX: Property 'name' does not exist on type 'unknown'. By typing `attr`, this is resolved.
                         variationName: variationMap.get(attr.variationId)?.name || 'N/A',
+                        // FIX: Property 'name' does not exist on type 'unknown'. By typing `attr`, this is resolved.
                         valueName: variationValueMap.get(attr.valueId)?.name || 'N/A',
                     }));
     
@@ -316,6 +324,7 @@ const AddProductPage: React.FC = () => {
                         sku: variant.sku,
                         costPrice: variant.costPrice,
                         price: variant.price,
+                        // FIX: Argument of type 'unknown' is not assignable to parameter of type 'string'. Typing the `locationId` in the outer loop scope and `variant` here resolves this.
                         stock: variant.stocks.get(locationId) || 0,
                         variationAttributes: attributes
                     };
@@ -456,7 +465,8 @@ const AddProductPage: React.FC = () => {
     const handleBulkUpdate = (field: 'costPrice' | 'price', value: string) => {
         const numValue = parseFloat(value);
         if (isNaN(numValue) || numValue < 0) return;
-        setVariantsMatrix(prev => prev.map(variant => ({...variant, [field]: numValue })));
+        // FIX: Explicitly typing the 'variant' parameter to fix type inference issues.
+        setVariantsMatrix(prev => prev.map((variant: VariantMatrixItem) => ({...variant, [field]: numValue })));
     };
 
     const handleBulkStockUpdate = (locationId: string, value: string) => {
@@ -689,7 +699,7 @@ const AddProductPage: React.FC = () => {
                                 <th className="p-2 font-semibold">Variant</th><th className="p-2 font-semibold">SKU</th><th className="p-2 font-semibold">Cost Price</th><th className="p-2 font-semibold">Selling Price</th>
                                 {Array.from(formData.businessLocationIds).map(locationId => <th key={locationId} className="p-2 font-semibold">Stock @ {locationsMap.get(locationId)}</th>)}
                             </tr></thead>
-                            {/* FIX: The `variant` parameter was being inferred as 'unknown'. Explicitly typing it as `VariantMatrixItem` resolves property access errors. */}
+                            {/* FIX: Explicitly typing the 'variant' parameter to fix type inference issues. */}
                             <tbody>{variantsMatrix.map((variant: VariantMatrixItem, index) => (
                                 <tr key={variant.id} className="border-b dark:border-slate-700"><td className="p-2">{variant.name}</td>
                                     <td className="p-2"><input type="text" value={variant.sku} onChange={e => handleVariantMatrixChange(index, 'sku', e.target.value)} className={baseInputClasses} /></td>
@@ -698,6 +708,7 @@ const AddProductPage: React.FC = () => {
                                     {/* FIX: Explicitly typing `locationId` resolves type inference errors in this map function. */}
                                     {Array.from(formData.businessLocationIds).map((locationId: string) => (
                                         <td key={locationId} className="p-2">
+                                            {/* FIX: Argument of type 'unknown' is not assignable to parameter of type 'string'. Typing `locationId` above resolves this. */}
                                             <input type="number" value={variant.stocks.get(locationId) || ''} onChange={e => handleVariantMatrixStockChange(index, locationId, e.target.value)} className={`${baseInputClasses} w-24`} />
                                         </td>
                                     ))}

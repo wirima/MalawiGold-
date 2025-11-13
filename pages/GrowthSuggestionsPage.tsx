@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation, Navigate } from 'react-router-dom';
 
 const IdeaCard: React.FC<{
     title: string;
@@ -42,6 +43,12 @@ const IdeaCard: React.FC<{
 
 const GrowthSuggestionsPage: React.FC = () => {
     const { hasPermission } = useAuth();
+    const location = useLocation();
+    const isDemo = location.pathname.startsWith('/demo');
+
+    if (isDemo) {
+        return <Navigate to="/demo" replace />;
+    }
 
     if (!hasPermission('growth:view')) {
         return (
@@ -55,7 +62,7 @@ const GrowthSuggestionsPage: React.FC = () => {
     }
     
     const Icon: React.FC<{ path: string }> = ({ path }) => (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d={path} />
         </svg>
     );
@@ -63,7 +70,8 @@ const GrowthSuggestionsPage: React.FC = () => {
     const uaeIdeas = [
         {
             title: "B2B Logistics Optimizer for SMEs",
-            priority: "High",
+            // FIX: Added 'as const' to ensure the string literal type matches the component's prop type.
+            priority: "High" as const,
             concept: "A mobile-first SaaS platform for small retailers and F&B businesses to intelligently manage suppliers and inventory. This is a natural extension of your POS system's backend logic, solving a clear, monetizable problem in a major trade hub.",
             features: [
                 "Simple purchase order creation and tracking.",
@@ -75,7 +83,8 @@ const GrowthSuggestionsPage: React.FC = () => {
         },
         {
             title: "Smart Concierge & Lifestyle Platform",
-            priority: "Medium",
+            // FIX: Added 'as const' to ensure the string literal type matches the component's prop type.
+            priority: "Medium" as const,
             concept: "A premium, AI-powered platform for residents and high-end property managers to manage lifestyle services (e.g., laundry, cleaning, maintenance). Taps into the UAE's demand for convenience and luxury services.",
             features: [
                 "Integration with local service vendors.",
@@ -90,7 +99,8 @@ const GrowthSuggestionsPage: React.FC = () => {
     const malawiIdeas = [
         {
             title: "Micro-SME Inventory & Mobile Money Ledger",
-            priority: "High",
+            // FIX: Added 'as const' to ensure the string literal type matches the component's prop type.
+            priority: "High" as const,
             concept: "A 'POS-lite' for small shop owners and market vendors on basic Android phones. This directly adapts your core POS concept to the local context by being simple, offline-first, and integrated with mobile money.",
             features: [
                 "Works 100% offline, syncing when a connection is available.",
@@ -102,7 +112,8 @@ const GrowthSuggestionsPage: React.FC = () => {
         },
         {
             title: "Agri-Tech Platform for Smallholder Farmers",
-            priority: "Medium",
+            // FIX: Added 'as const' to ensure the string literal type matches the component's prop type.
+            priority: "Medium" as const,
             concept: "A simple, mobile-first tool to help small-scale farmers get fair market pricing and connect with buyers. This has immense social impact potential and solves a critical information gap in the agricultural sector.",
             features: [
                 "SMS/USSD-based interface for accessibility without internet.",
@@ -125,7 +136,7 @@ const GrowthSuggestionsPage: React.FC = () => {
             
             {/* UAE Market */}
             <div className="space-y-6">
-                <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
+                 <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-2xl font-bold">Target Market: UAE (High-Tech, Service-Oriented)</h2>
                     <p className="mt-1 text-slate-500">Ideas leveraging the region's focus on efficiency, luxury, and digital services.</p>
                 </div>
@@ -134,7 +145,7 @@ const GrowthSuggestionsPage: React.FC = () => {
             
             {/* Malawi Market */}
             <div className="space-y-6">
-                <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
+                 <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-2xl font-bold">Target Market: Malawi (High-Impact, Mobile-First)</h2>
                     <p className="mt-1 text-slate-500">Ideas focused on solving fundamental problems, designed for accessibility on low-cost devices.</p>
                 </div>

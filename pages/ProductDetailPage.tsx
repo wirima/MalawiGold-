@@ -29,7 +29,7 @@ const ProductDetailPage: React.FC = () => {
     return (
         <div>
              <div className="mb-4">
-                <Link to="/products" className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">&larr; Back to Products</Link>
+                <Link to="/app/products" className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">&larr; Back to Products</Link>
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
                 <div className="md:flex">

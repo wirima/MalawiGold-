@@ -29,7 +29,7 @@ const TestimonialCard: React.FC<{ quote: string; author: string; company: string
 
 const LandingPage: React.FC = () => {
     const Icon: React.FC<{ path: string }> = ({ path }) => (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d={path} />
         </svg>
     );
@@ -47,10 +47,10 @@ const LandingPage: React.FC = () => {
                     </p>
                     <div className="mt-8 flex justify-center gap-4">
                         <Link
-                            to="/signup"
+                            to="/demo"
                             className="inline-block rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                         >
-                            Start 14-Day Free Trial
+                            Explore Live Demo
                         </Link>
                         <Link
                             to="/login"
@@ -107,7 +107,7 @@ const LandingPage: React.FC = () => {
                         <FeatureCard title="AI Business Analyst" icon={<Icon path="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />}>
                             Turn your sales data into actionable advice. Get AI-powered suggestions on pricing, promotions, and inventory.
                         </FeatureCard>
-                         <FeatureCard title="Customer Management" icon={<Icon path="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />}>
+                         <FeatureCard title="Customer Management" icon={<Icon path="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />}>
                             Build customer loyalty by tracking purchase history and creating customer groups for targeted discounts.
                         </FeatureCard>
                     </div>
@@ -134,14 +134,14 @@ const LandingPage: React.FC = () => {
                 <div className="max-w-3xl mx-auto text-center px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">Ready to Transform Your Business?</h2>
                     <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
-                        Join hundreds of businesses growing with TranscendPOS. Start your free 14-day trial today, no credit card required.
+                        Explore the full power of TranscendPOS with our live demo. No signup required.
                     </p>
                     <div className="mt-8">
                         <Link
-                            to="/signup"
+                            to="/demo"
                             className="inline-block rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500"
                         >
-                            Claim Your Free Trial
+                            Explore Live Demo
                         </Link>
                     </div>
                 </div>

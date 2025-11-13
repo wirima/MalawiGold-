@@ -1,28 +1,34 @@
-import { Content } from "@google/genai";
-import { Sale, CustomerRequest, CustomerReturn } from '../types';
+import { GoogleGenAI, Content } from "@google/genai";
+import { Sale, CustomerRequest, CustomerReturn, Product } from '../types';
 import { MOCK_CATEGORIES } from '../data/mockData';
 
-// This is a new, secure function that calls our own backend proxy.
+// This function securely calls the Gemini API via a backend proxy.
 const generateSecureInsights = async (prompt: string): Promise<string> => {
-    // The frontend now calls a local API endpoint.
-    // This endpoint is a serverless function that will securely call the Gemini API.
-    const response = await fetch('/api/generate-insights', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
-    });
+    try {
+        const response = await fetch('/api/generate-insights', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt }),
+        });
 
-    if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: "An unknown error occurred" }));
-        console.error("Error from API proxy:", errorBody);
-        throw new Error(errorBody.error || "Failed to generate insights from API proxy.");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `API responded with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.text;
+    } catch (error) {
+        console.error("Error calling backend for Gemini insights:", error);
+        return `
+            <h4>Error Generating Insights</h4>
+            <p>Sorry, there was an error communicating with the AI service. The service may be temporarily unavailable or not configured correctly on the backend.</p>
+            <p class="text-xs text-red-400">Error details: ${error instanceof Error ? error.message : 'An unknown error occurred.'}</p>
+        `;
     }
-    
-    const data = await response.json();
-    return data.text;
-}
+};
 
 
 export const getBusinessInsights = async (salesData: Sale[]): Promise<string> => {
@@ -146,25 +152,28 @@ export const getReturnAnalysisInsights = async (returns: CustomerReturn[]): Prom
 
 // --- CHATBOT FUNCTIONALITY ---
 
-// The client-side function calling demo has been removed as it was insecure and non-functional.
-// To re-enable it, you must create a dedicated backend endpoint (e.g., /api/chat) that
-// securely calls the Gemini API and performs the function logic on the server.
-export const processChat = async (
-  history: Content[],
-  message: string,
-): Promise<string> => {
-    console.warn("processChat is a demo function. A secure backend endpoint is required for production use.");
+export const processChat = async (history: Content[], message: string, sales: Sale[], products: Product[]): Promise<string> => {
     try {
-        // In a real app, this would call a secure backend endpoint:
-        // const response = await fetch('/api/chat', { method: 'POST', body: JSON.stringify({ history, message }) });
-        // const data = await response.json();
-        // return data.text;
-        
-        // Returning a message explaining the situation for the demo.
-        return "Sorry, the live chatbot functionality with function calling is disabled for security reasons in this deployed version. It requires a dedicated backend endpoint to process requests securely.";
+        const salesSummary = sales.slice(0, 5).map(s => ({ date: s.date, total: s.total, items_count: s.items.length }));
+        const productsSummary = products.filter(p => p.stock < 10).slice(0, 5).map(p => ({ name: p.name, stock: p.stock }));
 
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ history, message, salesSummary, productsSummary }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Chat API responded with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.text;
     } catch (error) {
-        console.error("Error in mock processChat:", error);
-        return "Sorry, I encountered an error. The chatbot requires a backend implementation.";
+        console.error("Error in processChat:", error);
+        return "Sorry, I encountered an error communicating with the chat service.";
     }
 };

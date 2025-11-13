@@ -142,6 +142,11 @@ export const MOCK_PRODUCTS: Product[] = [
   { id: 'PROD011', name: 'Craft Beer', sku: 'SKU011', categoryId: 'C05', brandId: 'B06', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 2.80, price: 6.50, stock: 48, reorderPoint: 12, imageUrl: 'https://picsum.photos/seed/beer/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Locally brewed IPA.', taxAmount: 10, taxType: 'percentage', isAgeRestricted: true },
   { id: 'PROD012', name: 'Cigarettes', sku: 'SKU012', categoryId: 'C06', brandId: 'B05', unitId: 'U01', businessLocationId: 'LOC03', costPrice: 5.00, price: 9.00, stock: 30, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/cigarettes/400', isNotForSale: false, productType: 'single', barcodeType: 'UPC', description: 'Pack of 20.', taxAmount: 1.50, taxType: 'fixed', isAgeRestricted: true },
   { id: 'PROD013', name: 'CBD Oil', sku: 'SKU013', categoryId: 'C07', brandId: 'B05', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 15.00, price: 35.00, stock: 15, reorderPoint: 5, imageUrl: 'https://picsum.photos/seed/cbdoil/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: '500mg full spectrum oil.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: true },
+  { id: 'PROD014', name: 'Bagel with Cream Cheese', sku: 'SKU014', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.80, price: 4.50, stock: 40, reorderPoint: 15, imageUrl: 'https://picsum.photos/seed/bagel/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Toasted bagel with a generous spread of cream cheese.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD015', name: 'Orange Juice', sku: 'SKU015', categoryId: 'C03', brandId: 'B03', unitId: 'U17', businessLocationId: 'LOC02', costPrice: 1.00, price: 3.00, stock: 60, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/orangejuice/400', isNotForSale: false, productType: 'single', barcodeType: 'EAN13', description: 'Freshly squeezed orange juice.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD016', name: 'Donut', sku: 'SKU016', categoryId: 'C02', brandId: 'B02', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 0.80, price: 2.00, stock: 55, reorderPoint: 20, imageUrl: 'https://picsum.photos/seed/donut/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Classic glazed donut.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD017', name: 'Hot Chocolate', sku: 'SKU017', categoryId: 'C01', brandId: 'B01', unitId: 'U01', businessLocationId: 'LOC02', costPrice: 1.60, price: 3.75, stock: 70, reorderPoint: 25, imageUrl: 'https://picsum.photos/seed/hotchoco/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Rich and creamy hot chocolate with whipped cream.', taxAmount: 5, taxType: 'percentage', isAgeRestricted: false },
+  { id: 'PROD018', name: 'Breakfast Burrito', sku: 'SKU018', categoryId: 'C04', brandId: 'B04', unitId: 'U01', businessLocationId: 'LOC01', costPrice: 3.20, price: 7.00, stock: 25, reorderPoint: 10, imageUrl: 'https://picsum.photos/seed/burrito/400', isNotForSale: false, productType: 'single', barcodeType: 'CODE128', description: 'Hearty burrito with eggs, cheese, and sausage.', taxAmount: 0, taxType: 'percentage', isAgeRestricted: false },
 ];
 
 export const MOCK_STOCK_ADJUSTMENTS: StockAdjustment[] = [
@@ -235,6 +240,106 @@ export const MOCK_SALES: Sale[] = [
         payments: [{ methodId: 'pay_cash', amount: 13.00 }],
         status: 'completed'
     },
+    {
+        id: 'SALE005',
+        date: '2023-10-28T09:05:00Z',
+        customer: { id: MOCK_CUSTOMERS[3].id, name: MOCK_CUSTOMERS[3].name },
+        items: [ { ...MOCK_PRODUCTS[10], quantity: 1 }, { ...MOCK_PRODUCTS[11], quantity: 1 } ],
+        total: 16.00,
+        payments: [{ methodId: 'pay_card', amount: 16.00 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE006',
+        date: '2023-10-28T11:20:00Z',
+        customer: { id: MOCK_CUSTOMERS[1].id, name: MOCK_CUSTOMERS[1].name },
+        items: [ { ...MOCK_PRODUCTS[14], quantity: 2 }, { ...MOCK_PRODUCTS[15], quantity: 2 } ],
+        total: 10.00,
+        payments: [{ methodId: 'pay_nfc', amount: 10.00 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE007',
+        date: '2023-10-29T13:00:00Z',
+        customer: { id: MOCK_CUSTOMERS[2].id, name: MOCK_CUSTOMERS[2].name },
+        items: [ { ...MOCK_PRODUCTS[6], quantity: 1 }, { ...MOCK_PRODUCTS[7], quantity: 1 } ],
+        total: 3.75,
+        payments: [{ methodId: 'pay_cash', amount: 5.00 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE008',
+        date: '2023-10-29T15:45:00Z',
+        customer: { id: MOCK_CUSTOMERS[0].id, name: MOCK_CUSTOMERS[0].name },
+        items: [ { ...MOCK_PRODUCTS[16], quantity: 1 }, { ...MOCK_PRODUCTS[13], quantity: 1 } ],
+        total: 39.75,
+        payments: [{ methodId: 'pay_card', amount: 39.75 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE009',
+        date: '2023-10-30T08:30:00Z',
+        customer: { id: MOCK_CUSTOMERS[1].id, name: MOCK_CUSTOMERS[1].name },
+        items: [ { ...MOCK_PRODUCTS[17], quantity: 1 } ],
+        total: 7.00,
+        payments: [{ methodId: 'pay_manual_card', amount: 7.00 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE010',
+        date: '2023-10-30T10:00:00Z',
+        customer: { id: MOCK_CUSTOMERS[2].id, name: MOCK_CUSTOMERS[2].name },
+        items: [ { ...MOCK_PRODUCTS[0], quantity: 1 } ],
+        total: 2.50,
+        payments: [{ methodId: 'pay_cash', amount: 2.50 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE011',
+        date: '2023-10-31T12:15:00Z',
+        customer: { id: MOCK_CUSTOMERS[3].id, name: MOCK_CUSTOMERS[3].name },
+        items: [ { ...MOCK_PRODUCTS[0], quantity: 50 } ],
+        total: 125.00,
+        payments: [{ methodId: 'pay_changu', amount: 125.00 }],
+        discount: { type: 'percentage', value: 15 },
+        status: 'completed'
+    },
+    {
+        id: 'SALE012',
+        date: '2023-10-31T16:00:00Z',
+        customer: { id: MOCK_CUSTOMERS[2].id, name: MOCK_CUSTOMERS[2].name },
+        items: [ { ...MOCK_PRODUCTS[4], quantity: 1 }, { ...MOCK_PRODUCTS[5], quantity: 1 } ],
+        total: 4.50,
+        payments: [{ methodId: 'pay_cash', amount: 4.50 }],
+        status: 'voided'
+    },
+    {
+        id: 'SALE013',
+        date: '2023-11-01T09:00:00Z',
+        customer: { id: MOCK_CUSTOMERS[0].id, name: MOCK_CUSTOMERS[0].name },
+        items: [ { ...MOCK_PRODUCTS[12], quantity: 1 } ],
+        total: 35.00,
+        payments: [{ methodId: 'pay_stripe', amount: 35.00 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE014',
+        date: '2023-11-01T11:00:00Z',
+        customer: { id: MOCK_CUSTOMERS[1].id, name: MOCK_CUSTOMERS[1].name },
+        items: [ { ...MOCK_PRODUCTS[1], quantity: 2 }, { ...MOCK_PRODUCTS[2], quantity: 1 } ],
+        total: 10.50,
+        payments: [{ methodId: 'pay_card', amount: 10.50 }],
+        status: 'completed'
+    },
+    {
+        id: 'SALE015',
+        date: '2023-11-01T14:30:00Z',
+        customer: { id: MOCK_CUSTOMERS[2].id, name: MOCK_CUSTOMERS[2].name },
+        items: [ { ...MOCK_PRODUCTS[9], quantity: 1 } ],
+        total: 6.50,
+        payments: [{ methodId: 'pay_tnm', amount: 6.50 }],
+        status: 'completed'
+    }
 ];
 
 export const MOCK_CUSTOMER_RETURNS: CustomerReturn[] = [
@@ -513,7 +618,7 @@ export const MOCK_ROLES: Role[] = [
             'users:view',
             'settings:view',
             'settings:tax', 'settings:product', 'settings:contact', 'settings:sale', 'settings:pos', 'settings:purchases', 'settings:payment', 'settings:dashboard', 'settings:system', 'settings:prefixes', 'settings:email', 'settings:sms', 'settings:reward_points', 'settings:modules', 'settings:custom_labels', 'settings:locations', 'settings:age_verification',
-            'settings:integrations', 'settings:accounts'
+            'settings:integrations', 'settings:accounts', 'settings:subscription'
         ]
     },
     {
@@ -547,16 +652,10 @@ export const MOCK_ROLES: Role[] = [
 ];
 
 export const MOCK_USERS: User[] = [
-    // FIX: Added 'account_status' property to satisfy the User type.
-    { id: 'USER001', name: 'Alice Admin', email: 'alice.admin@example.com', roleId: 'admin', businessLocationId: 'LOC01', account_status: 'trial' },
-    // FIX: Added 'account_status' property to satisfy the User type.
-    { id: 'USER002', name: 'Mike Supervisor', email: 'mike.manager@example.com', roleId: 'manager', businessLocationId: 'LOC01', account_status: 'trial' },
-    // FIX: Added 'account_status' property to satisfy the User type.
-    { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier', businessLocationId: 'LOC02', account_status: 'trial' },
-    // FIX: Added 'account_status' property to satisfy the User type.
-    { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager', businessLocationId: 'LOC03', account_status: 'trial' },
-    // FIX: Added 'account_status' property to satisfy the User type.
-    { id: 'USER005', name: 'Sarah Sales', email: 'sarah.sales@example.com', roleId: 'sales_rep', businessLocationId: 'LOC01', account_status: 'trial' },
-    // FIX: Added 'account_status' property to satisfy the User type.
-    { id: 'USER-ADMIN-MGL', name: 'Admin MGL', email: 'Admin@transcendpos.com', roleId: 'admin', businessLocationId: 'MGL01', account_status: 'trial' },
+    { id: 'USER001', name: 'Alice Admin', email: 'alice.admin@example.com', roleId: 'admin', businessLocationId: 'LOC01', account_status: 'trial', onboarding_complete: true, subscriptionPlan: 'professional' },
+    { id: 'USER002', name: 'Mike Supervisor', email: 'mike.manager@example.com', roleId: 'manager', businessLocationId: 'LOC01', account_status: 'trial', onboarding_complete: true, subscriptionPlan: 'professional' },
+    { id: 'USER003', name: 'Casey Cashier', email: 'casey.cashier@example.com', roleId: 'cashier', businessLocationId: 'LOC02', account_status: 'trial', onboarding_complete: true, subscriptionPlan: 'professional' },
+    { id: 'USER004', name: 'David Jones', email: 'david.jones@example.com', roleId: 'manager', businessLocationId: 'LOC03', account_status: 'trial', onboarding_complete: true, subscriptionPlan: 'professional' },
+    { id: 'USER005', name: 'Sarah Sales', email: 'sarah.sales@example.com', roleId: 'sales_rep', businessLocationId: 'LOC01', account_status: 'trial', onboarding_complete: true, subscriptionPlan: 'professional' },
+    { id: 'USER-ADMIN-MGL', name: 'Admin MGL', email: 'Admin@transcendpos.com', roleId: 'admin', businessLocationId: 'MGL01', account_status: 'trial', onboarding_complete: true, subscriptionPlan: 'professional' },
 ];

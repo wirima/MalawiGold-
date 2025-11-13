@@ -39,7 +39,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 ];
 
 const NavIcon: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
         {children}
     </svg>
 );
@@ -53,7 +53,6 @@ export interface NavItem {
 }
 
 export const getNavItems = (t: (key: string) => string): NavItem[] => [
-  { path: '/', label: 'Home', icon: <NavIcon>{ICONS.HOME}</NavIcon> },
   { path: '/', label: t('dashboard'), icon: <NavIcon>{ICONS.DASHBOARD}</NavIcon>, permission: 'dashboard:view' },
   { 
     label: t('contacts'),
@@ -185,6 +184,7 @@ export const getNavItems = (t: (key: string) => string): NavItem[] => [
         { path: 'settings/age-verification', label: t('ageVerification'), permission: 'settings:age_verification' },
         { path: 'settings/integrations', label: 'Integrations', permission: 'settings:integrations' },
         { path: 'settings/api-proxy-guide', label: 'API Proxy Guide', permission: 'settings:view' },
+        { path: 'settings/subscription', label: 'Subscription', permission: 'settings:subscription' },
     ]
   }
 ];

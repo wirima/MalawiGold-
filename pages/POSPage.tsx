@@ -290,7 +290,7 @@ const POSPage: React.FC = () => {
     const tax = totalAfterDiscount * 0.08;
     const total = totalAfterDiscount + tax;
 
-    const handleConfirmPayment = (payments: { methodId: string; amount: number }[]) => {
+    const handleConfirmPayment = async (payments: { methodId: string; amount: number }[]) => {
         const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
         if (!selectedCustomer) {
             alert('Error: Please select a valid customer.');
@@ -304,11 +304,11 @@ const POSPage: React.FC = () => {
             payments,
             passportNumber,
             nationality,
-            discount,
-            status: isReturnMode ? 'return' : 'completed',
+            discount: discount || undefined,
+            status: (isReturnMode ? 'return' : 'completed') as Sale['status'],
         };
 
-        const newSale = isOnline ? addSale(saleData) : addSaleToQueue(saleData);
+        const newSale = isOnline ? await addSale(saleData) : addSaleToQueue(saleData);
         
         setIsPaymentModalOpen(false);
         setCompletedSale(newSale);

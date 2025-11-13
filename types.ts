@@ -354,7 +354,12 @@ export interface User {
     email: string;
     roleId: Role['id'];
     businessLocationId: string;
-    account_status: 'trial' | 'active';
+    account_status: 'trial' | 'active' | 'inactive' | 'onboarding_pending';
+    onboarding_complete: boolean;
+    subscriptionPlan?: 'pos' | 'inventory' | 'bundle' | 'professional';
+    phone?: string;
+    country_code?: string;
+    address?: string;
 }
 
 export interface BrandingSettings {

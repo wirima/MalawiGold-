@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Role, Permission, BusinessLocation } from '../types';
@@ -277,7 +275,7 @@ const UserFormModal: React.FC<{
             if (isEditing && user) {
                 onSave({ ...user, ...userData });
             } else {
-                onSave(userData);
+                onSave({ ...userData, account_status: 'trial', onboarding_complete: false });
             }
         }
     };

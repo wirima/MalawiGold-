@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { StockAdjustment, StockAdjustmentType } from '../types';
 import { Link } from 'react-router-dom';
+import { downloadCSV } from '../utils';
 
 type SortableKeys = 'date' | 'productName' | 'type' | 'quantity' | 'reason';
 type SortDirection = 'ascending' | 'descending';
@@ -53,23 +54,22 @@ const StockAdjustmentsPage: React.FC = () => {
                 const { key, direction } = sortConfig;
                 const asc = direction === 'ascending' ? 1 : -1;
 
-                switch (key) {
-                    case 'date':
-                        return (new Date(a.date).getTime() - new Date(b.date).getTime()) * asc;
-                    
-                    case 'quantity':
-                        // Explicitly handle numeric sorting for the quantity column.
-                        return (a.quantity - b.quantity) * asc;
-                    
-                    case 'productName':
-                    case 'type':
-                    case 'reason':
-                        // Use localeCompare for robust, case-insensitive string sorting.
-                        return a[key].localeCompare(b[key], undefined, { sensitivity: 'base' }) * asc;
-                    
-                    default:
-                        return 0;
+                const aValue = a[key];
+                const bValue = b[key];
+
+                if (typeof aValue === 'number' && typeof bValue === 'number') {
+                    return (aValue - bValue) * asc;
                 }
+                
+                if (key === 'date') {
+                     return (new Date(a.date).getTime() - new Date(b.date).getTime()) * asc;
+                }
+
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return aValue.localeCompare(bValue, undefined, { sensitivity: 'base' }) * asc;
+                }
+
+                return 0;
             });
         }
 
@@ -93,6 +93,20 @@ const StockAdjustmentsPage: React.FC = () => {
         setProductFilter('all');
         setTypeFilter('all');
         setDateRange({ start: '', end: '' });
+    };
+
+    // FIX: Add handleDownloadCsv and handleDownloadExcel functions
+    const handleDownloadCsv = () => {
+        const headers = ['date', 'product_name', 'sku', 'type', 'quantity', 'reason'];
+        const data = sortedAndFilteredAdjustments.map(adj => [
+            new Date(adj.date).toLocaleString(),
+            adj.productName,
+            products.find(p => p.id === adj.productId)?.sku || 'N/A',
+            adj.type,
+            adj.quantity,
+            adj.reason
+        ]);
+        downloadCSV('stock_adjustments.csv', headers, data);
     };
 
     const getSortIndicator = (key: SortableKeys) => {
@@ -133,15 +147,20 @@ const StockAdjustmentsPage: React.FC = () => {
                         <h1 className="text-2xl font-bold">Stock Adjustments</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">Track and manage your inventory changes.</p>
                     </div>
-                    <Link
-                        to="/stock-adjustments/add"
-                        className={`bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold whitespace-nowrap ${!canManage ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        onClick={(e) => !canManage && e.preventDefault()}
-                        aria-disabled={!canManage}
-                        title={!canManage ? "You don't have permission to add stock adjustments" : ""}
-                    >
-                        Add Stock Adjustment
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleDownloadCsv} className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 font-semibold whitespace-nowrap">
+                            Export CSV
+                        </button>
+                        <Link
+                            to="/app/stock-adjustments/add"
+                            className={`bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold whitespace-nowrap ${!canManage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={(e) => !canManage && e.preventDefault()}
+                            aria-disabled={!canManage}
+                            title={!canManage ? "You don't have permission to add stock adjustments" : ""}
+                        >
+                            Add Stock Adjustment
+                        </Link>
+                    </div>
                 </div>
                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="lg:col-span-2">
@@ -180,27 +199,19 @@ const StockAdjustmentsPage: React.FC = () => {
                     <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300">
                         <tr>
                             <SortableHeader sortKey="date">Date</SortableHeader>
-                            <SortableHeader sortKey="productName">Product Name</SortableHeader>
+                            <SortableHeader sortKey="productName">Product</SortableHeader>
                             <SortableHeader sortKey="type">Type</SortableHeader>
                             <SortableHeader sortKey="quantity">Quantity</SortableHeader>
                             <SortableHeader sortKey="reason">Reason</SortableHeader>
                         </tr>
                     </thead>
                     <tbody>
-                        {sortedAndFilteredAdjustments.length > 0 ? sortedAndFilteredAdjustments.map(adj => (
+                        {sortedAndFilteredAdjustments.map(adj => (
                             <tr key={adj.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/50">
+                                <td className="px-6 py-4 whitespace-nowrap">{new Date(adj.date).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200">{adj.productName}</td>
                                 <td className="px-6 py-4">
-                                    <div>{new Date(adj.date).toLocaleDateString()}</div>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">{new Date(adj.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                </td>
-                                <td scope="row" className="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">
-                                    {adj.productName}
-                                </td>
-                                <td className="px-6 py-4">
-                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                                        adj.type === 'addition' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                    }`}>
+                                    <span className={`capitalize px-2 py-1 text-xs font-medium rounded-full ${adj.type === 'addition' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
                                         {adj.type}
                                     </span>
                                 </td>
@@ -209,10 +220,11 @@ const StockAdjustmentsPage: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4">{adj.reason}</td>
                             </tr>
-                        )) : (
+                        ))}
+                         {sortedAndFilteredAdjustments.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="text-center py-10 text-slate-500 dark:text-slate-400">
-                                    {isFiltered ? "No stock adjustments match your filters." : "No stock adjustments have been recorded yet."}
+                                    No stock adjustments found matching your criteria.
                                 </td>
                             </tr>
                         )}
