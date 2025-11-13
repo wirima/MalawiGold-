@@ -22,7 +22,7 @@ export default async function handler(req: Request) {
     }
 
     // IMPORTANT: The API_KEY is securely accessed from Vercel's environment variables
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'API key not configured on server' }), { 
           status: 500,
